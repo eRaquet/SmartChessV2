@@ -108,27 +108,28 @@ class Board(gym.Env):
         # clear old observation
         self.clear_observation()
 
-        self.observation["num_moves"] = num_moves
+        if num_moves != 0:
+            self.observation["num_moves"] = num_moves
 
-        # create observation encodings
-        self.observation["encoding"][0:num_moves] = generate_board_encodings_from_moves(self.encoding, self.moves, self.board.turn)
+            # create observation encodings
+            self.observation["encoding"][0:num_moves] = generate_board_encodings_from_moves(self.encoding, self.moves, self.board.turn)
 
-        # check for castling rights and draw rights
-        for i, move in enumerate(self.moves):
-            self.board.push(move)
+            # check for castling rights and draw rights
+            for i, move in enumerate(self.moves):
+                self.board.push(move)
 
-            self.observation["castling_rights"][i] = [
-                bool(self.board.castling_rights & (chess.BB_A1 if self.board.turn == chess.WHITE else chess.BB_A8)),
-                bool(self.board.castling_rights & (chess.BB_H1 if self.board.turn == chess.WHITE else chess.BB_H8)),
-                bool(self.board.castling_rights & (chess.BB_A8 if self.board.turn == chess.WHITE else chess.BB_A1)),
-                bool(self.board.castling_rights & (chess.BB_H8 if self.board.turn == chess.WHITE else chess.BB_H1)),
-            ]
+                self.observation["castling_rights"][i] = [
+                    bool(self.board.castling_rights & (chess.BB_A1 if self.board.turn == chess.WHITE else chess.BB_A8)),
+                    bool(self.board.castling_rights & (chess.BB_H1 if self.board.turn == chess.WHITE else chess.BB_H8)),
+                    bool(self.board.castling_rights & (chess.BB_A8 if self.board.turn == chess.WHITE else chess.BB_A1)),
+                    bool(self.board.castling_rights & (chess.BB_H8 if self.board.turn == chess.WHITE else chess.BB_H1)),
+                ]
 
-            self.observation["is_draw"][i] = self.board.is_repetition() or self.board.is_fifty_moves()
+                self.observation["is_draw"][i] = self.board.is_repetition() or self.board.is_fifty_moves()
 
-            self.board.pop()
+                self.board.pop()
 
-        self.saved_encoding[0:num_moves] = self.observation["encoding"][0:num_moves]
+            self.saved_encoding[0:num_moves] = self.observation["encoding"][0:num_moves]
 
     def update_state(self, index: int) -> None:
         """
