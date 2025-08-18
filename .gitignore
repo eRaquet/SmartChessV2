@@ -205,3 +205,8 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+### Personal Additions
+
+# Ignore github copilot config stuff
+.github*

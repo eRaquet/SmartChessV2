@@ -18,6 +18,15 @@ type MoveReward = float
 type Action = int
 
 
+# Enum for display modes
+class DisplayMode(Enum):
+    """Enumeration for different board display modes."""
+
+    GUI = 1
+    ASCII = 2
+    NONE = 3
+
+
 # dictionary structure to encode board observations
 class Observation(TypedDict):
     """

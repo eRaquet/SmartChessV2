@@ -1,5 +1,7 @@
 """Module to define the board environment for training and playing."""
 
+import time
+
 import chess
 import gym
 import numpy as np
@@ -8,10 +10,12 @@ from gym import spaces
 from modules.chess_types import (
     Action,
     BoardInfo,
+    DisplayMode,
     IsOver,
     MoveReward,
     Observation,
 )
+from modules.display import Display
 from modules.tools import (
     encode_board_obs,
     generate_board_encodings_from_moves,
@@ -21,7 +25,7 @@ from modules.tools import (
 class Board(gym.Env):
     """Chess board gym environment with generation of valid moves and creation of observations."""
 
-    def __init__(self) -> None:
+    def __init__(self, render_mode: DisplayMode = DisplayMode.NONE) -> None:
         """Initiate a board object."""
         self.board = chess.Board()
         self.encoding = encode_board_obs(self.board.piece_map(), self.board.turn)
@@ -48,6 +52,10 @@ class Board(gym.Env):
 
         self.saved_encoding = np.zeros((218, 8, 8, 12), dtype=np.uint8)
 
+        self.render_mode = render_mode
+        if self.render_mode is DisplayMode.GUI:
+            self.display = Display()
+
     def reset(self) -> tuple[Observation, BoardInfo]:  # type: ignore[override]
         """
 
@@ -63,6 +71,7 @@ class Board(gym.Env):
         self.moves = list(self.board.legal_moves)
         self.generate_observation()
         info: BoardInfo = {}
+        self.render()
         return self.observation, info
 
     def step(self, action: Action) -> tuple[Observation, MoveReward, IsOver, IsOver, BoardInfo]:  # type: ignore[override]
@@ -92,6 +101,7 @@ class Board(gym.Env):
             self.board.is_repetition() or self.board.is_fifty_moves() or self.board.is_insufficient_material() or self.board.is_stalemate()
         )
         reward = 0.0
+        self.render()
 
         return (
             self.observation,
@@ -153,3 +163,15 @@ class Board(gym.Env):
         self.observation["castling_rights"][0:old_num_moves].fill(0)
         self.observation["is_draw"][0:old_num_moves].fill(0)
         self.observation["num_moves"] = 0
+
+    def render(self) -> None:
+        """Render the board object according to the set render mode."""
+        if self.render_mode is DisplayMode.NONE:
+            return
+        if self.render_mode is DisplayMode.ASCII:
+            print("\033[2J\033[H", end="")
+            print("-" * 15)
+            print(self.board)
+            print("-" * 15)
+        if self.render_mode is DisplayMode.GUI:
+            self.display.display_board(self.board, self.board.piece_map())
