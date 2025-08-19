@@ -1,7 +1,5 @@
 """Module to define the board environment for training and playing."""
 
-import time
-
 import chess
 import gym
 import numpy as np
