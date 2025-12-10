@@ -53,11 +53,35 @@ class Observation(TypedDict):
     num_moves: int
 
 
+class MappedObservation(TypedDict, total=False):
+    """A dictionary that maps an observation to white."""
+
+    white: Observation
+    black: Observation
+
+
+class MappedAction(TypedDict, total=False):
+    """A dictionary that maps an action to a specific player."""
+
+    white: Action
+    black: Action
+
+
 # dictionary structure to specify the info read off from the board at each position
 class BoardInfo(TypedDict):
     """
 
     Class that defines board info.
+
+    Currently empty.
+
+    """
+
+
+class GameInfo(TypedDict):
+    """
+
+    Class that defines game info.
 
     Currently empty.
 

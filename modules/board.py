@@ -50,8 +50,8 @@ class Board(gym.Env):
 
         self.saved_encoding = np.zeros((218, 8, 8, 12), dtype=np.uint8)
 
-        self.render_mode = render_mode
-        if self.render_mode is DisplayMode.GUI:
+        self.rendering_mode = render_mode
+        if self.rendering_mode is DisplayMode.GUI:
             self.display = Display()
 
     def reset(self) -> tuple[Observation, BoardInfo]:  # type: ignore[override]
@@ -164,12 +164,12 @@ class Board(gym.Env):
 
     def render(self) -> None:
         """Render the board object according to the set render mode."""
-        if self.render_mode is DisplayMode.NONE:
+        if self.rendering_mode is DisplayMode.NONE:
             return
-        if self.render_mode is DisplayMode.ASCII:
+        if self.rendering_mode is DisplayMode.ASCII:
             print("\033[2J\033[H", end="")
             print("-" * 15)
             print(self.board)
             print("-" * 15)
-        if self.render_mode is DisplayMode.GUI:
+        if self.rendering_mode is DisplayMode.GUI:
             self.display.display_board(self.board, self.board.piece_map())
