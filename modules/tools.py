@@ -1,7 +1,6 @@
 """File containing helper functions for chess bot."""
 
 from collections import Counter
-from pathlib import Path
 
 import chess
 import numpy as np
@@ -322,15 +321,3 @@ def square_indices(square: chess.Square, player_color: chess.Color) -> tuple[int
         row and column index of square in encoding space
     """
     return square // 8 if player_color == chess.WHITE else 7 - square // 8, square % 8
-
-
-board = chess.Board("r3k2r/4p3/5n2/3P4/4pP2/8/1p2P3/R3K2R b kq f3 0 1")
-encoding = encode_board(board)
-moves = list(board.legal_moves)
-board.push(moves[0])
-encoding_new = encode_board(board)
-game_encoding_counter = Counter([encoding_new.copy().tobytes(), encoding_new.copy().tobytes()])
-encodings = generate_board_encodings_from_moves(encoding, moves, chess.BLACK, game_encoding_counter)
-np.save(Path(__file__).parent.parent / "tests" / "data" / "test_position_black_move_encoding", encodings)
-np.save(Path(__file__).parent.parent / "tests" / "data" / "test_repeated_position_black_encoding", encoding_new)
-np.save(Path(__file__).parent.parent / "tests" / "data" / "test_move_generation_black_start_encoding", encoding)
