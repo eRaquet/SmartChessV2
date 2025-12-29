@@ -155,7 +155,7 @@ def generate_board_encodings_from_moves(  # noqa: PLR0915
     to_squares_col = move_squares_index[:, 1, 1]
 
     # get piece types
-    piece_indices = np.argmax(encoding[from_squares_row, from_squares_col], axis=1)
+    piece_indices = np.argmax(flipped_piece_encoding[from_squares_row, from_squares_col], axis=1)
     promotions = np.array([get_piece_index(move.promotion, Players.OPPONENT) if move.promotion is not None else 0 for move in moves])
 
     ### Run parallel move encoding
@@ -174,7 +174,7 @@ def generate_board_encodings_from_moves(  # noqa: PLR0915
         # remove captured pawn
         encodings[
             move_range[en_passant_indices],
-            to_squares_row[en_passant_indices] - 1,
+            to_squares_row[en_passant_indices] + 1,
             to_squares_col[en_passant_indices],
             get_piece_index(chess.PAWN, Players.SELF),
         ] = 0
@@ -234,13 +234,20 @@ def generate_board_encodings_from_moves(  # noqa: PLR0915
 
     # move rooks
     if len(king_side_indices[0]) > 0:
-        encodings[move_range[king_side_indices], 0, 7, get_piece_index(chess.ROOK, Players.OPPONENT)] = 0
-        encodings[move_range[king_side_indices], 0, 5, get_piece_index(chess.ROOK, Players.OPPONENT)] = 1
+        encodings[move_range[king_side_indices], lib.MAX_ROW_INDEX, lib.MAX_COL_INDEX, get_piece_index(chess.ROOK, Players.OPPONENT)] = 0
+        encodings[move_range[king_side_indices], lib.MAX_ROW_INDEX, 5, get_piece_index(chess.ROOK, Players.OPPONENT)] = 1
     if len(queen_side_indices[0]) > 0:
-        encodings[move_range[queen_side_indices], 0, 0, get_piece_index(chess.ROOK, Players.OPPONENT)] = 0
-        encodings[move_range[queen_side_indices], 0, 3, get_piece_index(chess.ROOK, Players.OPPONENT)] = 1
+        encodings[move_range[queen_side_indices], lib.MAX_ROW_INDEX, lib.MIN_COL_INDEX, get_piece_index(chess.ROOK, Players.OPPONENT)] = 0
+        encodings[move_range[queen_side_indices], lib.MAX_ROW_INDEX, 3, get_piece_index(chess.ROOK, Players.OPPONENT)] = 1
 
     # adjust castling rights
+
+    # determine if the king moved and undo castling rights if so
+    if encoding[0, 0, 12] == 1 or encoding[0, 0, 13] == 1:  # if the opponent had any caslting rights
+        king_movement_non_castling = np.where(piece_indices == get_piece_index(chess.KING, Players.OPPONENT))
+
+        if len(king_movement_non_castling[0]) > 0:
+            encodings[move_range[king_movement_non_castling], :, :, 14:16] = 0
 
     # check queen side castling rights
     if encoding[0, 0, 12] == 1:
@@ -249,9 +256,9 @@ def generate_board_encodings_from_moves(  # noqa: PLR0915
             & (from_squares_col == lib.MIN_COL_INDEX)  # piece moved from the left of the chessboard
             & (from_squares_row == lib.MAX_ROW_INDEX)  # piece moved from the top of the chessboard
         )
-        if len(queen_side_rook_movement) > 0:
+        if len(queen_side_rook_movement[0]) > 0:
             encodings[move_range[queen_side_rook_movement], :, :, 15] = 0
-        if len(queen_side_indices) > 0:
+        if len(queen_side_indices[0]) > 0:
             encodings[move_range[queen_side_indices], :, :, 15] = 0
 
     # check king side castling rights
@@ -261,16 +268,16 @@ def generate_board_encodings_from_moves(  # noqa: PLR0915
             & (from_squares_col == lib.MAX_COL_INDEX)  # piece moved from the left of the chessboard
             & (from_squares_row == lib.MAX_ROW_INDEX)  # piece moved from the top of the chessboard
         )
-        if len(king_side_rook_movement) > 0:
+        if len(king_side_rook_movement[0]) > 0:
             encodings[move_range[king_side_rook_movement], :, :, 14] = 0
-        if len(king_side_indices) > 0:
+        if len(king_side_indices[0]) > 0:
             encodings[move_range[king_side_indices], :, :, 14] = 0
 
     # look for three-fold repetition
     counts = np.array([board_state_counter.get(board.tobytes(), 0) for board in encodings], dtype=np.uint8)
     repetition_indices = np.where(counts > 1)
 
-    if len(repetition_indices) > 0:
+    if len(repetition_indices[0]) > 0:
         encodings[move_range[repetition_indices], :, :, 16] = 1
 
     return encodings
@@ -315,3 +322,15 @@ def square_indices(square: chess.Square, player_color: chess.Color) -> tuple[int
         row and column index of square in encoding space
     """
     return square // 8 if player_color == chess.WHITE else 7 - square // 8, square % 8
+
+
+board = chess.Board("r3k2r/4p3/5n2/3P4/4pP2/8/1p2P3/R3K2R b kq f3 0 1")
+encoding = encode_board(board)
+moves = list(board.legal_moves)
+board.push(moves[0])
+encoding_new = encode_board(board)
+game_encoding_counter = Counter([encoding_new.copy().tobytes(), encoding_new.copy().tobytes()])
+encodings = generate_board_encodings_from_moves(encoding, moves, chess.BLACK, game_encoding_counter)
+np.save(Path(__file__).parent.parent / "tests" / "data" / "test_position_black_move_encoding", encodings)
+np.save(Path(__file__).parent.parent / "tests" / "data" / "test_repeated_position_black_encoding", encoding_new)
+np.save(Path(__file__).parent.parent / "tests" / "data" / "test_move_generation_black_start_encoding", encoding)

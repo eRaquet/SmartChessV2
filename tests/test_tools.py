@@ -1,6 +1,7 @@
 # ruff: noqa: S101
 """File for testing tools module."""
 
+from collections import Counter
 from pathlib import Path
 
 import chess
@@ -28,32 +29,29 @@ def default_board() -> chess.Board:
 
 def test_generate_board_encodings_from_moves() -> None:
     """Test the generate_board_encodings_from_moves function."""
-    # en passant position
-    en_passant_board = chess.Board("8/8/8/4pP2/8/8/8/8 w - e6 0 1")
-    en_passant_encoding = encode_board(en_passant_board)
-    en_passant_move = generate_board_encodings_from_moves(en_passant_encoding, list(en_passant_board.legal_moves), chess.WHITE)[
-        1, :, :, [get_piece_index(chess.PAWN, Players.SELF), get_piece_index(chess.PAWN, Players.OPPONENT)]
-    ]  # get the en passant move encoding for the pawns
-    en_passant_move_truth = np.load(path / "data" / "test_en_passant.npy")
-    assert np.allclose(en_passant_move, en_passant_move_truth)
+    # test white move generation  (FEN is 4k3/6P1/8/4Pp2/3p4/5N2/4P3/R3K2R w KQ f6 0 1)
+    board = chess.Board("4k3/6P1/8/4Pp2/3p4/5N2/4P3/R3K2R w KQ f6 0 1")
+    moves = list(board.legal_moves)
+    encoding = np.load(Path(__file__).parent / "data" / "test_position_white_move_start_encoding.npy")
+    repeated_encoding = np.load(Path(__file__).parent / "data" / "test_repeated_position_white_encoding.npy")
+    board_state_counter = Counter([repeated_encoding.copy().tobytes(), repeated_encoding.copy().tobytes()])
+    encodings = generate_board_encodings_from_moves(encoding, moves, chess.WHITE, board_state_counter)
 
-    # promotion
-    promotion_board = chess.Board("8/P7/8/8/8/8/8/k6K w - - 0 1")
-    promotion_encoding = encode_board(promotion_board.piece_map(), chess.WHITE)
-    promotion_move = generate_board_encodings_from_moves(promotion_encoding, list(promotion_board.legal_moves), chess.WHITE)[
-        6, :, :, [get_piece_index(chess.PAWN, Players.SELF), get_piece_index(chess.KNIGHT, Players.SELF)]
-    ]  # get the promotion move encodings for the pawns and the knight
-    promotion_move_truth = np.load(path / "data" / "test_promotion.npy")
-    assert np.allclose(promotion_move, promotion_move_truth)
+    encodings_truth = np.load(Path(__file__).parent / "data" / "test_position_white_move_encoding.npy")
 
-    # castling
-    castling_board = chess.Board("r3k2r/pppb1ppp/2npbn2/4p3/2B1P3/2N2N2/PPP2PPP/R3K2R w KQkq - 0 1")
-    castling_encoding = encode_board(castling_board.piece_map(), chess.WHITE)
-    castling_move = generate_board_encodings_from_moves(castling_encoding, list(castling_board.legal_moves), chess.WHITE)[
-        29, :, :, [get_piece_index(chess.ROOK, Players.SELF), get_piece_index(chess.KING, Players.SELF)]
-    ]  # get the castling move encodings for the rooks and kings
-    castling_move_truth = np.load(path / "data" / "test_castling.npy")
-    assert np.allclose(castling_move, castling_move_truth)
+    assert np.allclose(encodings, encodings_truth)
+
+    # test black move generation  (FEN is r3k2r/4p3/5n2/3P4/4pP2/8/1p2P3/R3K2R b kq f3 0 1)
+    board = chess.Board("r3k2r/4p3/5n2/3P4/4pP2/8/1p2P3/R3K2R b kq f3 0 1")
+    moves = list(board.legal_moves)
+    encoding = np.load(Path(__file__).parent / "data" / "test_position_black_move_start_encoding.npy")
+    repeated_encoding = np.load(Path(__file__).parent / "data" / "test_repeated_position_black_encoding.npy")
+    board_state_counter = Counter([repeated_encoding.copy().tobytes(), repeated_encoding.copy().tobytes()])
+    encodings = generate_board_encodings_from_moves(encoding, moves, chess.BLACK, board_state_counter)
+
+    encodings_truth = np.load(Path(__file__).parent / "data" / "test_position_black_move_encoding.npy")
+
+    assert np.allclose(encodings, encodings_truth)
 
 
 def test_encode_board() -> None:
