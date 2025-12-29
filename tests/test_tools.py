@@ -21,35 +21,6 @@ path = Path(__file__).parent
 
 
 @pytest.fixture
-def test_boards() -> list[chess.Board]:
-    """Set of test positions."""
-    fens = [
-        # 1. Back Rank Mate Threat
-        "6k1/5ppp/8/8/8/8/5PPP/5RK1 w - - 0 1",
-        # 2. Smothered Mate Setup
-        "6k1/5ppp/8/8/8/5N2/5PPP/6RK w - - 0 1",
-        # 3. Underpromotion to Knight
-        "7k/P7/8/8/8/8/6pp/7K w - - 0 1",
-        # 4. Zugzwang in Endgame
-        "8/8/8/5k2/5p2/5P2/6K1/8 b - - 0 1",
-        # 5. Desperado Piece
-        "r1bqkbnr/pppp1ppp/2n5/4p3/3P4/5N2/PPP2PPP/RNBQKB1R b KQkq - 0 4",
-        # 6. Trapped Queen
-        "rnb1kbnr/ppp2ppp/8/3qp3/3P4/2N1P3/PPP2PPP/R1BQKBNR w KQkq - 0 6",
-        # 7. Stalemate Trap
-        "7k/5K2/6Q1/8/8/8/8/8 b - - 0 1",
-        # 8. Knight Fork Puzzle
-        "r1bqk2r/pppp1ppp/2n2n2/4p3/1b2P3/2N2N2/PPP1QPPP/R1B1KB1R w KQkq - 4 5",
-        # 9. Classic Queen Sacrifice
-        "r1bqkb1r/pppp1ppp/2n2n2/4P3/1b1P4/2N5/PPP2PPP/R1BQKBNR w KQkq - 0 5",
-        # 10. Opening Trap (Legal's Mate)
-        "rnbqkbnr/pppp1ppp/8/4p3/3P4/5N2/PPP2PPP/RNBQKB1R w KQkq - 2 3",
-    ]
-
-    return [chess.Board(fen) for fen in fens]
-
-
-@pytest.fixture
 def default_board() -> chess.Board:
     """Create the default board setup and piece map."""
     return chess.Board()
@@ -85,16 +56,23 @@ def test_generate_board_encodings_from_moves() -> None:
     assert np.allclose(castling_move, castling_move_truth)
 
 
-def test_encode_board(default_board: tuple[chess.Board, dict[chess.Square, chess.Piece]]) -> None:
+def test_encode_board() -> None:
     """Test the encode_board_obs function."""
-    _, piece_map = default_board
-    encoding_white = encode_board(piece_map, chess.WHITE)
-    encoding_black = encode_board(piece_map, chess.BLACK)
+    # test white position
+    board = chess.Board("4k3/6P1/8/4Pp2/8/8/8/R3K2R w KQ f6 0 1")
+    encoding = encode_board(board)
 
-    encoding_truth = np.load(path / "data" / "test_default_board_encoding.npy")
+    encoding_truth = np.load(path / "data" / "test_position_white_board_encoding.npy")
 
-    assert np.allclose(encoding_white, encoding_truth)
-    assert np.allclose(encoding_black, encoding_truth)
+    assert np.allclose(encoding, encoding_truth)
+
+    # test black position
+    board = chess.Board("r3k2r/8/8/8/3Pp3/8/1p6/4K3 b kq d3 0 1")
+    encoding = encode_board(board)
+
+    encoding_truth = np.load(path / "data" / "test_position_black_board_encoding.npy")
+
+    assert np.allclose(encoding, encoding_truth)
 
 
 def test_get_piece_index(default_board: tuple[chess.Board, dict[chess.Square, chess.Piece]]) -> None:

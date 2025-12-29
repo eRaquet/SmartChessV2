@@ -1,6 +1,7 @@
 """File containing helper functions for chess bot."""
 
 from collections import Counter
+from pathlib import Path
 
 import chess
 import numpy as np
