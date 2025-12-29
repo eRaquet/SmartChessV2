@@ -11,7 +11,7 @@ from modules.conventions import (
     Players,
 )
 from modules.tools import (
-    encode_board_obs,
+    encode_board,
     generate_board_encodings_from_moves,
     get_piece_index,
     square_indices,
@@ -50,19 +50,16 @@ def test_boards() -> list[chess.Board]:
 
 
 @pytest.fixture
-def default_board() -> tuple[chess.Board, dict[chess.Square, chess.Piece]]:
+def default_board() -> chess.Board:
     """Create the default board setup and piece map."""
-    board = chess.Board()
-    piece_map = board.piece_map()
-
-    return (board, piece_map)
+    return chess.Board()
 
 
 def test_generate_board_encodings_from_moves() -> None:
     """Test the generate_board_encodings_from_moves function."""
     # en passant position
     en_passant_board = chess.Board("8/8/8/4pP2/8/8/8/8 w - e6 0 1")
-    en_passant_encoding = encode_board_obs(en_passant_board.piece_map(), chess.WHITE)
+    en_passant_encoding = encode_board(en_passant_board)
     en_passant_move = generate_board_encodings_from_moves(en_passant_encoding, list(en_passant_board.legal_moves), chess.WHITE)[
         1, :, :, [get_piece_index(chess.PAWN, Players.SELF), get_piece_index(chess.PAWN, Players.OPPONENT)]
     ]  # get the en passant move encoding for the pawns
@@ -71,7 +68,7 @@ def test_generate_board_encodings_from_moves() -> None:
 
     # promotion
     promotion_board = chess.Board("8/P7/8/8/8/8/8/k6K w - - 0 1")
-    promotion_encoding = encode_board_obs(promotion_board.piece_map(), chess.WHITE)
+    promotion_encoding = encode_board(promotion_board.piece_map(), chess.WHITE)
     promotion_move = generate_board_encodings_from_moves(promotion_encoding, list(promotion_board.legal_moves), chess.WHITE)[
         6, :, :, [get_piece_index(chess.PAWN, Players.SELF), get_piece_index(chess.KNIGHT, Players.SELF)]
     ]  # get the promotion move encodings for the pawns and the knight
@@ -80,7 +77,7 @@ def test_generate_board_encodings_from_moves() -> None:
 
     # castling
     castling_board = chess.Board("r3k2r/pppb1ppp/2npbn2/4p3/2B1P3/2N2N2/PPP2PPP/R3K2R w KQkq - 0 1")
-    castling_encoding = encode_board_obs(castling_board.piece_map(), chess.WHITE)
+    castling_encoding = encode_board(castling_board.piece_map(), chess.WHITE)
     castling_move = generate_board_encodings_from_moves(castling_encoding, list(castling_board.legal_moves), chess.WHITE)[
         29, :, :, [get_piece_index(chess.ROOK, Players.SELF), get_piece_index(chess.KING, Players.SELF)]
     ]  # get the castling move encodings for the rooks and kings
@@ -88,11 +85,11 @@ def test_generate_board_encodings_from_moves() -> None:
     assert np.allclose(castling_move, castling_move_truth)
 
 
-def test_encode_board_obs(default_board: tuple[chess.Board, dict[chess.Square, chess.Piece]]) -> None:
+def test_encode_board(default_board: tuple[chess.Board, dict[chess.Square, chess.Piece]]) -> None:
     """Test the encode_board_obs function."""
     _, piece_map = default_board
-    encoding_white = encode_board_obs(piece_map, chess.WHITE)
-    encoding_black = encode_board_obs(piece_map, chess.BLACK)
+    encoding_white = encode_board(piece_map, chess.WHITE)
+    encoding_black = encode_board(piece_map, chess.BLACK)
 
     encoding_truth = np.load(path / "data" / "test_default_board_encoding.npy")
 

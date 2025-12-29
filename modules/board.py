@@ -15,7 +15,7 @@ from modules.chess_types import (
 )
 from modules.display import Display
 from modules.tools import (
-    encode_board_obs,
+    encode_board,
     generate_board_encodings_from_moves,
 )
 
@@ -26,29 +26,23 @@ class Board(gym.Env):
     def __init__(self, render_mode: DisplayMode = DisplayMode.NONE) -> None:
         """Initiate a board object."""
         self.board = chess.Board()
-        self.encoding = encode_board_obs(self.board.piece_map(), self.board.turn)
+        self.board_encoding = encode_board(self.board)
         self.moves = list(self.board.legal_moves)
 
         # define the action and observation space
         self.action_space = spaces.Discrete(218)  # index of chosen move
         self.observation_space = spaces.Dict(
             {
-                "encoding": spaces.Box(0, 1, shape=(218, 8, 8, 12), dtype=np.uint8),
-                "castling_rights": spaces.Box(0, 1, shape=(218, 4), dtype=np.uint8),
-                "is_draw": spaces.Box(0, 1, shape=(218,), dtype=np.uint8),
+                "encoding": spaces.Box(0, 1, shape=(218, 8, 8, 18), dtype=np.uint8),
                 "num_moves": spaces.Discrete(218),
             }
         )
 
         # allocate the observation space
         self.observation: Observation = {
-            "encoding": np.zeros((218, 8, 8, 12), dtype=np.uint8),
-            "castling_rights": np.zeros((218, 4), dtype=np.uint8),
-            "is_draw": np.zeros((218,), dtype=np.uint8),
+            "encoding": np.zeros((218, 8, 8, 18), dtype=np.uint8),
             "num_moves": 0,
         }
-
-        self.saved_encoding = np.zeros((218, 8, 8, 12), dtype=np.uint8)
 
         self.render_mode = render_mode
         if self.render_mode is DisplayMode.GUI:

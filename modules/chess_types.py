@@ -8,8 +8,26 @@ from typing import (
 import numpy as np
 from numpy.typing import NDArray
 
-type BoardEncoding = NDArray[np.uint8]  # has a shape of (8, 8, 12), 0 is no piece, 1 is a piece
-type SetEncoding = NDArray[np.uint8]  # has a shape of (n, 8, 8, 12), 0 is no piece, 1 is a piece
+# a piece encoding is the datatype that contains the information about piece positions
+type PieceEncoding = NDArray[np.uint8]  # has a shape of (8, 8, 12)
+PIECE_ENCODING_SHAPE = (8, 8, 12)
+
+# a board encoding is the datatype that contains the information of a board that is given to a model
+# it is formatted in the following way:
+# AXES:
+#   - Row
+#   - Column
+#   - Information Type
+#       - 0:6 Self Pieces -- Pawn, Knight, Bishops, Rooks, Queen, King
+#       - 6:12 Opponent Pieces -- King, Queen, Rooks, Bishops, Knights, Pawn
+#       - 12:16 Castling Rights (all Rows and Columns are 1 if it has rights) -- Bottom Left, Bottom Right, Top Right, Top Left
+#       - 16 Draw Conditions (all Rows and Columns are 1 if the position could be a draw)
+#       - 17 Aun Passant (squares where an Aun Passant capture could happen)
+type BoardEncoding = NDArray[np.uint8]  # has a shape of (8, 8, 18)
+BOARD_ENCODING_SHAPE = (8, 8, 18)
+
+# an set of some number of board encodings, to be kept together (i.e. game trajectories or observations)
+type SetEncoding = NDArray[np.uint8]  # has a shape of (n, 8, 8, 18)
 type IsOver = bool
 type MoveReward = float
 
@@ -37,18 +55,10 @@ class Observation(TypedDict):
 
     """
 
-    # the encoding is from the serspective of the player to move (i.e., the first 6 pieces always belong to self)
-    encoding: np.ndarray[tuple[int, int, int, int], np.dtype[np.uint8]]  # shape: (218, 8, 8, 12)
-
-    # castling rights format
-    # 1: bottom left castling rights
-    # 2: bottom right castling rights
-    # 3: top left castling rights
-    # 4: top left castling rights
-    castling_rights: np.ndarray[tuple[int, int], np.dtype[np.uint8]]  # shape: (218, 4)
-
-    # draw check
-    is_draw: np.ndarray[tuple[int], np.dtype[np.uint8]]  # shape: (218)
+    # the encoding is from the serspective of the player to move
+    # last axis of encoding is delegated in the following
+    #   - 0:6 players pieces
+    encoding: SetEncoding  # shape: (218, 8, 8, 18)
 
     num_moves: int
 

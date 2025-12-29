@@ -23,3 +23,8 @@ piece_index = {
     (chess.KNIGHT, Players.OPPONENT): 10,
     (chess.PAWN, Players.OPPONENT): 11,
 }
+
+MIN_ROW_INDEX = 0
+MAX_ROW_INDEX = 7
+MIN_COL_INDEX = 0
+MAX_COL_INDEX = 7
