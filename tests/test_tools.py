@@ -1,4 +1,5 @@
 # ruff: noqa: S101
+# # ruff: noqa: PLR2004
 """File for testing tools module."""
 
 from collections import Counter
@@ -73,21 +74,23 @@ def test_encode_board() -> None:
     assert np.allclose(encoding, encoding_truth)
 
 
-def test_get_piece_index(default_board: tuple[chess.Board, dict[chess.Square, chess.Piece]]) -> None:
+def test_get_piece_index() -> None:
     """Test the get_piece_index function."""
-    player = chess.WHITE
+    # self pieces
+    assert get_piece_index(chess.PAWN, Players.SELF) == 0
+    assert get_piece_index(chess.KNIGHT, Players.SELF) == 1
+    assert get_piece_index(chess.BISHOP, Players.SELF) == 2
+    assert get_piece_index(chess.ROOK, Players.SELF) == 3
+    assert get_piece_index(chess.QUEEN, Players.SELF) == 4
+    assert get_piece_index(chess.KING, Players.SELF) == 5
 
-    _, piece_map = default_board
-
-    # extract pieces from the piece_map and sort them into a consistent order
-    pieces = sorted(piece_map.values(), key=lambda piece: hash(piece))
-    piece_indices_white = [get_piece_index(piece.piece_type, Players(player == piece.color)) for piece in pieces]
-    piece_indices_black = [get_piece_index(piece.piece_type, Players(player != piece.color)) for piece in pieces]
-
-    piece_indices_white_truth = [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 5, 11, 11, 11, 11, 11, 11, 11, 11, 10, 10, 9, 9, 8, 8, 7, 6]
-
-    assert piece_indices_white_truth == piece_indices_white
-    assert piece_indices_white_truth == [*piece_indices_black[16:32], *piece_indices_black[0:16]]
+    # opponent pieces
+    assert get_piece_index(chess.PAWN, Players.OPPONENT) == 11
+    assert get_piece_index(chess.KNIGHT, Players.OPPONENT) == 10
+    assert get_piece_index(chess.BISHOP, Players.OPPONENT) == 9
+    assert get_piece_index(chess.ROOK, Players.OPPONENT) == 8
+    assert get_piece_index(chess.QUEEN, Players.OPPONENT) == 7
+    assert get_piece_index(chess.KING, Players.OPPONENT) == 6
 
 
 def test_square_indices() -> None:
