@@ -2,6 +2,8 @@
 
 from typing import Any
 
+import numpy as np
+
 from modules.chess_types import (
     Action,
     Observation,
@@ -31,3 +33,24 @@ class AgentBase:
         NotImplementedError
         """
         raise NotImplementedError
+
+
+class RandomAgent(AgentBase):
+    """Agent that picks a random move."""
+
+    def act(self, obs: Observation) -> Action:
+        """
+
+        Choose a random action.
+
+        Parameters
+        ----------
+        obs : Observation
+            observation of board
+
+        Returns
+        -------
+        Action
+            randomly chosen action
+        """
+        return np.random.Generator.integers(len(obs))
