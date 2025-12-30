@@ -28,6 +28,7 @@ BOARD_ENCODING_SHAPE = (8, 8, 18)
 
 # an set of some number of board encodings, to be kept together (i.e. game trajectories or observations)
 type SetEncoding = NDArray[np.uint8]  # has a shape of (n, 8, 8, 18)
+type Observation = SetEncoding
 type IsOver = bool
 type MoveReward = float
 
@@ -43,24 +44,6 @@ class DisplayMode(Enum):
     GUI = 1
     ASCII = 2
     NONE = 3
-
-
-# dictionary structure to encode board observations
-class Observation(TypedDict):
-    """
-
-    Encoding dictionary for an observation of the board.
-
-    This works by noting that there can only be at most 218 valid moves for a certain player.
-
-    """
-
-    # the encoding is from the serspective of the player to move
-    # last axis of encoding is delegated in the following
-    #   - 0:6 players pieces
-    encoding: SetEncoding  # shape: (218, 8, 8, 18)
-
-    num_moves: int
 
 
 # dictionary structure to specify the info read off from the board at each position

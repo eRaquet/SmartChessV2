@@ -55,6 +55,8 @@ class Display:
         board_map : dict[chess.Piece, chess.Square] | None, optional
             Map of pieces, optional for efficiency, by default None
         """
+        pg.event.pump()  # temporary fix for flushing pygame events
+
         if board_map is None:
             board_map = board.piece_map()
 

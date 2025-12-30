@@ -1,5 +1,7 @@
 """Module to define the board environment for training and playing."""
 
+from collections import Counter
+
 import chess
 import gym
 import numpy as np
@@ -23,29 +25,24 @@ from modules.tools import (
 class Board(gym.Env):
     """Chess board gym environment with generation of valid moves and creation of observations."""
 
-    def __init__(self, render_mode: DisplayMode = DisplayMode.NONE) -> None:
+    def __init__(self, rendering_mode: DisplayMode = DisplayMode.NONE) -> None:
         """Initiate a board object."""
         self.board = chess.Board()
-        self.board_encoding = encode_board(self.board)
+        self.encoding = encode_board(self.board)
+        self.board_state_counter = Counter(self.encoding.tobytes())
         self.moves = list(self.board.legal_moves)
 
-        # define the action and observation space
-        self.action_space = spaces.Discrete(218)  # index of chosen move
-        self.observation_space = spaces.Dict(
-            {
-                "encoding": spaces.Box(0, 1, shape=(218, 8, 8, 18), dtype=np.uint8),
-                "num_moves": spaces.Discrete(218),
-            }
-        )
+        # define the action and observation space as the
+        # index of chosen move, noting that 218 is the
+        # maximum number of moves possible in a valid chess position
+        self.action_space = spaces.Discrete(218)
+        self.observation_space = spaces.Sequence(spaces.MultiBinary([8, 8, 18]))
 
         # allocate the observation space
-        self.observation: Observation = {
-            "encoding": np.zeros((218, 8, 8, 18), dtype=np.uint8),
-            "num_moves": 0,
-        }
+        self.observation = np.array([])
 
-        self.render_mode = render_mode
-        if self.render_mode is DisplayMode.GUI:
+        self.rendering_mode = rendering_mode
+        if self.rendering_mode is DisplayMode.GUI:
             self.display = Display()
 
     def reset(self) -> tuple[Observation, BoardInfo]:  # type: ignore[override]
@@ -59,7 +56,8 @@ class Board(gym.Env):
             First observation
         """
         self.board.reset()
-        self.encoding = encode_board_obs(self.board.piece_map(), self.board.turn)
+        self.encoding = encode_board(self.board)
+        self.board_state_counter = Counter(self.encoding.tobytes())
         self.moves = list(self.board.legal_moves)
         self.generate_observation()
         info: BoardInfo = {}
@@ -107,63 +105,34 @@ class Board(gym.Env):
         """Make the environment reflect the board state and generate an observation."""
         num_moves = len(self.moves)
 
-        # clear old observation
-        self.clear_observation()
-
         if num_moves != 0:
-            self.observation["num_moves"] = num_moves
-
             # create observation encodings
-            self.observation["encoding"][0:num_moves] = generate_board_encodings_from_moves(self.encoding, self.moves, self.board.turn)
+            self.observation = generate_board_encodings_from_moves(self.encoding, self.moves, self.board.turn, self.board_state_counter)
 
-            # check for castling rights and draw rights
-            for i, move in enumerate(self.moves):
-                self.board.push(move)
-
-                self.observation["castling_rights"][i] = [
-                    bool(self.board.castling_rights & (chess.BB_A1 if self.board.turn == chess.WHITE else chess.BB_A8)),
-                    bool(self.board.castling_rights & (chess.BB_H1 if self.board.turn == chess.WHITE else chess.BB_H8)),
-                    bool(self.board.castling_rights & (chess.BB_A8 if self.board.turn == chess.WHITE else chess.BB_A1)),
-                    bool(self.board.castling_rights & (chess.BB_H8 if self.board.turn == chess.WHITE else chess.BB_H1)),
-                ]
-
-                self.observation["is_draw"][i] = self.board.is_repetition() or self.board.is_fifty_moves()
-
-                self.board.pop()
-
-            self.saved_encoding[0:num_moves] = self.observation["encoding"][0:num_moves]
-
-    def update_state(self, index: int) -> None:
+    def update_state(self, action: Action) -> None:
         """
 
         Update the state of the environment without generating an observation.
 
         Parameters
         ----------
-        index : int
-            index of move to play
+        action : Action
+            played action, represented by the index of move to play
         """
-        move = self.moves[index]
+        move = self.moves[action]
         self.board.push(move)
         self.moves = list(self.board.legal_moves)
-        self.encoding = np.flip(self.saved_encoding[index], axis=(0, 2)).copy()
-
-    def clear_observation(self) -> None:
-        """Clear the old observation fields."""
-        old_num_moves = self.observation["num_moves"]
-        self.observation["encoding"][0:old_num_moves].fill(0)
-        self.observation["castling_rights"][0:old_num_moves].fill(0)
-        self.observation["is_draw"][0:old_num_moves].fill(0)
-        self.observation["num_moves"] = 0
+        self.encoding = encode_board(self.board)
+        self.board_state_counter.update(self.encoding.tobytes())
 
     def render(self) -> None:
         """Render the board object according to the set render mode."""
-        if self.render_mode is DisplayMode.NONE:
+        if self.rendering_mode is DisplayMode.NONE:
             return
-        if self.render_mode is DisplayMode.ASCII:
+        if self.rendering_mode is DisplayMode.ASCII:
             print("\033[2J\033[H", end="")
             print("-" * 15)
             print(self.board)
             print("-" * 15)
-        if self.render_mode is DisplayMode.GUI:
+        if self.rendering_mode is DisplayMode.GUI:
             self.display.display_board(self.board, self.board.piece_map())
