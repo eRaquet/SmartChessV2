@@ -65,7 +65,7 @@ class Board:
 
             # check for end conditions
             if self._board.is_checkmate():
-                self._status = BoardOutcome.BLACk if self._board.turn == chess.WHITE else BoardOutcome.WHITE
+                self._status = BoardOutcome.BLACK if self._board.turn == chess.WHITE else BoardOutcome.WHITE
             elif (
                 self._board.is_repetition()
                 or self._board.is_fifty_moves()
@@ -188,3 +188,15 @@ class Board:
             shape (n, 8, 8, 18), where n is the number of valid moves
         """
         return self._observation
+
+    @property
+    def turn(self) -> chess.Color:
+        """
+
+        Player whose turn it is.
+
+        Returns
+        -------
+        chess.Color
+        """
+        return self._board.turn
