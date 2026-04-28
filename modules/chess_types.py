@@ -36,6 +36,9 @@ type Trajectory = SetEncoding
 # corresponds to the index of the chosen move
 type Action = int
 
+type Evaluation = float
+type SetEvaluation = NDArray[np.double]
+
 
 # Enum for display modes
 class DisplayMode(Enum):
