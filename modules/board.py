@@ -3,17 +3,14 @@
 from collections import Counter
 
 import chess
-import gym
 import numpy as np
-from gym import spaces
 
 from modules.chess_types import (
     Action,
-    BoardInfo,
+    BoardOutcome,
     DisplayMode,
-    IsOver,
-    MoveReward,
     Observation,
+    Trajectory,
 )
 from modules.display import Display
 from modules.tools import (
@@ -22,49 +19,38 @@ from modules.tools import (
 )
 
 
-class Board(gym.Env):
-    """Chess board gym environment with generation of valid moves and creation of observations."""
+class Board:
+    """Chess board environment with generation of valid moves and creation of observations."""
 
     def __init__(self, rendering_mode: DisplayMode = DisplayMode.NONE) -> None:
         """Initiate a board object."""
-        self.board = chess.Board()
-        self.encoding = encode_board(self.board)
-        self.board_state_counter = Counter(self.encoding.tobytes())
-        self.moves = list(self.board.legal_moves)
+        self._board = chess.Board()
+        self._encoding = encode_board(self._board)
+        self._state_list = [self._encoding.copy()]
+        self._board_state_counter = Counter(self._encoding.tobytes())
+        self._moves = list(self._board.legal_moves)
 
-        # define the action and observation space as the
-        # index of chosen move, noting that 218 is the
-        # maximum number of moves possible in a valid chess position
-        self.action_space = spaces.Discrete(218)
-        self.observation_space = spaces.Sequence(spaces.MultiBinary([8, 8, 18]))
+        self._status = BoardOutcome.UNDECIDED
 
         # allocate the observation space
-        self.observation = np.array([])
+        self._observation: Observation = np.array([], dtype=np.uint8)
+        self.observe()
 
-        self.rendering_mode = rendering_mode
-        if self.rendering_mode is DisplayMode.GUI:
-            self.display = Display()
+        self._rendering_mode = rendering_mode
+        if self._rendering_mode is DisplayMode.GUI:
+            self._display = Display()
 
-    def reset(self) -> tuple[Observation, BoardInfo]:  # type: ignore[override]
-        """
-
-        Reset board position.
-
-        Returns
-        -------
-        Observation
-            First observation
-        """
-        self.board.reset()
-        self.encoding = encode_board(self.board)
-        self.board_state_counter = Counter(self.encoding.tobytes())
-        self.moves = list(self.board.legal_moves)
-        self.generate_observation()
-        info: BoardInfo = {}
+    def reset(self) -> None:
+        """Reset board position."""
+        self._board.reset()
+        self._encoding = encode_board(self._board)
+        self._state_list = [self._encoding.copy()]
+        self._board_state_counter = Counter(self._encoding.tobytes())
+        self._moves = list(self._board.legal_moves)
+        self.observe()
         self.render()
-        return self.observation, info
 
-    def step(self, action: Action) -> tuple[Observation, MoveReward, IsOver, IsOver, BoardInfo]:  # type: ignore[override]
+    def step(self, action: Action) -> None:
         """
 
         Step the board through one move, encoded by `action`.
@@ -73,41 +59,37 @@ class Board(gym.Env):
         ----------
         action : Action
             Action performed on the board (chess move)
-
-        Returns
-        -------
-        tuple[Observation, MoveReward, IsOver, BoardInfo]
-            Information about board:
-                Observation: board state after move
-                float: immediate reward from action
-                bool: whether the position is a checkmate
-                bool: whether the position is a draw
-                dict: info about the game
         """
-        self.update_state(action)
-        self.generate_observation()
-        terminated = self.board.is_checkmate()
-        truncated = (
-            self.board.is_repetition() or self.board.is_fifty_moves() or self.board.is_insufficient_material() or self.board.is_stalemate()
-        )
-        reward = 0.0
-        self.render()
+        if self._status not in BoardOutcome.TERMINATED:
+            self.update_state(action)
 
-        return (
-            self.observation,
-            reward,
-            terminated,
-            truncated,
-            {},
-        )
+            # check for end conditions
+            if self._board.is_checkmate():
+                self._status = BoardOutcome.BLACK if self._board.turn == chess.WHITE else BoardOutcome.WHITE
+            elif (
+                self._board.is_repetition()
+                or self._board.is_fifty_moves()
+                or self._board.is_insufficient_material()
+                or self._board.is_stalemate()
+            ):
+                self._status = BoardOutcome.DRAW
 
-    def generate_observation(self) -> None:
+            self.observe()
+
+            self.render()
+        else:
+            msg = "Board is in terminal state, and cannot be stepped."
+            raise RuntimeError(msg)
+
+    def observe(self) -> None:
         """Make the environment reflect the board state and generate an observation."""
-        num_moves = len(self.moves)
-
-        if num_moves != 0:
+        if self._status not in BoardOutcome.TERMINATED:
             # create observation encodings
-            self.observation = generate_board_encodings_from_moves(self.encoding, self.moves, self.board.turn, self.board_state_counter)
+            self._observation = generate_board_encodings_from_moves(
+                self._encoding, self._moves, self._board.turn, self._board_state_counter
+            )
+        else:
+            self._observation = np.array([], dtype=np.uint8)
 
     def update_state(self, action: Action) -> None:
         """
@@ -119,20 +101,102 @@ class Board(gym.Env):
         action : Action
             played action, represented by the index of move to play
         """
-        move = self.moves[action]
-        self.board.push(move)
-        self.moves = list(self.board.legal_moves)
-        self.encoding = encode_board(self.board)
-        self.board_state_counter.update(self.encoding.tobytes())
+        move = self._moves[action]
+        self._board.push(move)
+        self._moves = list(self._board.legal_moves)
+        self._encoding = encode_board(self._board)
+        self._state_list.append(self._encoding.copy())
+        self._board_state_counter.update(self._encoding.tobytes())
 
     def render(self) -> None:
         """Render the board object according to the set render mode."""
-        if self.rendering_mode is DisplayMode.NONE:
+        if self._rendering_mode is DisplayMode.NONE:
             return
-        if self.rendering_mode is DisplayMode.ASCII:
+        if self._rendering_mode is DisplayMode.ASCII:
             print("\033[2J\033[H", end="")
             print("-" * 15)
-            print(self.board)
+            print(self._board)
             print("-" * 15)
-        if self.rendering_mode is DisplayMode.GUI:
-            self.display.display_board(self.board, self.board.piece_map())
+        if self._rendering_mode is DisplayMode.GUI:
+            self._display.display_board(self._board, self._board.piece_map())
+
+    @property
+    def moves(self) -> list[chess.Move]:
+        """
+
+        List of possible moves from the current board state.
+
+        Returns
+        -------
+        list[chess.Move]
+            list of moves
+        """
+        return self._moves
+
+    @property
+    def terminated(self) -> bool:
+        """
+
+        Is the board at a terminal state.
+
+        Returns
+        -------
+        bool
+        """
+        return self._status in BoardOutcome.TERMINATED
+
+    @property
+    def winner(self) -> chess.Color | None:
+        """
+
+        The winner in the current board state, None if not applicable.
+
+        Returns
+        -------
+        chess.Color | None
+            The winning color, or None if no winner is determined (draw or unfinished game)
+        """
+        if self._status in BoardOutcome.WON:
+            return chess.WHITE if BoardOutcome.WHITE else chess.BLACK
+        return None
+
+    @property
+    def trajectory(self) -> Trajectory:
+        """
+
+        Trajectory of game states as a SetEncoding.
+
+        Returns
+        -------
+        Trajectory
+            shape (n, 8, 8, 18), where n is the index of each successive board state
+        """
+        if self._status in BoardOutcome.TERMINATED:
+            return np.array(self._state_list, dtype=np.uint8)
+        msg = "Board is not in terminal state, and does not contain a valid trajectory."
+        raise RuntimeError(msg)
+
+    @property
+    def observation(self) -> Observation:
+        """
+
+        Observation of current board state.
+
+        Returns
+        -------
+        Observation
+            shape (n, 8, 8, 18), where n is the number of valid moves
+        """
+        return self._observation
+
+    @property
+    def turn(self) -> chess.Color:
+        """
+
+        Player whose turn it is.
+
+        Returns
+        -------
+        chess.Color
+        """
+        return self._board.turn
