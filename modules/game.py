@@ -3,9 +3,9 @@
 import time
 
 import chess
-from agent import AgentBase, RandomAgent
-from board import Board
 
+from modules.agent import AgentBase, RandomAgent
+from modules.board import Board
 from modules.chess_types import DisplayMode, Trajectory
 
 
@@ -24,6 +24,7 @@ class Game:
         while not self._board.terminated:
             action = self._agents[self._board.turn].act(self._board)
             self._board.step(action)
+            time.sleep(0.1)
 
     @property
     def trajectory(self) -> Trajectory:

@@ -28,6 +28,7 @@ dependencies = [
     "pygame>=2.6.1",
     "pytest>=8.4.1",
     "ray>=2.48.0",
+    "scipy>=1.15.3",
 ]
 
 ########

@@ -1,5 +1,8 @@
-def main():
-    print("Hello from smartchessv2!")
+"""Main Script."""
+
+
+def main() -> None:
+    """Run main function."""
 
 
 if __name__ == "__main__":
