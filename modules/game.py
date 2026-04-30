@@ -38,16 +38,3 @@ class Game:
             shape (n, 8, 8, 18) where n is the number of board states
         """
         return self._board.trajectory
-
-
-# benchmarking code snippet
-if __name__ == "__main__":
-    print("Start")
-    start = time.perf_counter()
-
-    game = Game(RandomAgent(), RandomAgent(), Board(DisplayMode.NONE))
-    game.play_game()
-
-    end = time.perf_counter()
-
-    print(f"Done with {((end - start) / len(game.trajectory) * 1e3):.3f} ms per move")
