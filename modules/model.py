@@ -11,6 +11,7 @@ from pathlib import Path
 import numpy as np
 from keras import Input, Model
 from keras.layers import BatchNormalization, Conv2D, Dense, Reshape
+from keras.models import load_model
 from keras.optimizers import Adam
 
 from modules.chess_types import BoardEncoding, Evaluation, SetEncoding, SetEvaluation
@@ -131,6 +132,13 @@ class StandardModel(ModelBase):
             # save constructed model
             self._model.save(project_path / "data" / "saved_models" / f"strain_{strain}" / f"{self._name}.keras")
 
+        else:
+            try:
+                self._model = load_model(project_path / "data" / "saved_models" / f"strain_{strain}" / f"{self._name}.keras")
+            except FileNotFoundError:
+                msg = "Unable to load model: invalid file name"
+                raise FileNotFoundError(msg) from None
+
     def predict(self, encoding: BoardEncoding) -> Evaluation:
         """
 
@@ -150,13 +158,33 @@ class StandardModel(ModelBase):
         # cast encoding to the proper shape and data type
         encoding_recasted = encoding.astype(np.float16).reshape((1, *encoding.shape))
 
-        return self._model.predict(encoding_recasted)[0, 0]
+        return self._model.predict_on_batch(encoding_recasted)[0, 0]
+
+    def predict_batch(self, encodings: SetEncoding) -> SetEvaluation:
+        """
+
+        Make a random prediction of the probability of winning from the given position.
+
+        Parameters
+        ----------
+        encodings : SetEncoding
+            Encodings to predict for.
+
+        Returns
+        -------
+        Evaluation
+            random evaluation between 0 and 1
+        """
+        # cast encoding to the proper shape and data type
+        encodings_recasted = encodings.astype(np.float16)
+
+        return self._model.predict(encodings_recasted, verbose=0).reshape((len(encodings_recasted),))
 
 
-model = StandardModel(0, 0, construct=True)
-model._model.summary()
-encoding = np.ones((8, 8, 18), dtype=np.uint8)
+rng = np.random.default_rng()
+model = StandardModel(0, 0, construct=False)
+encoding = rng.integers(0, 2, (1000, 8, 8, 18), dtype=np.uint8)
 t = time.perf_counter()
-model.predict(encoding)
+model.predict_batch(encoding)
 print(str(time.perf_counter() - t))
 pass
