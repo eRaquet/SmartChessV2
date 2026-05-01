@@ -4,9 +4,9 @@ import time
 
 import chess
 
-from modules.agent import AgentBase, RandomAgent
+from modules.agent import AgentBase
 from modules.board import Board
-from modules.chess_types import DisplayMode, Trajectory
+from modules.chess_types import Trajectory
 
 
 class Game:

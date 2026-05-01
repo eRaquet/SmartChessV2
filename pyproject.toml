@@ -23,6 +23,7 @@ dependencies = [
     "chess>=1.11.2",
     "git-lfs>=1.6",
     "gym>=0.26.2",
+    "keras>=3.12.1",
     "line-profiler>=5.0.0",
     "numpy>=2.2.6",
     "pygame>=2.6.1",
