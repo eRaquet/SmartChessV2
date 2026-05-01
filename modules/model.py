@@ -5,7 +5,6 @@ import os
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"  # Suppress INFO and WARNING from C++
 os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"  # Disable oneDNN messages
 
-import time
 from pathlib import Path
 
 import numpy as np
@@ -179,12 +178,3 @@ class StandardModel(ModelBase):
         encodings_recasted = encodings.astype(np.float16)
 
         return self._model.predict(encodings_recasted, verbose=0).reshape((len(encodings_recasted),))
-
-
-rng = np.random.default_rng()
-model = StandardModel(0, 0, construct=False)
-encoding = rng.integers(0, 2, (1000, 8, 8, 18), dtype=np.uint8)
-t = time.perf_counter()
-model.predict_batch(encoding)
-print(str(time.perf_counter() - t))
-pass

@@ -210,3 +210,6 @@ __marimo__/
 
 # Ignore github copilot config stuff
 .github*
+
+# Ignore keras model files (for now, change when actively training)
+*.keras
