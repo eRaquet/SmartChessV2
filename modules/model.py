@@ -5,6 +5,7 @@ import os
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"  # Suppress INFO and WARNING from C++
 os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"  # Disable oneDNN messages
 
+import json
 from pathlib import Path
 
 import numpy as np
@@ -99,7 +100,6 @@ class StandardModel(ModelBase):
 
         self._strain = strain
         self._generation = generation
-        self._name = f"strain_{strain}_gen_{generation}"
 
         if construct:
             # input layer
@@ -129,11 +129,11 @@ class StandardModel(ModelBase):
             self._model.compile(optimizer=opt, loss="mean_squared_error")
 
             # save constructed model
-            self._model.save(project_path / "data" / "saved_models" / f"strain_{strain}" / f"{self._name}.keras")
+            self._model.save(project_path / "data" / "saved_models" / f"strain_{strain}" / f"{self.name}.keras")
 
         else:
             try:
-                self._model = load_model(project_path / "data" / "saved_models" / f"strain_{strain}" / f"{self._name}.keras")
+                self._model = load_model(project_path / "data" / "saved_models" / f"strain_{strain}" / f"{self.name}.keras")
             except FileNotFoundError:
                 msg = "Unable to load model: invalid file name"
                 raise FileNotFoundError(msg) from None
@@ -178,3 +178,78 @@ class StandardModel(ModelBase):
         encodings_recasted = encodings.astype(np.float16)
 
         return self._model.predict(encodings_recasted, verbose=0).reshape((len(encodings_recasted),))
+
+    def save(self, *, keep_generation: bool = False, new_generation: bool = False) -> None:
+        """
+
+        Save model after training.
+
+        Parameters
+        ----------
+        keep_generation : bool, optional
+            update the current latest generation without upgrading to a new generation, by default False
+        new_generation : bool, optional
+            save the current model as a new generation, by default False
+        """
+        curr_generation = self.get_curr_generation
+
+        # check for trying to save new versions of old model generations (not good for record keeping)
+        if self._generation != curr_generation:
+            msg = "Can only update the most current model generation to maintain backward compatability."
+            raise RuntimeError(msg)
+
+        # update current model
+        if keep_generation:
+            self._model.save(project_path / "data" / "saved_models" / f"strain_{self._strain}" / f"{self.name}.keras")
+
+        # save model as a new generation
+        if new_generation:
+            self._generation += 1
+            self.set_curr_generation(self._generation)
+            self._model.save(project_path / "data" / "saved_models" / f"strain_{self._strain}" / f"{self.name}.keras")
+
+        else:
+            msg = "Please specify whether to save as a new generation or an update of a past generation."
+            raise RuntimeError(msg)
+
+    @property
+    def name(self) -> str:
+        """
+
+        Get the name of the model.
+
+        Returns
+        -------
+        str
+            name of model
+        """
+        return f"strain_{self._strain}_gen_{self._generation}"
+
+    def get_curr_generation(self) -> int:
+        """
+
+        Get the highest generation number from this model's strain.
+
+        Returns
+        -------
+        int
+            Generation number
+        """
+        with Path.open(project_path / "data" / "saved_models" / "metadata.json", "w") as metadata_file:
+            metadata = json.load(metadata_file)
+            return metadata[f"strain_{self._strain}_curr_gen"]
+
+    def set_curr_generation(self, generation_num: int) -> None:
+        """
+
+        Set the highest generation number for this model's strain.
+
+        Parameters
+        ----------
+        generation_num : int
+            Generation number to set
+        """
+        with Path.open(project_path / "data" / "saved_models" / "metadata.json", "w") as metadata_file:
+            metadata = json.load(metadata_file)
+            metadata[f"strain_{self._strain}_curr_gen"] = generation_num
+            json.dump(metadata, metadata_file)
