@@ -191,7 +191,7 @@ class StandardModel(ModelBase):
         new_generation : bool, optional
             save the current model as a new generation, by default False
         """
-        curr_generation = self.get_curr_generation
+        curr_generation = self.get_curr_generation()
 
         # check for trying to save new versions of old model generations (not good for record keeping)
         if self._generation != curr_generation:
@@ -203,7 +203,7 @@ class StandardModel(ModelBase):
             self._model.save(project_path / "data" / "saved_models" / f"strain_{self._strain}" / f"{self.name}.keras")
 
         # save model as a new generation
-        if new_generation:
+        elif new_generation:
             self._generation += 1
             self.set_curr_generation(self._generation)
             self._model.save(project_path / "data" / "saved_models" / f"strain_{self._strain}" / f"{self.name}.keras")
@@ -235,9 +235,10 @@ class StandardModel(ModelBase):
         int
             Generation number
         """
-        with Path.open(project_path / "data" / "saved_models" / "metadata.json", "w") as metadata_file:
+        with Path.open(project_path / "data" / "saved_models" / "metadata.json", "r") as metadata_file:
             metadata = json.load(metadata_file)
-            return metadata[f"strain_{self._strain}_curr_gen"]
+
+        return metadata[f"strain_{self._strain}_curr_gen"]
 
     def set_curr_generation(self, generation_num: int) -> None:
         """
@@ -249,7 +250,8 @@ class StandardModel(ModelBase):
         generation_num : int
             Generation number to set
         """
-        with Path.open(project_path / "data" / "saved_models" / "metadata.json", "w") as metadata_file:
+        with Path.open(project_path / "data" / "saved_models" / "metadata.json", "r") as metadata_file:
             metadata = json.load(metadata_file)
             metadata[f"strain_{self._strain}_curr_gen"] = generation_num
+        with Path.open(project_path / "data" / "saved_models" / "metadata.json", "w") as metadata_file:
             json.dump(metadata, metadata_file)
