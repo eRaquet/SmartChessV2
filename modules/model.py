@@ -102,6 +102,11 @@ class StandardModel(ModelBase):
         self._generation = generation
 
         if construct:
+            # create model strain directories if they don't already exits
+            strain_dir = project_path / "data" / "saved_models"
+            for i in range(8):
+                (strain_dir / f"strain_{i}").mkdir(parents=True, exist_ok=True)
+
             # input layer
             input_layer = Input((8, 8, 18), dtype="float16")
 
@@ -125,7 +130,7 @@ class StandardModel(ModelBase):
 
             # build model
             opt = Adam()
-            self._model = Model(inputs=input_layer, outputs=output_layer, name=self._name)
+            self._model = Model(inputs=input_layer, outputs=output_layer, name=self.name)
             self._model.compile(optimizer=opt, loss="mean_squared_error")
 
             # save constructed model

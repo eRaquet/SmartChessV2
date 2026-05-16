@@ -31,9 +31,9 @@ if __name__ == "__main__":
             times[i] += dt / N[i] * 1000  # time in miliseconds per position
             print(f"{N[i]} positions evaluated in {dt:.3f} seconds with an average of {dt / N[i] * 1000:.1f} ms per board encoding.")
 
-plt.figure()
-plt.plot(np.log10(N), np.log10(times / num_iterations))
-plt.xlabel("# of Positions (log scale)")
-plt.ylabel("Time in ms per Position (log scale)")
-plt.title("Model Performance vs. Size of Batch")
-plt.show()
+    plt.figure()
+    plt.plot(np.log10(N), np.log10(times / num_iterations))
+    plt.xlabel("# of Positions (log scale)")
+    plt.ylabel("Time in ms per Position (log scale)")
+    plt.title("Model Performance vs. Size of Batch")
+    plt.show()
