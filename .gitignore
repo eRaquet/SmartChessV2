@@ -211,5 +211,8 @@ __marimo__/
 # Ignore github copilot config stuff
 .github*
 
+# Ignore uv lock files
+*uv.lock
+
 # Ignore keras model files (for now, change when actively training)
 *.keras
