@@ -1,7 +1,5 @@
 """Module for the game architecture."""
 
-import time
-
 import chess
 
 from modules.agent import AgentBase
@@ -24,7 +22,6 @@ class Game:
         while not self._board.terminated:
             action = self._agents[self._board.turn].act(self._board)
             self._board.step(action)
-            time.sleep(0.1)
 
     @property
     def trajectory(self) -> Trajectory:
