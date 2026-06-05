@@ -1,5 +1,6 @@
 """Script to demo the model module's prediction tool kit."""
 
+import argparse
 import time
 
 import numpy as np
@@ -8,6 +9,16 @@ from matplotlib import pyplot as plt
 from modules.model import StandardModel
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="Benchmark standard model predictions with varying sized inputs."
+    )
+    parser.add_argument(
+        "--show_progress",
+        action="store_true",
+        help="Print intermediate progress updates as benchmark proceeds.",
+    )
+    args = parser.parse_args()
+
     num_iterations = 10
 
     # generate rng for random data
@@ -29,10 +40,14 @@ if __name__ == "__main__":
             predictions = model.predict_batch(encodings)
             dt = time.perf_counter() - t
             times[i] += dt / N[i] * 1000  # time in miliseconds per position
-            print(f"{N[i]} positions evaluated in {dt:.3f} seconds with an average of {dt / N[i] * 1000:.1f} ms per board encoding.")
+            if args.show_progress:
+                print(
+                    f"{N[i]} positions evaluated in {dt:.3f} seconds with an average of"
+                    f" {dt / N[i] * 1000:.1f} ms per board encoding."
+                )
 
     plt.figure()
-    plt.plot(np.log10(N), np.log10(times / num_iterations))
+    plt.loglog(N, times / num_iterations)
     plt.xlabel("# of Positions (log scale)")
     plt.ylabel("Time in ms per Position (log scale)")
     plt.title("Model Performance vs. Size of Batch")
