@@ -15,8 +15,7 @@ from keras.models import load_model
 from keras.optimizers import Adam
 
 from modules.chess_types import BoardEncoding, Evaluation, SetEncoding, SetEvaluation
-
-project_path = Path(__file__).parent.parent
+from modules.config import PROJECT_PATH
 
 
 class ModelBase:
@@ -103,7 +102,7 @@ class StandardModel(ModelBase):
 
         if construct:
             # create model strain directories if they don't already exits
-            strain_dir = project_path / "data" / "saved_models"
+            strain_dir = PROJECT_PATH / "data" / "saved_models"
             for i in range(8):
                 (strain_dir / f"strain_{i}").mkdir(parents=True, exist_ok=True)
 
@@ -113,15 +112,39 @@ class StandardModel(ModelBase):
             # convolution layers
 
             # shuffle layers (don't condense the board at all, but add more channels)
-            temp_layer = Conv2D(filters=256, kernel_size=3, activation="relu", padding="same", data_format="channels_last")(input_layer)
+            temp_layer = Conv2D(
+                filters=256,
+                kernel_size=3,
+                activation="relu",
+                padding="same",
+                data_format="channels_last",
+            )(input_layer)
             temp_layer = BatchNormalization()(temp_layer)
 
             # condensing layers
-            temp_layer = Conv2D(filters=128, kernel_size=3, activation="relu", padding="valid", data_format="channels_last")(temp_layer)
+            temp_layer = Conv2D(
+                filters=128,
+                kernel_size=3,
+                activation="relu",
+                padding="valid",
+                data_format="channels_last",
+            )(temp_layer)
             temp_layer = BatchNormalization()(temp_layer)
-            temp_layer = Conv2D(filters=64, kernel_size=3, activation="relu", padding="valid", data_format="channels_last")(temp_layer)
+            temp_layer = Conv2D(
+                filters=64,
+                kernel_size=3,
+                activation="relu",
+                padding="valid",
+                data_format="channels_last",
+            )(temp_layer)
             temp_layer = BatchNormalization()(temp_layer)
-            temp_layer = Conv2D(filters=32, kernel_size=4, activation="relu", padding="valid", data_format="channels_last")(temp_layer)
+            temp_layer = Conv2D(
+                filters=32,
+                kernel_size=4,
+                activation="relu",
+                padding="valid",
+                data_format="channels_last",
+            )(temp_layer)
             temp_layer = BatchNormalization()(temp_layer)
 
             # squishing layer
@@ -134,11 +157,19 @@ class StandardModel(ModelBase):
             self._model.compile(optimizer=opt, loss="mean_squared_error")
 
             # save constructed model
-            self._model.save(project_path / "data" / "saved_models" / f"strain_{strain}" / f"{self.name}.keras")
+            self._model.save(
+                PROJECT_PATH / "data" / "saved_models" / f"strain_{strain}" / f"{self.name}.keras"
+            )
 
         else:
             try:
-                self._model = load_model(project_path / "data" / "saved_models" / f"strain_{strain}" / f"{self.name}.keras")
+                self._model = load_model(
+                    PROJECT_PATH
+                    / "data"
+                    / "saved_models"
+                    / f"strain_{strain}"
+                    / f"{self.name}.keras"
+                )
             except FileNotFoundError:
                 msg = "Unable to load model: invalid file name"
                 raise FileNotFoundError(msg) from None
@@ -182,7 +213,9 @@ class StandardModel(ModelBase):
         # cast encoding to the proper shape and data type
         encodings_recasted = encodings.astype(np.float16)
 
-        return self._model.predict(encodings_recasted, verbose=0).reshape((len(encodings_recasted),))
+        return self._model.predict(encodings_recasted, verbose=0).reshape(
+            (len(encodings_recasted),)
+        )
 
     def save(self, *, keep_generation: bool = False, new_generation: bool = False) -> None:
         """
@@ -192,29 +225,45 @@ class StandardModel(ModelBase):
         Parameters
         ----------
         keep_generation : bool, optional
-            update the current latest generation without upgrading to a new generation, by default False
+            update the current latest generation without upgrading to a new generation, by default
+            False
         new_generation : bool, optional
             save the current model as a new generation, by default False
         """
         curr_generation = self.get_curr_generation()
 
-        # check for trying to save new versions of old model generations (not good for record keeping)
+        # check for trying to save new versions of old model generations (not good for record
+        # keeping)
         if self._generation != curr_generation:
-            msg = "Can only update the most current model generation to maintain backward compatability."
+            msg = "Can only update the most current model \
+                generation to maintain backward compatability."
             raise RuntimeError(msg)
 
         # update current model
         if keep_generation:
-            self._model.save(project_path / "data" / "saved_models" / f"strain_{self._strain}" / f"{self.name}.keras")
+            self._model.save(
+                PROJECT_PATH
+                / "data"
+                / "saved_models"
+                / f"strain_{self._strain}"
+                / f"{self.name}.keras"
+            )
 
         # save model as a new generation
         elif new_generation:
             self._generation += 1
             self.set_curr_generation(self._generation)
-            self._model.save(project_path / "data" / "saved_models" / f"strain_{self._strain}" / f"{self.name}.keras")
+            self._model.save(
+                PROJECT_PATH
+                / "data"
+                / "saved_models"
+                / f"strain_{self._strain}"
+                / f"{self.name}.keras"
+            )
 
         else:
-            msg = "Please specify whether to save as a new generation or an update of a past generation."
+            msg = "Please specify whether to save as a new \
+                generation or an update of a past generation."
             raise RuntimeError(msg)
 
     @property
@@ -240,7 +289,9 @@ class StandardModel(ModelBase):
         int
             Generation number
         """
-        with Path.open(project_path / "data" / "saved_models" / "metadata.json", "r") as metadata_file:
+        with Path.open(
+            PROJECT_PATH / "data" / "saved_models" / "metadata.json", "r"
+        ) as metadata_file:
             metadata = json.load(metadata_file)
 
         return metadata[f"strain_{self._strain}_curr_gen"]
@@ -255,8 +306,12 @@ class StandardModel(ModelBase):
         generation_num : int
             Generation number to set
         """
-        with Path.open(project_path / "data" / "saved_models" / "metadata.json", "r") as metadata_file:
+        with Path.open(
+            PROJECT_PATH / "data" / "saved_models" / "metadata.json", "r"
+        ) as metadata_file:
             metadata = json.load(metadata_file)
             metadata[f"strain_{self._strain}_curr_gen"] = generation_num
-        with Path.open(project_path / "data" / "saved_models" / "metadata.json", "w") as metadata_file:
+        with Path.open(
+            PROJECT_PATH / "data" / "saved_models" / "metadata.json", "w"
+        ) as metadata_file:
             json.dump(metadata, metadata_file)

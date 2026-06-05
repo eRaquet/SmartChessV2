@@ -3,9 +3,8 @@
 import json
 from pathlib import Path
 
+from modules.config import PROJECT_PATH
 from modules.model import StandardModel
-
-project_path = Path(__file__).parent.parent.parent
 
 if __name__ == "__main__":
     # define metadata to track model generations
@@ -20,7 +19,7 @@ if __name__ == "__main__":
         "strain_7_curr_gen": 0,
     }
 
-    with Path.open(project_path / "data" / "saved_models" / "metadata.json", "w") as file:
+    with Path.open(PROJECT_PATH / "data" / "saved_models" / "metadata.json", "w") as file:
         json.dump(metadata, file)
 
     for i in range(8):

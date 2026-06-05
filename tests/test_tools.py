@@ -3,12 +3,12 @@
 """File for testing tools module."""
 
 from collections import Counter
-from pathlib import Path
 
 import chess
 import numpy as np
 import pytest
 
+from modules.config import PROJECT_PATH
 from modules.conventions import (
     Players,
 )
@@ -18,8 +18,6 @@ from modules.tools import (
     get_piece_index,
     square_indices,
 )
-
-path = Path(__file__).parent
 
 
 @pytest.fixture
@@ -33,24 +31,44 @@ def test_generate_board_encodings_from_moves() -> None:
     # test white move generation  (FEN is 4k3/6P1/8/4Pp2/3p4/5N2/4P3/R3K2R w KQ f6 0 1)
     board = chess.Board("4k3/6P1/8/4Pp2/3p4/5N2/4P3/R3K2R w KQ f6 0 1")
     moves = list(board.legal_moves)
-    encoding = np.load(Path(__file__).parent / "data" / "test_position_white_move_start_encoding.npy")
-    repeated_encoding = np.load(Path(__file__).parent / "data" / "test_repeated_position_white_encoding.npy")
-    board_state_counter = Counter([repeated_encoding.copy().tobytes(), repeated_encoding.copy().tobytes()])
-    encodings = generate_board_encodings_from_moves(encoding, moves, chess.WHITE, board_state_counter)
+    encoding = np.load(
+        PROJECT_PATH / "tests" / "data" / "test_position_white_move_start_encoding.npy"
+    )
+    repeated_encoding = np.load(
+        PROJECT_PATH / "tests" / "data" / "test_repeated_position_white_encoding.npy"
+    )
+    board_state_counter = Counter(
+        [repeated_encoding.copy().tobytes(), repeated_encoding.copy().tobytes()]
+    )
+    encodings = generate_board_encodings_from_moves(
+        encoding, moves, chess.WHITE, board_state_counter
+    )
 
-    encodings_truth = np.load(Path(__file__).parent / "data" / "test_position_white_move_encoding.npy")
+    encodings_truth = np.load(
+        PROJECT_PATH / "tests" / "data" / "test_position_white_move_encoding.npy"
+    )
 
     assert np.allclose(encodings, encodings_truth)
 
     # test black move generation  (FEN is r3k2r/4p3/5n2/3P4/4pP2/8/1p2P3/R3K2R b kq f3 0 1)
     board = chess.Board("r3k2r/4p3/5n2/3P4/4pP2/8/1p2P3/R3K2R b kq f3 0 1")
     moves = list(board.legal_moves)
-    encoding = np.load(Path(__file__).parent / "data" / "test_position_black_move_start_encoding.npy")
-    repeated_encoding = np.load(Path(__file__).parent / "data" / "test_repeated_position_black_encoding.npy")
-    board_state_counter = Counter([repeated_encoding.copy().tobytes(), repeated_encoding.copy().tobytes()])
-    encodings = generate_board_encodings_from_moves(encoding, moves, chess.BLACK, board_state_counter)
+    encoding = np.load(
+        PROJECT_PATH / "tests" / "data" / "test_position_black_move_start_encoding.npy"
+    )
+    repeated_encoding = np.load(
+        PROJECT_PATH / "tests" / "data" / "test_repeated_position_black_encoding.npy"
+    )
+    board_state_counter = Counter(
+        [repeated_encoding.copy().tobytes(), repeated_encoding.copy().tobytes()]
+    )
+    encodings = generate_board_encodings_from_moves(
+        encoding, moves, chess.BLACK, board_state_counter
+    )
 
-    encodings_truth = np.load(Path(__file__).parent / "data" / "test_position_black_move_encoding.npy")
+    encodings_truth = np.load(
+        PROJECT_PATH / "tests" / "data" / "test_position_black_move_encoding.npy"
+    )
 
     assert np.allclose(encodings, encodings_truth)
 
@@ -61,7 +79,9 @@ def test_encode_board() -> None:
     board = chess.Board("4k3/6P1/8/4Pp2/8/8/8/R3K2R w KQ f6 0 1")
     encoding = encode_board(board)
 
-    encoding_truth = np.load(path / "data" / "test_position_white_board_encoding.npy")
+    encoding_truth = np.load(
+        PROJECT_PATH / "tests" / "data" / "test_position_white_board_encoding.npy"
+    )
 
     assert np.allclose(encoding, encoding_truth)
 
@@ -69,7 +89,9 @@ def test_encode_board() -> None:
     board = chess.Board("r3k2r/8/8/8/3Pp3/8/1p6/4K3 b kq d3 0 1")
     encoding = encode_board(board)
 
-    encoding_truth = np.load(path / "data" / "test_position_black_board_encoding.npy")
+    encoding_truth = np.load(
+        PROJECT_PATH / "tests" / "data" / "test_position_black_board_encoding.npy"
+    )
 
     assert np.allclose(encoding, encoding_truth)
 
