@@ -45,7 +45,7 @@ files = "falcon_odin_tracking_and_guidence"
 ########
 
 [tool.ruff]
-line-length = 140
+line-length = 100
 indent-width = 4
 
 target-version = "py312"
