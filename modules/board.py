@@ -65,7 +65,9 @@ class Board:
 
             # check for end conditions
             if self._board.is_checkmate():
-                self._status = BoardOutcome.BLACK if self._board.turn == chess.WHITE else BoardOutcome.WHITE
+                self._status = (
+                    BoardOutcome.BLACK if self._board.turn == chess.WHITE else BoardOutcome.WHITE
+                )
             elif (
                 self._board.is_repetition()
                 or self._board.is_fifty_moves()
@@ -200,3 +202,33 @@ class Board:
         chess.Color
         """
         return self._board.turn
+
+    @property
+    def full_move_count(self) -> int:
+        """
+
+        Total number of full moves in the game so far.
+
+        Half moves count the number of individual moves from players, whereas full moves are the
+        total number of pairs of moves from both players.
+
+        Returns
+        -------
+        int
+        """
+        return self._board.fullmove_number
+
+    @property
+    def half_move_count(self) -> int:
+        """
+
+        Total number of half moves in the game so far.
+
+        Half moves count the number of individual moves from players, whereas full moves are the
+        total number of pairs of moves from both players.
+
+        Returns
+        -------
+        int
+        """
+        return self._board.ply()
