@@ -6,6 +6,7 @@ import time
 import numpy as np
 from matplotlib import pyplot as plt
 
+from modules.config import PROJECT_PATH
 from modules.model import StandardModel
 
 if __name__ == "__main__":
@@ -17,6 +18,7 @@ if __name__ == "__main__":
         action="store_true",
         help="Print intermediate progress updates as benchmark proceeds.",
     )
+    parser.add_argument("-f", "--file", type=str, help="Output file for graph")
     args = parser.parse_args()
 
     num_iterations = 10
@@ -52,3 +54,7 @@ if __name__ == "__main__":
     plt.ylabel("Time in ms per Position (log scale)")
     plt.title("Model Performance vs. Size of Batch")
     plt.show()
+
+    if args.file:
+        plt.savefig(PROJECT_PATH / "graphs" / args.file)
+        print(f"Figure saved to ./graphs/{args.file}")
