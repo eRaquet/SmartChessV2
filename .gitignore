@@ -222,3 +222,5 @@ uv.lock
 
 # Ignore macOS system file stuff
 .DS_Store
+
+data/
