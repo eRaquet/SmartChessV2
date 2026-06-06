@@ -101,10 +101,10 @@ class StandardModel(ModelBase):
         self._generation = generation
 
         if construct:
-            # create model strain directories if they don't already exits
-            strain_dir = PROJECT_PATH / "data" / "saved_models"
-            for i in range(8):
-                (strain_dir / f"strain_{i}").mkdir(parents=True, exist_ok=True)
+            # create model strain directory if it doesn't already exits
+            (PROJECT_PATH / "data" / "saved_models" / f"strain_{self._strain}").mkdir(
+                parents=True, exist_ok=True
+            )
 
             # input layer
             input_layer = Input((8, 8, 18), dtype="float16")
@@ -170,9 +170,12 @@ class StandardModel(ModelBase):
                     / f"strain_{strain}"
                     / f"{self.name}.keras"
                 )
-            except FileNotFoundError:
-                msg = "Unable to load model: invalid file name"
-                raise FileNotFoundError(msg) from None
+            except ValueError:
+                msg = (
+                    f"Unable to load model: strain {self._strain}"
+                    f" generation {self._generation} not found."
+                )
+                raise ValueError(msg) from None
 
     def predict(self, encoding: BoardEncoding) -> Evaluation:
         """
