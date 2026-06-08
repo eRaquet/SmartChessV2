@@ -15,7 +15,7 @@ from keras.models import load_model
 from keras.optimizers import Adam
 
 from modules.chess_types import BoardEncoding, Evaluation, SetEncoding, SetEvaluation
-from modules.config import PROJECT_PATH
+from modules.config import MODEL_PARAMS, PROJECT_PATH
 
 
 class ModelBase:
@@ -96,7 +96,22 @@ class StandardModel(ModelBase):
     """CNN-based evaluation model for chess boards."""
 
     def __init__(self, strain: int, generation: int, *, construct: bool = False) -> None:
+        """
 
+        Create a standard model.
+
+        Requires the saved model `metadata.json` to be configured.
+
+        Parameters
+        ----------
+        strain : int
+            strain number of model
+        generation : int
+            generation number of model
+        construct : bool, optional
+            whether to construct the model from scratch and save to memory, or load it from memory,
+            by default False
+        """
         self._strain = strain
         self._generation = generation
 
@@ -106,76 +121,14 @@ class StandardModel(ModelBase):
                 parents=True, exist_ok=True
             )
 
-            # input layer
-            input_layer = Input((8, 8, 18), dtype="float16")
-
-            # convolution layers
-
-            # shuffle layers (don't condense the board at all, but add more channels)
-            temp_layer = Conv2D(
-                filters=256,
-                kernel_size=3,
-                activation="relu",
-                padding="same",
-                data_format="channels_last",
-            )(input_layer)
-            temp_layer = BatchNormalization()(temp_layer)
-
-            # condensing layers
-            temp_layer = Conv2D(
-                filters=128,
-                kernel_size=3,
-                activation="relu",
-                padding="valid",
-                data_format="channels_last",
-            )(temp_layer)
-            temp_layer = BatchNormalization()(temp_layer)
-            temp_layer = Conv2D(
-                filters=64,
-                kernel_size=3,
-                activation="relu",
-                padding="valid",
-                data_format="channels_last",
-            )(temp_layer)
-            temp_layer = BatchNormalization()(temp_layer)
-            temp_layer = Conv2D(
-                filters=32,
-                kernel_size=4,
-                activation="relu",
-                padding="valid",
-                data_format="channels_last",
-            )(temp_layer)
-            temp_layer = BatchNormalization()(temp_layer)
-
-            # squishing layer
-            temp_layer = Dense(1, activation="sigmoid")(temp_layer)
-            output_layer = Reshape((1,))(temp_layer)
-
-            # build model
-            opt = Adam()
-            self._model = Model(inputs=input_layer, outputs=output_layer, name=self.name)
-            self._model.compile(optimizer=opt, loss="mean_squared_error")
+            # construct model from scratch
+            self._construct_model()
 
             # save constructed model
-            self._model.save(
-                PROJECT_PATH / "data" / "saved_models" / f"strain_{strain}" / f"{self.name}.keras"
-            )
+            self.save(keep_generation=True)
 
         else:
-            try:
-                self._model = load_model(
-                    PROJECT_PATH
-                    / "data"
-                    / "saved_models"
-                    / f"strain_{strain}"
-                    / f"{self.name}.keras"
-                )
-            except ValueError:
-                msg = (
-                    f"Unable to load model: strain {self._strain}"
-                    f" generation {self._generation} not found."
-                )
-                raise ValueError(msg) from None
+            self._load()
 
     def predict(self, encoding: BoardEncoding) -> Evaluation:
         """
@@ -269,6 +222,23 @@ class StandardModel(ModelBase):
                 generation or an update of a past generation."
             raise RuntimeError(msg)
 
+    def _load(self) -> None:
+        """Load model from `.keras` file."""
+        try:
+            self._model = load_model(
+                PROJECT_PATH
+                / "data"
+                / "saved_models"
+                / f"strain_{self._strain}"
+                / f"{self.name}.keras"
+            )
+        except ValueError:
+            msg = (
+                f"Unable to load model: strain {self._strain}"
+                f" generation {self._generation} not found."
+            )
+            raise ValueError(msg) from None
+
     @property
     def name(self) -> str:
         """
@@ -318,3 +288,57 @@ class StandardModel(ModelBase):
             PROJECT_PATH / "data" / "saved_models" / "metadata.json", "w"
         ) as metadata_file:
             json.dump(metadata, metadata_file)
+
+    def _construct_model(self) -> None:
+        """
+        Construct a model for this object.
+
+        Uses the configuration parameters in `config.py`, and
+        stores in `self._model`.
+        """
+        # input layer
+        input_layer = Input((8, 8, 18), dtype="float16")
+
+        # convolution layers
+
+        temp_layer = Conv2D(
+            filters=MODEL_PARAMS["1"]["filters"],
+            kernel_size=MODEL_PARAMS["1"]["kernal_size"],
+            activation=MODEL_PARAMS["1"]["activation"],
+            padding=MODEL_PARAMS["1"]["padding"],
+            data_format=MODEL_PARAMS["1"]["data_format"],
+        )(input_layer)
+        temp_layer = BatchNormalization()(temp_layer)
+        temp_layer = Conv2D(
+            filters=MODEL_PARAMS["2"]["filters"],
+            kernel_size=MODEL_PARAMS["2"]["kernal_size"],
+            activation=MODEL_PARAMS["2"]["activation"],
+            padding=MODEL_PARAMS["2"]["padding"],
+            data_format=MODEL_PARAMS["2"]["data_format"],
+        )(temp_layer)
+        temp_layer = BatchNormalization()(temp_layer)
+        temp_layer = Conv2D(
+            filters=MODEL_PARAMS["3"]["filters"],
+            kernel_size=MODEL_PARAMS["3"]["kernal_size"],
+            activation=MODEL_PARAMS["3"]["activation"],
+            padding=MODEL_PARAMS["3"]["padding"],
+            data_format=MODEL_PARAMS["3"]["data_format"],
+        )(temp_layer)
+        temp_layer = BatchNormalization()(temp_layer)
+        temp_layer = Conv2D(
+            filters=MODEL_PARAMS["4"]["filters"],
+            kernel_size=MODEL_PARAMS["4"]["kernal_size"],
+            activation=MODEL_PARAMS["4"]["activation"],
+            padding=MODEL_PARAMS["4"]["padding"],
+            data_format=MODEL_PARAMS["4"]["data_format"],
+        )(temp_layer)
+        temp_layer = BatchNormalization()(temp_layer)
+
+        # squishing layer
+        temp_layer = Dense(1, activation="sigmoid")(temp_layer)
+        output_layer = Reshape((1,))(temp_layer)
+
+        # build model
+        opt = Adam()
+        self._model = Model(inputs=input_layer, outputs=output_layer, name=self.name)
+        self._model.compile(optimizer=opt, loss="mean_squared_error")

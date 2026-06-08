@@ -11,7 +11,9 @@ if __name__ == "__main__":
     metadata = {}
     for i in range(STRAIN_COUNT):
         metadata[f"strain_{i}_curr_gen"] = 0
-        StandardModel(i, 0, construct=True)
 
     with Path.open(PROJECT_PATH / "data" / "saved_models" / "metadata.json", "w") as file:
         json.dump(metadata, file)
+
+    for i in range(STRAIN_COUNT):
+        StandardModel(i, 0, construct=True)
