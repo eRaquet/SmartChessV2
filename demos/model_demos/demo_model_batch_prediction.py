@@ -1,0 +1,60 @@
+"""Script to demo the model module's prediction tool kit."""
+
+import argparse
+import time
+
+import numpy as np
+from matplotlib import pyplot as plt
+
+from modules.config import PROJECT_PATH
+from modules.model import StandardModel
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="Benchmark standard model predictions with varying sized inputs."
+    )
+    parser.add_argument(
+        "--show_progress",
+        action="store_true",
+        help="Print intermediate progress updates as benchmark proceeds.",
+    )
+    parser.add_argument("-f", "--file", type=str, help="Output file for graph")
+    args = parser.parse_args()
+
+    num_iterations = 10
+
+    # generate rng for random data
+    rng = np.random.default_rng()
+
+    # load model (strain: 0, generation: 0)
+    # construct=True if model does not yet exist (for seeding)
+    model = StandardModel(0, 0)
+
+    N = np.array([10, 30, 100, 300, 1000, 3000, 10000])
+    times = np.zeros(N.shape)
+
+    for _ in range(num_iterations):
+        for i in range(len(N)):
+            encodings = rng.integers(0, 2, (N[i], 8, 8, 18), dtype=np.uint8)
+
+            # evaluate random encodings as a batch
+            t = time.perf_counter()
+            predictions = model.predict_batch(encodings)
+            dt = time.perf_counter() - t
+            times[i] += dt / N[i] * 1000  # time in miliseconds per position
+            if args.show_progress:
+                print(
+                    f"{N[i]} positions evaluated in {dt:.3f} seconds with an average of"
+                    f" {dt / N[i] * 1000:.1f} ms per board encoding."
+                )
+
+    plt.figure()
+    plt.loglog(N, times / num_iterations)
+    plt.xlabel("# of Positions (log scale)")
+    plt.ylabel("Time in ms per Position (log scale)")
+    plt.title("Model Performance vs. Size of Batch")
+    plt.show()
+
+    if args.file:
+        plt.savefig(PROJECT_PATH / "graphs" / args.file)
+        print(f"Figure saved to ./graphs/{args.file}")

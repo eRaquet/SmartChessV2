@@ -185,7 +185,7 @@ $$
 $$
 In a well trained model, this quantity begins close to 0.5 and makes its way either to 1 or 0 as the game goes on (1 if the policy is winning, or 0 if losing).
 
-![Normal Trajectory](graphs/Example%20Game%20Trajectory%20Board%20Eval)
+![Normal Trajectory](graphs/Example%20Game%20Trajectory%20Board%20Eval.png)
 
 ### Model Reinforcement
 The challenge now is to decide how to reinforce a model $\mu(s)$ so that it becomes a better estimate of $p(s, \pi_{\infty}, \pi_{\infty})$.  Say I have some policy $\pi$ defined by the model $\mu$.  If I transform $\mu$ into $\mu'$, by the following rule
@@ -220,15 +220,15 @@ The most intuitive way to estimate $p(s, \pi, \pi)$ is to play a bunch of games 
 
 In addition to this downside, actual experience shows that models trained this way are very noisy, often having virtually no consistency between positions.  Their evaluation trajectories look more like
 
-![Uncorrelated Trajectory](graphs/Example%20Game%20Trajectory%20Board%20Eval%20Uncorrelated)
+![Uncorrelated Trajectory](graphs/Example%20Game%20Trajectory%20Board%20Eval%20Uncorrelated.png)
 
 We can clearly see that this is very wrong, as the evaluation of a particular board state is intimately tied to the evaluations of the surrounding states.  Worse, this reinforcement tends to saturate the evaluations early, even if the policy loses after suggesting a win confidence of 1.
 
-![Saturated Trajectory](graphs/Example%20Game%20Trajectory%20Board%20Eval%20Saturated)
+![Saturated Trajectory](graphs/Example%20Game%20Trajectory%20Board%20Eval%20Saturated.png)
 
 There is a better way...  Consider game trajectory board evaluation plot for white:
 
-![Blunder Trajectory](graphs/Example%20Game%20Trajectory%20Board%20Eval%20Blunder)
+![Blunder Trajectory](graphs/Example%20Game%20Trajectory%20Board%20Eval%20Blunder.png)
 
 This pictures a blunder.  Under the first reinforcement criteria, all the moves from 0 to 44 should be negatively reinforced, since the policy ended up losing.  However, this is obviously the wrong thing to do, since it is clear from the trajectory that the policy lost **only** because of move 45.  Essentially, the policy picked a state that it thought was good, but then the next state revealed (likely by the opponent's response) that the chosen state was actually very bad.  And here's the real clincher...how bad was the chosen state?  Approximately as bad as the state that followed!  After all, if you assume that the opponent is trying to pick the state that minimizes your chance of winning, then the quality of any state you choose is only as good as the quality (for you) of the state your opponent chooses as a response.
 
