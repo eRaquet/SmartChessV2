@@ -14,14 +14,14 @@ if __name__ == "__main__":
         description="Benchmark standard model predictions with varying sized inputs."
     )
     parser.add_argument(
-        "--show_progress",
+        "--show-progress",
         action="store_true",
         help="Print intermediate progress updates as benchmark proceeds.",
     )
     parser.add_argument("-f", "--file", type=str, help="Output file for graph")
     args = parser.parse_args()
 
-    num_iterations = 10
+    num_iterations = 20
 
     # generate rng for random data
     rng = np.random.default_rng()
@@ -33,8 +33,8 @@ if __name__ == "__main__":
     N = np.array([10, 30, 100, 300, 1000, 3000, 10000])
     times = np.zeros(N.shape)
 
-    for _ in range(num_iterations):
-        for i in range(len(N)):
+    for i in range(len(N)):
+        for _ in range(num_iterations):
             encodings = rng.integers(0, 2, (N[i], 8, 8, 18), dtype=np.uint8)
 
             # evaluate random encodings as a batch
@@ -45,7 +45,7 @@ if __name__ == "__main__":
             if args.show_progress:
                 print(
                     f"{N[i]} positions evaluated in {dt:.3f} seconds with an average of"
-                    f" {dt / N[i] * 1000:.1f} ms per board encoding."
+                    f" {dt / N[i] * 1000:.3f} ms per board encoding."
                 )
 
     plt.figure()

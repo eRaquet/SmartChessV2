@@ -22,14 +22,14 @@ requires-python = ">=3.10"
 dependencies = [
     "chess>=1.11.2",
     "git-lfs>=1.6",
-    "keras>=3.12.1",
+    "keras",
     "line-profiler>=5.0.0",
     "matplotlib>=3.10.9",
+    "mlx>=0.31.2",
     "numpy>=2.2.6",
     "pygame>=2.6.1",
     "pytest>=8.4.1",
     "scipy>=1.15.3",
-    "tensorflow>=2.21.0",
 ]
 
 ########
@@ -127,3 +127,6 @@ quote-style = "double"  # change to "double" or "single" if either is preferred
 indent-style = "space"
 skip-magic-trailing-comma = false
 line-ending = "auto"
+
+[tool.uv.sources]
+keras = { git = "https://github.com/keras-team/keras.git", rev = "mlx" }
