@@ -40,15 +40,6 @@ type Evaluation = float
 type SetEvaluation = NDArray[np.double]
 
 
-# Enum for display modes
-class DisplayMode(Enum):
-    """Enumeration for different board display modes."""
-
-    GUI = 1
-    ASCII = 2
-    NONE = 3
-
-
 class BoardOutcome(IntFlag):
     """Enumeration of various states of outcome for a chess board."""
 

@@ -8,11 +8,9 @@ import numpy as np
 from modules.chess_types import (
     Action,
     BoardOutcome,
-    DisplayMode,
     Observation,
     Trajectory,
 )
-from modules.display import Display
 from modules.tools import (
     encode_board,
     generate_board_encodings_from_moves,
@@ -22,7 +20,7 @@ from modules.tools import (
 class Board:
     """Chess board environment with generation of valid moves and creation of observations."""
 
-    def __init__(self, rendering_mode: DisplayMode = DisplayMode.NONE) -> None:
+    def __init__(self) -> None:
         """Initiate a board object."""
         self._board = chess.Board()
         self._encoding = encode_board(self._board)
@@ -34,11 +32,7 @@ class Board:
 
         # allocate the observation space
         self._observation: Observation = np.array([], dtype=np.uint8)
-        self.observe()
-
-        self._rendering_mode = rendering_mode
-        if self._rendering_mode is DisplayMode.GUI:
-            self._display = Display()
+        self._observe()
 
     def reset(self) -> None:
         """Reset board position."""
@@ -47,8 +41,8 @@ class Board:
         self._state_list = [self._encoding.copy()]
         self._board_state_counter = Counter(self._encoding.tobytes())
         self._moves = list(self._board.legal_moves)
-        self.observe()
-        self.render()
+        self._observe()
+        self._render()
 
     def step(self, action: Action) -> None:
         """
@@ -76,14 +70,14 @@ class Board:
             ):
                 self._status = BoardOutcome.DRAW
 
-            self.observe()
+            self._observe()
 
-            self.render()
+            self._render()
         else:
             msg = "Board is in terminal state, and cannot be stepped."
             raise RuntimeError(msg)
 
-    def observe(self) -> None:
+    def _observe(self) -> None:
         """Make the environment reflect the board state and generate an observation."""
         if self._status not in BoardOutcome.TERMINATED:
             # create observation encodings
@@ -96,7 +90,7 @@ class Board:
     def update_state(self, action: Action) -> None:
         """
 
-        Update the state of the environment without generating an observation.
+        Update the state of the environment without generating an observation or rendering.
 
         Parameters
         ----------
@@ -110,17 +104,9 @@ class Board:
         self._state_list.append(self._encoding.copy())
         self._board_state_counter.update(self._encoding.tobytes())
 
-    def render(self) -> None:
-        """Render the board object according to the set render mode."""
-        if self._rendering_mode is DisplayMode.NONE:
-            return
-        if self._rendering_mode is DisplayMode.ASCII:
-            print("\033[2J\033[H", end="")
-            print("-" * 15)
-            print(self._board)
-            print("-" * 15)
-        if self._rendering_mode is DisplayMode.GUI:
-            self._display.display_board(self._board, self._board.piece_map())
+    def _render(self) -> None:
+        """Render method for board, empty for base class."""
+        return
 
     @property
     def moves(self) -> list[chess.Move]:
@@ -232,3 +218,13 @@ class Board:
         int
         """
         return self._board.ply()
+
+
+class ASCIIBoard(Board):
+    """Board with simple ASCII visualization."""
+
+    def _render(self) -> None:
+        """Render board as ASCII."""
+        print("-" * 15)
+        print(self._board)
+        print("-" * 15)

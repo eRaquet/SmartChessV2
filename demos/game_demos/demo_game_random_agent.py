@@ -6,8 +6,7 @@ import time
 import chess
 
 from modules.agent import RandomAgent
-from modules.board import Board
-from modules.chess_types import DisplayMode
+from modules.board import ASCIIBoard, Board
 from modules.game import Game
 
 if __name__ == "__main__":
@@ -24,7 +23,7 @@ if __name__ == "__main__":
 
     start = time.perf_counter()
 
-    board = Board(DisplayMode.ASCII if args.gui else DisplayMode.NONE)
+    board = ASCIIBoard() if args.gui else Board()
     white_agent = RandomAgent()
     black_agent = RandomAgent()
     game = Game(white_agent, black_agent, board)

@@ -9,6 +9,7 @@ from modules.board import Board
 from modules.chess_types import (
     Action,
 )
+from modules.display import Display
 from modules.model import ModelBase
 
 
@@ -91,3 +92,15 @@ class StandardAgent(AgentBase):
         choice_distribution = softmax(evals * self.confidence_factor)
 
         return self.rng.choice(len(choice_distribution), p=choice_distribution)
+
+
+class UIAgent(AgentBase):
+    """Agent that gets user input from a board with a GUI."""
+
+    def __init__(self, board: Board, display: Display) -> None:
+        # core objects that a UIAgent contains
+        self._board = board
+        self._display = display
+
+        # UI agent display configs
+        self._input_move = None
