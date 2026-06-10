@@ -11,6 +11,7 @@ from modules.chess_types import (
     Observation,
     Trajectory,
 )
+from modules.display import Display
 from modules.tools import (
     encode_board,
     generate_board_encodings_from_moves,
@@ -228,3 +229,16 @@ class ASCIIBoard(Board):
         print("-" * 15)
         print(self._board)
         print("-" * 15)
+
+
+class GUIBoard(Board):
+    """Board with full pygame gui."""
+
+    def __init__(self) -> None:
+        super().__init__()
+
+        self._display = Display()
+
+    def _render(self) -> None:
+        """Render board display."""
+        self._display.display_board(self._board)

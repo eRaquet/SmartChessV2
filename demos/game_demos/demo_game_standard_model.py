@@ -6,7 +6,7 @@ import time
 import chess
 
 from modules.agent import StandardAgent
-from modules.board import ASCIIBoard, Board
+from modules.board import ASCIIBoard, Board, GUIBoard
 from modules.game import Game
 from modules.model import StandardModel
 
@@ -14,8 +14,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Demo playing a game with the standard agent with model strain 0 gen 0."
     )
+    parser.add_argument("--gui", action="store_true", help="display the game with GUI")
     parser.add_argument(
-        "--gui", action="store_true", help="display the game with printoff in terminal"
+        "--ascii", action="store_true", help="display the game with ASCII in terminal"
     )
 
     args = parser.parse_args()
@@ -24,7 +25,7 @@ if __name__ == "__main__":
 
     start = time.perf_counter()
 
-    board = ASCIIBoard() if args.gui else Board()
+    board = ASCIIBoard() if args.ascii else GUIBoard() if args.gui else Board()
     white_agent = StandardAgent(StandardModel(0, 0), confidence_factor=1.0)
     black_agent = StandardAgent(StandardModel(0, 0), confidence_factor=1.0)
     game = Game(white_agent, black_agent, board)
