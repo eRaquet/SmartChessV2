@@ -9,6 +9,10 @@ import pygame as pg
 
 from modules.config import PROJECT_PATH
 
+BOARD_RIM_THICKNESS = 20
+BOARD_WIDTH = 480
+SQUARE_WIDTH = BOARD_WIDTH / 8
+
 
 class Display:
     """Class to display boards associated with the Board environment."""
@@ -102,7 +106,16 @@ class Display:
                 )
 
             # draw the square color
-            pg.draw.rect(self.surf, color, pg.Rect(20 + 60 * column, 20 + 60 * row, 60, 60))
+            pg.draw.rect(
+                self.surf,
+                color,
+                pg.Rect(
+                    BOARD_RIM_THICKNESS + SQUARE_WIDTH * column,
+                    BOARD_RIM_THICKNESS + SQUARE_WIDTH * row,
+                    SQUARE_WIDTH,
+                    SQUARE_WIDTH,
+                ),
+            )
 
             piece = board_map.get(i)
 
@@ -111,11 +124,81 @@ class Display:
                 # place a piece if one exist on that square
                 self.surf.blit(
                     self.images[(piece.piece_type, piece.color)],
-                    pg.Rect(20 + 60 * column, 20 + 60 * row, 60, 60),
+                    pg.Rect(
+                        BOARD_RIM_THICKNESS + SQUARE_WIDTH * column,
+                        BOARD_RIM_THICKNESS + SQUARE_WIDTH * row,
+                        SQUARE_WIDTH,
+                        SQUARE_WIDTH,
+                    ),
                 )
 
         pg.display.update()
 
-    def end_display(self) -> None:
-        """Close display."""
-        pg.quit()
+    def get_user_input(
+        self, board: chess.Board, board_map: dict[chess.Square, chess.Piece] | None = None
+    ) -> chess.Move | None:
+        """
+
+        Check if there is a user input.
+
+        Parameters
+        ----------
+        board : chess.Board
+            chess.board object which is being displayed
+        board_map : dict[chess.Square, chess.Piece] | None, optional
+            map of pieces on board, by default None
+        """
+        if board_map is None:
+            board_map = board.piece_map()
+
+        # get events
+        events = pg.event.get()
+
+        for event in events:
+            # if button pressed...
+            if event.type == pg.MOUSEBUTTONDOWN:
+                pos = pg.mouse.get_pos()
+
+                # if mouse is over the board
+                if (
+                    pos[0] >= BOARD_RIM_THICKNESS and pos[0] <= BOARD_WIDTH + BOARD_RIM_THICKNESS
+                ) and (
+                    pos[1] >= BOARD_RIM_THICKNESS and pos[1] <= BOARD_WIDTH + BOARD_RIM_THICKNESS
+                ):
+                    # shift position
+                    pos = (pos[0] - BOARD_RIM_THICKNESS, pos[1] - BOARD_RIM_THICKNESS)
+
+                    column = int(pos[0] / SQUARE_WIDTH)
+                    row = 7 - int(pos[1] / SQUARE_WIDTH)
+                    square = column + 8 * row
+
+                    # ...no square selected->select square
+                    if self.selectedSquare is None:
+                        if square in board_map and board_map[square].color == board.turn:
+                            self.selectedSquare = square
+                            self.displayBoard(board, board_map=board_map)
+
+                    # ...square is selected
+                    else:
+                        if (
+                            square in board_map
+                            and board_map[square].color == board.turn
+                            and square != self.selectedSquare
+                        ):
+                            self.selectedSquare = square
+                            self.displayBoard(board, board_map=board_map)
+
+                        if square in self.highlightMask:
+                            self.selectedSquare = None
+                            self.displayBoard(board, board_map=board_map)
+
+                            # if the move is a pawn promotion
+                            if board_map[self.selectedSquare].piece_type == chess.PAWN and (
+                                chess.square_rank(square) == 7 or chess.square_rank(square) == 0  # noqa: PLR2004
+                            ):
+                                return chess.Move(self.selectedSquare, square, chess.QUEEN)
+                            return chess.Move(self.selectedSquare, square)
+
+                        self.selectedSquare = None
+                        self.displayBoard(board, board_map=board_map)
+        return None
