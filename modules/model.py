@@ -1,9 +1,7 @@
 """Module to specify the behavior of a chess board inference model."""
 
-import os
-
-os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"  # Suppress INFO and WARNING from C++
-os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"  # Disable oneDNN messages
+# import at top to configure keras backend
+from modules.model_config import MODEL_PARAMS  # noqa: I001
 
 import json
 from pathlib import Path
@@ -15,7 +13,7 @@ from keras.models import load_model
 from keras.optimizers import Adam
 
 from modules.chess_types import BoardEncoding, Evaluation, SetEncoding, SetEvaluation
-from modules.config import MODEL_PARAMS, PROJECT_PATH
+from modules.config import PROJECT_PATH
 
 
 class ModelBase:
