@@ -93,7 +93,9 @@ class RandomModel(ModelBase):
 class StandardModel(ModelBase):
     """CNN-based evaluation model for chess boards."""
 
-    def __init__(self, strain: int, generation: int, *, construct: bool = False) -> None:
+    def __init__(
+        self, strain: int, generation: int | None = None, *, construct: bool = False
+    ) -> None:
         """
 
         Create a standard model.
@@ -104,14 +106,18 @@ class StandardModel(ModelBase):
         ----------
         strain : int
             strain number of model
-        generation : int
-            generation number of model
+        generation : int | None
+            generation number of model, or None if selecting the current generation, None by default
         construct : bool, optional
             whether to construct the model from scratch and save to memory, or load it from memory,
             by default False
         """
         self._strain = strain
-        self._generation = generation
+
+        if generation:
+            self._generation = generation
+        else:
+            self._generation = self.get_curr_generation()
 
         if construct:
             # create model strain directory if it doesn't already exits
