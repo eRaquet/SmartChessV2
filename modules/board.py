@@ -6,6 +6,7 @@ import chess
 import numpy as np
 
 from modules.chess_types import (
+    RESIGN,
     Action,
     BoardOutcome,
     Observation,
@@ -56,24 +57,31 @@ class Board:
             Action performed on the board (chess move)
         """
         if self._status not in BoardOutcome.TERMINATED:
-            self.update_state(action)
+            if action != RESIGN:
+                self.update_state(action)
 
-            # check for end conditions
-            if self._board.is_checkmate():
+                # check for end conditions
+                if self._board.is_checkmate():
+                    self._status = (
+                        BoardOutcome.BLACK
+                        if self._board.turn == chess.WHITE
+                        else BoardOutcome.WHITE
+                    )
+                elif (
+                    self._board.is_repetition()
+                    or self._board.is_fifty_moves()
+                    or self._board.is_insufficient_material()
+                    or self._board.is_stalemate()
+                ):
+                    self._status = BoardOutcome.DRAW
+
+                self._observe()
+
+                self._render()
+            else:
                 self._status = (
                     BoardOutcome.BLACK if self._board.turn == chess.WHITE else BoardOutcome.WHITE
                 )
-            elif (
-                self._board.is_repetition()
-                or self._board.is_fifty_moves()
-                or self._board.is_insufficient_material()
-                or self._board.is_stalemate()
-            ):
-                self._status = BoardOutcome.DRAW
-
-            self._observe()
-
-            self._render()
         else:
             msg = "Board is in terminal state, and cannot be stepped."
             raise RuntimeError(msg)

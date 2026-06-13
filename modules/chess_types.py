@@ -34,7 +34,9 @@ type Trajectory = SetEncoding
 
 # alias for gym.Env terminology
 # corresponds to the index of the chosen move
+# -1 means a resignation
 type Action = int
+RESIGN: Action = -1
 
 type Evaluation = float
 type SetEvaluation = NDArray[np.double]
