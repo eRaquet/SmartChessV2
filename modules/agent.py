@@ -116,11 +116,5 @@ class UIAgent(AgentBase):
         """
         action = None
         while action is None:
-            move = self._board.get_user_input()
-            if move:
-                if move in self._board.moves:
-                    action = self._board.moves.index(move)
-                else:
-                    msg = "Selected move is not in list of legal moves."
-                    raise RuntimeError(msg)
+            action = self._board.get_user_input()
         return action

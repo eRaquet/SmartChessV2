@@ -5,6 +5,7 @@ from typing import (
     TypedDict,
 )
 
+import chess
 import numpy as np
 from numpy.typing import NDArray
 
@@ -31,6 +32,9 @@ BOARD_ENCODING_SHAPE = (8, 8, 18)
 type SetEncoding = NDArray[np.uint8]  # has a shape of (n, 8, 8, 18)
 type Observation = SetEncoding
 type Trajectory = SetEncoding
+# vector of all possible moves for a given state
+# the order must be static, as as Action is defined as an index into the move vector
+type MoveVector = list[chess.Move]
 
 # alias for gym.Env terminology
 # corresponds to the index of the chosen move

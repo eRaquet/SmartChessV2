@@ -9,7 +9,9 @@ import modules.conventions as lib
 from modules.chess_types import (
     BOARD_ENCODING_SHAPE,
     PIECE_ENCODING_SHAPE,
+    Action,
     BoardEncoding,
+    MoveVector,
     PieceEncoding,
     Players,
     SetEncoding,
@@ -112,7 +114,7 @@ def encode_board(board: chess.Board) -> BoardEncoding:
 
 def generate_board_encodings_from_moves(  # noqa: PLR0915
     encoding: BoardEncoding,
-    moves: list[chess.Move],
+    moves: MoveVector,
     player_color: chess.Color,
     board_state_counter: Counter[bytes],
 ) -> SetEncoding:
@@ -124,7 +126,7 @@ def generate_board_encodings_from_moves(  # noqa: PLR0915
     ----------
     encoding : BoardEncoding
         The board encoding of the current position from the view of player_color
-    moves : list[chess.Move]
+    moves : MoveVector
         List of moves possible from the current position
     player_color : chess.Color
         Color of the player whose turn it is (and whose BoardEncoding was created)
@@ -385,3 +387,23 @@ def square_indices(square: chess.Square, player_color: chess.Color) -> tuple[int
         row and column index of square in encoding space
     """
     return square // 8 if player_color == chess.WHITE else 7 - square // 8, square % 8
+
+
+def get_action(move: chess.Move, vector: MoveVector) -> Action:
+    """
+
+    Obtain the action that gives the selected move from the given move vector.
+
+    Parameters
+    ----------
+    move : chess.Move
+        move to create action for
+    vector : MoveVector
+        current move vector
+
+    Returns
+    -------
+    Action
+        index of given move in move vector
+    """
+    return vector.index(move)

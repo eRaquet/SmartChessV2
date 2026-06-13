@@ -2,11 +2,14 @@
 
 import os
 
+from modules.tools import get_action
+
 os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "1"  # disable the pygame welcome message
 
 import chess
 import pygame as pg
 
+from modules.chess_types import RESIGN, Action, MoveVector
 from modules.config import FPS, PROJECT_PATH
 
 BOARD_RIM_THICKNESS = 20
@@ -82,9 +85,11 @@ class Display:
             # highlight if the current square is a possible move for the selected piece
             if self.selected_square is not None:
                 highlight = chess.Move(self.selected_square, square) in board.legal_moves
-                self.highlight_mask.append(square)
             else:
                 highlight = False
+
+            if highlight:
+                self.highlight_mask.append(square)
 
             selected = square == self.selected_square
 
@@ -137,18 +142,32 @@ class Display:
         pg.display.update()
 
     def get_user_input(
-        self, board: chess.Board, board_map: dict[chess.Square, chess.Piece] | None = None
-    ) -> chess.Move | None:
+        self,
+        board: chess.Board,
+        moves: MoveVector,
+        board_map: dict[chess.Square, chess.Piece] | None = None,
+    ) -> Action | None:
         """
 
         Check if there is a user input.
+
+        This function enforces a frames per second limit, but does not implement an internal loop
+        currently.  That feature could be added at some point, if needed, but this way we can avoid
+        wierd infinite loops.
 
         Parameters
         ----------
         board : chess.Board
             chess.board object which is being displayed
+        moves : MoveVector
+            legal moves from the current position
         board_map : dict[chess.Square, chess.Piece] | None, optional
             map of pieces on board, by default None
+
+        Returns
+        -------
+        Action | None
+            action chosen by user, or None if no action yet selected
         """
         if board_map is None:
             board_map = board.piece_map()
@@ -186,12 +205,7 @@ class Display:
 
                     # ...square is selected
                     else:
-                        if square in board_map and board_map[square].color == board.turn:
-                            self.selected_square = (
-                                square if self.selected_square != square else None
-                            )
-                            self.display_board(board, board_map=board_map)
-
+                        # square is a valid square to move to
                         if square in self.highlight_mask:
                             # if the move is a pawn promotion
                             if board_map[self.selected_square].piece_type == chess.PAWN and (
@@ -199,10 +213,27 @@ class Display:
                             ):
                                 user_input = chess.Move(self.selected_square, square, chess.QUEEN)
                             user_input = chess.Move(self.selected_square, square)
+                            self.selected_square = None
 
-                        self.selected_square = None
-                        self.display_board(board, board_map=board_map)
+                        # square is not a vlid square to move to, but is a square with a piece of
+                        # our color
+                        elif square in board_map and board_map[square].color == board.turn:
+                            self.selected_square = (
+                                square if self.selected_square != square else None
+                            )
+                            self.display_board(board, board_map=board_map)
 
+                        # square is an "unselectable" square (empty or opponent)
+                        else:
+                            self.selected_square = None
+                            self.display_board(board, board_map=board_map)
+
+                        # if valid user input was created, return that
                         if user_input:
-                            return user_input
+                            return get_action(user_input, moves)
+
+            # return a resignation event if the window was exited
+            if event.type == pg.QUIT:
+                pg.quit()
+                return RESIGN
         return None

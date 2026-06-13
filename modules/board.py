@@ -9,6 +9,7 @@ from modules.chess_types import (
     RESIGN,
     Action,
     BoardOutcome,
+    MoveVector,
     Observation,
     Trajectory,
 )
@@ -118,14 +119,14 @@ class Board:
         return
 
     @property
-    def moves(self) -> list[chess.Move]:
+    def moves(self) -> MoveVector:
         """
 
         List of possible moves from the current board state.
 
         Returns
         -------
-        list[chess.Move]
+        MoveVector
             list of moves
         """
         return self._moves
@@ -251,14 +252,14 @@ class GUIBoard(Board):
         """Render board display."""
         self._display.display_board(self._board)
 
-    def get_user_input(self) -> chess.Move | None:
+    def get_user_input(self) -> Action | None:
         """
 
         Check if the user has given GUI input, and return the move if possible.
 
         Returns
         -------
-        chess.Move | None
-            move played by the user, or None if move not available
+        Action | None
+            Action selected by the user, or None if no action is yet selected
         """
-        return self._display.get_user_input(self._board)
+        return self._display.get_user_input(self._board, self._moves)
