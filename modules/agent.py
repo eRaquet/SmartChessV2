@@ -9,6 +9,7 @@ from modules.board import Board, GUIBoard
 from modules.chess_types import (
     Action,
 )
+from modules.config import DEFAULT_CONFIDENCE
 from modules.model import ModelBase
 
 
@@ -63,7 +64,9 @@ class RandomAgent(AgentBase):
 class StandardAgent(AgentBase):
     """Agent that picks a move based on its underlying model."""
 
-    def __init__(self, model: ModelBase, confidence_factor: float | None) -> None:
+    def __init__(
+        self, model: ModelBase, confidence_factor: float | None = DEFAULT_CONFIDENCE
+    ) -> None:
         self.model = model
         self.rng = np.random.default_rng()
         self.confidence_factor = confidence_factor
