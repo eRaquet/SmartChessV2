@@ -7,7 +7,7 @@ os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "1"  # disable the pygame welcome mes
 import chess
 import pygame as pg
 
-from modules.config import PROJECT_PATH
+from modules.config import FPS, PROJECT_PATH
 
 BOARD_RIM_THICKNESS = 20
 BOARD_WIDTH = 480
@@ -20,6 +20,8 @@ class Display:
     def __init__(self) -> None:
         """Initiate the display."""
         pg.init()
+
+        self.clock = pg.time.Clock()
 
         # dictionary of images associated with each piece
         self.images = {
@@ -79,7 +81,7 @@ class Display:
 
             # highlight if the current square is a possible move for the selected piece
             if self.selected_square is not None:
-                highlight = board.find_move(self.selected_square, square) in board.legal_moves
+                highlight = chess.Move(self.selected_square, square) in board.legal_moves
                 self.highlight_mask.append(square)
             else:
                 highlight = False
@@ -151,8 +153,12 @@ class Display:
         if board_map is None:
             board_map = board.piece_map()
 
+        self.clock.tick(FPS)
+
         # get events
         events = pg.event.get()
+
+        user_input = None
 
         for event in events:
             # if button pressed...
@@ -173,32 +179,30 @@ class Display:
                     square = column + 8 * row
 
                     # ...no square selected->select square
-                    if self.selectedSquare is None:
+                    if self.selected_square is None:
                         if square in board_map and board_map[square].color == board.turn:
-                            self.selectedSquare = square
-                            self.displayBoard(board, board_map=board_map)
+                            self.selected_square = square
+                            self.display_board(board, board_map=board_map)
 
                     # ...square is selected
                     else:
-                        if (
-                            square in board_map
-                            and board_map[square].color == board.turn
-                            and square != self.selectedSquare
-                        ):
-                            self.selectedSquare = square
-                            self.displayBoard(board, board_map=board_map)
+                        if square in board_map and board_map[square].color == board.turn:
+                            self.selected_square = (
+                                square if self.selected_square != square else None
+                            )
+                            self.display_board(board, board_map=board_map)
 
-                        if square in self.highlightMask:
-                            self.selectedSquare = None
-                            self.displayBoard(board, board_map=board_map)
-
+                        if square in self.highlight_mask:
                             # if the move is a pawn promotion
-                            if board_map[self.selectedSquare].piece_type == chess.PAWN and (
+                            if board_map[self.selected_square].piece_type == chess.PAWN and (
                                 chess.square_rank(square) == 7 or chess.square_rank(square) == 0  # noqa: PLR2004
                             ):
-                                return chess.Move(self.selectedSquare, square, chess.QUEEN)
-                            return chess.Move(self.selectedSquare, square)
+                                user_input = chess.Move(self.selected_square, square, chess.QUEEN)
+                            user_input = chess.Move(self.selected_square, square)
 
-                        self.selectedSquare = None
-                        self.displayBoard(board, board_map=board_map)
+                        self.selected_square = None
+                        self.display_board(board, board_map=board_map)
+
+                        if user_input:
+                            return user_input
         return None

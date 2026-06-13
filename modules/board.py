@@ -242,3 +242,15 @@ class GUIBoard(Board):
     def _render(self) -> None:
         """Render board display."""
         self._display.display_board(self._board)
+
+    def get_user_input(self) -> chess.Move | None:
+        """
+
+        Check if the user has given GUI input, and return the move if possible.
+
+        Returns
+        -------
+        chess.Move | None
+            move played by the user, or None if move not available
+        """
+        return self._display.get_user_input(self._board)

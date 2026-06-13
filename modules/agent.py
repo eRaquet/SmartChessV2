@@ -5,11 +5,10 @@ from typing import Any
 import numpy as np
 from scipy.special import softmax
 
-from modules.board import Board
+from modules.board import Board, GUIBoard
 from modules.chess_types import (
     Action,
 )
-from modules.display import Display
 from modules.model import ModelBase
 
 
@@ -97,10 +96,31 @@ class StandardAgent(AgentBase):
 class UIAgent(AgentBase):
     """Agent that gets user input from a board with a GUI."""
 
-    def __init__(self, board: Board, display: Display) -> None:
+    def __init__(self, board: GUIBoard) -> None:
+        if type(board) is not GUIBoard:
+            msg = "UI Agents can only be instantiated from a GUI Board."
+            raise TypeError(msg)
+
         # core objects that a UIAgent contains
         self._board = board
-        self._display = display
 
-        # UI agent display configs
-        self._input_move = None
+    def act(self, _: Board) -> Action:
+        """
+
+        Get the user input.
+
+        Returns
+        -------
+        Action
+            action to take, specified by user
+        """
+        action = None
+        while action is None:
+            move = self._board.get_user_input()
+            if move:
+                if move in self._board.moves:
+                    action = self._board.moves.index(move)
+                else:
+                    msg = "Selected move is not in list of legal moves."
+                    raise RuntimeError(msg)
+        return action
