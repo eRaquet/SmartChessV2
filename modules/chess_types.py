@@ -5,6 +5,7 @@ from typing import (
     TypedDict,
 )
 
+import chess
 import numpy as np
 from numpy.typing import NDArray
 
@@ -20,33 +21,31 @@ PIECE_ENCODING_SHAPE = (8, 8, 12)
 #   - Information Type
 #       - 0:6 Self Pieces -- Pawn, Knight, Bishops, Rooks, Queen, King
 #       - 6:12 Opponent Pieces -- King, Queen, Rooks, Bishops, Knights, Pawn
-#       - 12:16 Castling Rights (all Rows and Columns are 1 if it has rights) -- Bottom Left, Bottom Right, Top Right, Top Left
+#       - 12:16 Castling Rights (all Rows and Columns are 1 if it has rights) -- Bottom Left, Bottom
+#         Right, Top Right, Top Left
 #       - 16 Draw Conditions (all Rows and Columns are 1 if the position could be a draw)
 #       - 17 Aun Passant (squares where an Aun Passant capture could happen)
 # NOTE: board encodings always represent the board from the perspect of the player whose turn it is.
 type BoardEncoding = NDArray[np.uint8]  # has a shape of (8, 8, 18)
 BOARD_ENCODING_SHAPE = (8, 8, 18)
 
-# an set of some number of board encodings, to be kept together (i.e. game trajectories or observations)
+# an set of some number of board encodings, to be kept together (i.e. game trajectories or
+# observations)
 type SetEncoding = NDArray[np.uint8]  # has a shape of (n, 8, 8, 18)
 type Observation = SetEncoding
 type Trajectory = SetEncoding
+# vector of all possible moves for a given state
+# the order must be static, as as Action is defined as an index into the move vector
+type MoveVector = list[chess.Move]
 
 # alias for gym.Env terminology
 # corresponds to the index of the chosen move
+# -1 means a resignation
 type Action = int
+RESIGN: Action = -1
 
 type Evaluation = float
 type SetEvaluation = NDArray[np.double]
-
-
-# Enum for display modes
-class DisplayMode(Enum):
-    """Enumeration for different board display modes."""
-
-    GUI = 1
-    ASCII = 2
-    NONE = 3
 
 
 class BoardOutcome(IntFlag):
