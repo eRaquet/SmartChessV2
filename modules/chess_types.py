@@ -21,14 +21,16 @@ PIECE_ENCODING_SHAPE = (8, 8, 12)
 #   - Information Type
 #       - 0:6 Self Pieces -- Pawn, Knight, Bishops, Rooks, Queen, King
 #       - 6:12 Opponent Pieces -- King, Queen, Rooks, Bishops, Knights, Pawn
-#       - 12:16 Castling Rights (all Rows and Columns are 1 if it has rights) -- Bottom Left, Bottom Right, Top Right, Top Left
+#       - 12:16 Castling Rights (all Rows and Columns are 1 if it has rights) -- Bottom Left, Bottom
+#         Right, Top Right, Top Left
 #       - 16 Draw Conditions (all Rows and Columns are 1 if the position could be a draw)
 #       - 17 Aun Passant (squares where an Aun Passant capture could happen)
 # NOTE: board encodings always represent the board from the perspect of the player whose turn it is.
 type BoardEncoding = NDArray[np.uint8]  # has a shape of (8, 8, 18)
 BOARD_ENCODING_SHAPE = (8, 8, 18)
 
-# an set of some number of board encodings, to be kept together (i.e. game trajectories or observations)
+# an set of some number of board encodings, to be kept together (i.e. game trajectories or
+# observations)
 type SetEncoding = NDArray[np.uint8]  # has a shape of (n, 8, 8, 18)
 type Observation = SetEncoding
 type Trajectory = SetEncoding

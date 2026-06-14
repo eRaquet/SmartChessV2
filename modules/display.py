@@ -1,4 +1,4 @@
-"""Class for displaying chess boards that works nominally in conjunction with a board environment."""
+"""Module for displaying chess boards."""
 
 import os
 
@@ -10,11 +10,7 @@ import chess
 import pygame as pg
 
 from modules.chess_types import RESIGN, Action, MoveVector
-from modules.config import FPS, PROJECT_PATH
-
-BOARD_RIM_THICKNESS = 20
-BOARD_WIDTH = 480
-SQUARE_WIDTH = BOARD_WIDTH / 8
+from modules.config import BOARD_RIM_THICKNESS, BOARD_WIDTH, FPS, PROJECT_PATH, SQUARE_WIDTH
 
 
 class Display:
@@ -28,21 +24,57 @@ class Display:
 
         # dictionary of images associated with each piece
         self.images = {
-            (chess.PAWN, chess.WHITE): pg.image.load(PROJECT_PATH / "images" / "whitePawn.png"),
-            (chess.KNIGHT, chess.WHITE): pg.image.load(PROJECT_PATH / "images" / "whiteKnight.png"),
-            (chess.BISHOP, chess.WHITE): pg.image.load(PROJECT_PATH / "images" / "whiteBishop.png"),
-            (chess.ROOK, chess.WHITE): pg.image.load(PROJECT_PATH / "images" / "whiteRook.png"),
-            (chess.QUEEN, chess.WHITE): pg.image.load(PROJECT_PATH / "images" / "whiteQueen.png"),
-            (chess.KING, chess.WHITE): pg.image.load(PROJECT_PATH / "images" / "whiteKing.png"),
-            (chess.PAWN, chess.BLACK): pg.image.load(PROJECT_PATH / "images" / "blackPawn.png"),
-            (chess.KNIGHT, chess.BLACK): pg.image.load(PROJECT_PATH / "images" / "blackKnight.png"),
-            (chess.BISHOP, chess.BLACK): pg.image.load(PROJECT_PATH / "images" / "blackBishop.png"),
-            (chess.ROOK, chess.BLACK): pg.image.load(PROJECT_PATH / "images" / "blackRook.png"),
-            (chess.QUEEN, chess.BLACK): pg.image.load(PROJECT_PATH / "images" / "blackQueen.png"),
-            (chess.KING, chess.BLACK): pg.image.load(PROJECT_PATH / "images" / "blackKing.png"),
+            (chess.PAWN, chess.WHITE): pg.transform.smoothscale(
+                pg.image.load(PROJECT_PATH / "images" / "whitePawn.png"),
+                (SQUARE_WIDTH, SQUARE_WIDTH),
+            ),
+            (chess.KNIGHT, chess.WHITE): pg.transform.smoothscale(
+                pg.image.load(PROJECT_PATH / "images" / "whiteKnight.png"),
+                (SQUARE_WIDTH, SQUARE_WIDTH),
+            ),
+            (chess.BISHOP, chess.WHITE): pg.transform.smoothscale(
+                pg.image.load(PROJECT_PATH / "images" / "whiteBishop.png"),
+                (SQUARE_WIDTH, SQUARE_WIDTH),
+            ),
+            (chess.ROOK, chess.WHITE): pg.transform.smoothscale(
+                pg.image.load(PROJECT_PATH / "images" / "whiteRook.png"),
+                (SQUARE_WIDTH, SQUARE_WIDTH),
+            ),
+            (chess.QUEEN, chess.WHITE): pg.transform.smoothscale(
+                pg.image.load(PROJECT_PATH / "images" / "whiteQueen.png"),
+                (SQUARE_WIDTH, SQUARE_WIDTH),
+            ),
+            (chess.KING, chess.WHITE): pg.transform.smoothscale(
+                pg.image.load(PROJECT_PATH / "images" / "whiteKing.png"),
+                (SQUARE_WIDTH, SQUARE_WIDTH),
+            ),
+            (chess.PAWN, chess.BLACK): pg.transform.smoothscale(
+                pg.image.load(PROJECT_PATH / "images" / "blackPawn.png"),
+                (SQUARE_WIDTH, SQUARE_WIDTH),
+            ),
+            (chess.KNIGHT, chess.BLACK): pg.transform.smoothscale(
+                pg.image.load(PROJECT_PATH / "images" / "blackKnight.png"),
+                (SQUARE_WIDTH, SQUARE_WIDTH),
+            ),
+            (chess.BISHOP, chess.BLACK): pg.transform.smoothscale(
+                pg.image.load(PROJECT_PATH / "images" / "blackBishop.png"),
+                (SQUARE_WIDTH, SQUARE_WIDTH),
+            ),
+            (chess.ROOK, chess.BLACK): pg.transform.smoothscale(
+                pg.image.load(PROJECT_PATH / "images" / "blackRook.png"),
+                (SQUARE_WIDTH, SQUARE_WIDTH),
+            ),
+            (chess.QUEEN, chess.BLACK): pg.transform.smoothscale(
+                pg.image.load(PROJECT_PATH / "images" / "blackQueen.png"),
+                (SQUARE_WIDTH, SQUARE_WIDTH),
+            ),
+            (chess.KING, chess.BLACK): pg.transform.smoothscale(
+                pg.image.load(PROJECT_PATH / "images" / "blackKing.png"),
+                (SQUARE_WIDTH, SQUARE_WIDTH),
+            ),
         }
 
-        width_hight = 520
+        width_hight = BOARD_WIDTH + 2 * BOARD_RIM_THICKNESS
         self.surf = pg.display.set_mode((width_hight, width_hight))
 
         self.selected_square = None
@@ -85,11 +117,11 @@ class Display:
             # highlight if the current square is a possible move for the selected piece
             if self.selected_square is not None:
                 highlight = chess.Move(self.selected_square, square) in board.legal_moves
+
+                if highlight:
+                    self.highlight_mask.append(square)
             else:
                 highlight = False
-
-            if highlight:
-                self.highlight_mask.append(square)
 
             selected = square == self.selected_square
 

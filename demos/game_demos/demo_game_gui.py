@@ -42,7 +42,7 @@ if __name__ == "__main__":
             else:
                 msg = "Invalid argument for [--white] option"
                 raise ValueError(msg)
-        elif len(args.white) == 2:
+        elif len(args.white) == 2:  # noqa: PLR2004
             strain = args.white[0]
             generation = args.white[1]
             if strain.isdigit() and generation.isdigit():
@@ -67,7 +67,7 @@ if __name__ == "__main__":
             else:
                 msg = "Invalid argument for [--black] option"
                 raise ValueError(msg)
-        elif len(args.black) == 2:
+        elif len(args.black) == 2:  # noqa: PLR2004
             strain = args.black[0]
             generation = args.black[1]
             if strain.isdigit() and generation.isdigit():
