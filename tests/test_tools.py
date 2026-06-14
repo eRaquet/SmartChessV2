@@ -15,6 +15,7 @@ from modules.conventions import (
 from modules.tools import (
     encode_board,
     generate_board_encodings_from_moves,
+    get_action,
     get_piece_index,
     square_indices,
 )
@@ -121,3 +122,25 @@ def test_square_indices() -> None:
     assert square_indices(chess.A1, chess.BLACK) == (7, 0)
     assert square_indices(chess.H8, chess.WHITE) == (7, 7)
     assert square_indices(chess.H8, chess.BLACK) == (0, 7)
+
+
+def test_get_action() -> None:
+    """Test the get_action function."""
+    board = chess.Board()
+    moves = list(board.legal_moves)
+
+    # some test moves to try getting the action for
+    test_moves = [
+        chess.Move(chess.G1, chess.H3),
+        chess.Move(chess.G1, chess.F3),
+        chess.Move(chess.B1, chess.C3),
+        chess.Move(chess.B1, chess.A3),
+        chess.Move(chess.H2, chess.H3),
+        chess.Move(chess.G2, chess.G3),
+        chess.Move(chess.F2, chess.F3),
+        chess.Move(chess.E2, chess.E3),
+        chess.Move(chess.D2, chess.D3),
+    ]
+
+    for i, move in enumerate(test_moves):
+        assert get_action(move, moves) == i
