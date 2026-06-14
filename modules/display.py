@@ -20,10 +20,10 @@ class Display:
         """Initiate the display."""
         pg.init()
 
-        self.clock = pg.time.Clock()
+        self._clock = pg.time.Clock()
 
         # dictionary of images associated with each piece
-        self.images = {
+        self._images = {
             (chess.PAWN, chess.WHITE): pg.transform.smoothscale(
                 pg.image.load(PROJECT_PATH / "images" / "whitePawn.png"),
                 (SQUARE_WIDTH, SQUARE_WIDTH),
@@ -75,10 +75,10 @@ class Display:
         }
 
         width_hight = BOARD_WIDTH + 2 * BOARD_RIM_THICKNESS
-        self.surf = pg.display.set_mode((width_hight, width_hight))
+        self._surf = pg.display.set_mode((width_hight, width_hight))
 
-        self.selected_square = None
-        self.highlight_mask: list[chess.Square] = []
+        self._selected_square = None
+        self._highlight_mask: list[chess.Square] = []
 
         self.display_board(chess.Board())
 
@@ -102,10 +102,10 @@ class Display:
         if board_map is None:
             board_map = board.piece_map()
 
-        self.highlight_mask = []
+        self._highlight_mask = []
 
         # create a background color
-        self.surf.fill(pg.Color(100, 75, 25))
+        self._surf.fill(pg.Color(100, 75, 25))
 
         # render each square
         for i in range(64):
@@ -115,15 +115,15 @@ class Display:
             light_dark = (column + row + 1) % 2
 
             # highlight if the current square is a possible move for the selected piece
-            if self.selected_square is not None:
-                highlight = chess.Move(self.selected_square, square) in board.legal_moves
+            if self._selected_square is not None:
+                highlight = chess.Move(self._selected_square, square) in board.legal_moves
 
                 if highlight:
-                    self.highlight_mask.append(square)
+                    self._highlight_mask.append(square)
             else:
                 highlight = False
 
-            selected = square == self.selected_square
+            selected = square == self._selected_square
 
             # if our king is on this square and check is placed on the board
             if (
@@ -146,7 +146,7 @@ class Display:
 
             # draw the square color
             pg.draw.rect(
-                self.surf,
+                self._surf,
                 color,
                 pg.Rect(
                     BOARD_RIM_THICKNESS + SQUARE_WIDTH * column,
@@ -161,8 +161,8 @@ class Display:
             # if there is a piece at this square, render it onto the board
             if piece is not None:
                 # place a piece if one exist on that square
-                self.surf.blit(
-                    self.images[(piece.piece_type, piece.color)],
+                self._surf.blit(
+                    self._images[(piece.piece_type, piece.color)],
                     pg.Rect(
                         BOARD_RIM_THICKNESS + SQUARE_WIDTH * column,
                         BOARD_RIM_THICKNESS + SQUARE_WIDTH * row,
@@ -204,7 +204,7 @@ class Display:
         if board_map is None:
             board_map = board.piece_map()
 
-        self.clock.tick(FPS)
+        self._clock.tick(FPS)
 
         # get events
         events = pg.event.get()
@@ -230,34 +230,34 @@ class Display:
                     square = column + 8 * row
 
                     # ...no square selected->select square
-                    if self.selected_square is None:
+                    if self._selected_square is None:
                         if square in board_map and board_map[square].color == board.turn:
-                            self.selected_square = square
+                            self._selected_square = square
                             self.display_board(board, board_map=board_map)
 
                     # ...square is selected
                     else:
                         # square is a valid square to move to
-                        if square in self.highlight_mask:
+                        if square in self._highlight_mask:
                             # if the move is a pawn promotion
-                            if board_map[self.selected_square].piece_type == chess.PAWN and (
+                            if board_map[self._selected_square].piece_type == chess.PAWN and (
                                 chess.square_rank(square) == 7 or chess.square_rank(square) == 0  # noqa: PLR2004
                             ):
-                                user_input = chess.Move(self.selected_square, square, chess.QUEEN)
-                            user_input = chess.Move(self.selected_square, square)
-                            self.selected_square = None
+                                user_input = chess.Move(self._selected_square, square, chess.QUEEN)
+                            user_input = chess.Move(self._selected_square, square)
+                            self._selected_square = None
 
                         # square is not a vlid square to move to, but is a square with a piece of
                         # our color
                         elif square in board_map and board_map[square].color == board.turn:
-                            self.selected_square = (
-                                square if self.selected_square != square else None
+                            self._selected_square = (
+                                square if self._selected_square != square else None
                             )
                             self.display_board(board, board_map=board_map)
 
                         # square is an "unselectable" square (empty or opponent)
                         else:
-                            self.selected_square = None
+                            self._selected_square = None
                             self.display_board(board, board_map=board_map)
 
                         # if valid user input was created, return that
@@ -266,6 +266,10 @@ class Display:
 
             # return a resignation event if the window was exited
             if event.type == pg.QUIT:
-                pg.quit()
+                self.exit()
                 return RESIGN
         return None
+
+    def exit(self) -> None:
+        """Close the display window."""
+        pg.quit()
