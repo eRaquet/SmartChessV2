@@ -6,10 +6,21 @@ import chess
 import numpy as np
 
 import modules.conventions as lib
-from modules.chess_types import BOARD_ENCODING_SHAPE, PIECE_ENCODING_SHAPE, BoardEncoding, PieceEncoding, Players, SetEncoding
+from modules.chess_types import (
+    BOARD_ENCODING_SHAPE,
+    PIECE_ENCODING_SHAPE,
+    Action,
+    BoardEncoding,
+    MoveVector,
+    PieceEncoding,
+    Players,
+    SetEncoding,
+)
 
 
-def encode_pieces(piece_map: dict[chess.Square, chess.Piece], color_to_move: chess.Color) -> PieceEncoding:
+def encode_pieces(
+    piece_map: dict[chess.Square, chess.Piece], color_to_move: chess.Color
+) -> PieceEncoding:
     """
 
     Encode a board position from the perspective of a certain player color.
@@ -38,7 +49,9 @@ def encode_pieces(piece_map: dict[chess.Square, chess.Piece], color_to_move: che
     # iterate through piece map and set respective bits
     for square, piece in piece_map.items():
         row, col = square_indices(square, color_to_move)
-        encoded_pieces[row, col, get_piece_index(piece.piece_type, Players(piece.color == color_to_move))] = 1
+        encoded_pieces[
+            row, col, get_piece_index(piece.piece_type, Players(piece.color == color_to_move))
+        ] = 1
 
     # return contructed board encoding
     return encoded_pieces
@@ -100,7 +113,10 @@ def encode_board(board: chess.Board) -> BoardEncoding:
 
 
 def generate_board_encodings_from_moves(  # noqa: PLR0915
-    encoding: BoardEncoding, moves: list[chess.Move], player_color: chess.Color, board_state_counter: Counter[bytes]
+    encoding: BoardEncoding,
+    moves: MoveVector,
+    player_color: chess.Color,
+    board_state_counter: Counter[bytes],
 ) -> SetEncoding:
     """
 
@@ -110,12 +126,13 @@ def generate_board_encodings_from_moves(  # noqa: PLR0915
     ----------
     encoding : BoardEncoding
         The board encoding of the current position from the view of player_color
-    moves : list[chess.Move]
+    moves : MoveVector
         List of moves possible from the current position
     player_color : chess.Color
         Color of the player whose turn it is (and whose BoardEncoding was created)
     board_state_counter : Counter[bytes]
-        Counter containing the bytes of all previous board encodings to use for finding three-fold repetition
+        Counter containing the bytes of all previous board encodings to use for finding three-fold
+        repetition
 
     Returns
     -------
@@ -130,11 +147,15 @@ def generate_board_encodings_from_moves(  # noqa: PLR0915
     encodings = np.zeros((len(moves), 8, 8, 18), dtype=np.uint8)
 
     # transfer the piece encodings
-    flipped_piece_encoding = np.flip(encoding[:, :, 0:12], (-3, -1))  # flip the encodings to the other player
+    flipped_piece_encoding = np.flip(
+        encoding[:, :, 0:12], (-3, -1)
+    )  # flip the encodings to the other player
     encodings[:, :, :, 0:12] = flipped_piece_encoding  # fill in the flipped piece encodings
 
     # transfer the caslting encodings
-    flipped_castle_encoding = np.flip(encoding[:, :, 12:16], -1)  # flip the castling rights to the other player
+    flipped_castle_encoding = np.flip(
+        encoding[:, :, 12:16], -1
+    )  # flip the castling rights to the other player
     encodings[:, :, :, 12:16] = flipped_castle_encoding  # fill in the flipped castle encoding
 
     ### Construct move info
@@ -142,7 +163,11 @@ def generate_board_encodings_from_moves(  # noqa: PLR0915
     # move squares
     move_squares_index = np.array(
         [  # (move index, from/to square, row/column)
-            [square_indices(move.from_square, opponent_color), square_indices(move.to_square, opponent_color)] for move in moves
+            [
+                square_indices(move.from_square, opponent_color),
+                square_indices(move.to_square, opponent_color),
+            ]
+            for move in moves
         ]
     )
 
@@ -155,7 +180,12 @@ def generate_board_encodings_from_moves(  # noqa: PLR0915
 
     # get piece types
     piece_indices = np.argmax(flipped_piece_encoding[from_squares_row, from_squares_col], axis=1)
-    promotions = np.array([get_piece_index(move.promotion, Players.OPPONENT) if move.promotion is not None else 0 for move in moves])
+    promotions = np.array(
+        [
+            get_piece_index(move.promotion, Players.OPPONENT) if move.promotion is not None else 0
+            for move in moves
+        ]
+    )
 
     ### Run parallel move encoding
 
@@ -181,10 +211,16 @@ def generate_board_encodings_from_moves(  # noqa: PLR0915
     # check for en passant moves
     en_passant_move_indices = np.where(
         (piece_indices == get_piece_index(chess.PAWN, Players.OPPONENT))  # piece is a pawn
-        & (from_squares_row == to_squares_row + 2)  # the pawn moved twice (since it will always be opponent movement, I don't need abs())
         & (
-            (np.any(encodings[move_range, to_squares_row, np.clip(to_squares_col + 1, 0, 7), 0]))  # self pawn to the right
-            | (np.any(encodings[move_range, to_squares_row, np.clip(to_squares_col - 1, 0, 7), 0]))  # self pawn to the left
+            from_squares_row == to_squares_row + 2
+        )  # the pawn moved twice (since it will always be opponent movement, I don't need abs())
+        & (
+            (
+                np.any(encodings[move_range, to_squares_row, np.clip(to_squares_col + 1, 0, 7), 0])
+            )  # self pawn to the right
+            | (
+                np.any(encodings[move_range, to_squares_row, np.clip(to_squares_col - 1, 0, 7), 0])
+            )  # self pawn to the left
         )
     )
 
@@ -196,8 +232,11 @@ def generate_board_encodings_from_moves(  # noqa: PLR0915
             17,  # this is the en passant capture channel
         ] = 1
 
-    # move the piece to the new location (note that this also removes any pieces in the new location...capture!)
-    encodings[move_range, to_squares_row, to_squares_col] = encodings[move_range, from_squares_row, from_squares_col]
+    # move the piece to the new location (note that this also removes any pieces in the new
+    # location...capture!)
+    encodings[move_range, to_squares_row, to_squares_col] = encodings[
+        move_range, from_squares_row, from_squares_col
+    ]
 
     # remove the old piece location
     encodings[move_range, from_squares_row, from_squares_col, piece_indices] = 0
@@ -233,17 +272,41 @@ def generate_board_encodings_from_moves(  # noqa: PLR0915
 
     # move rooks
     if len(king_side_indices[0]) > 0:
-        encodings[move_range[king_side_indices], lib.MAX_ROW_INDEX, lib.MAX_COL_INDEX, get_piece_index(chess.ROOK, Players.OPPONENT)] = 0
-        encodings[move_range[king_side_indices], lib.MAX_ROW_INDEX, 5, get_piece_index(chess.ROOK, Players.OPPONENT)] = 1
+        encodings[
+            move_range[king_side_indices],
+            lib.MAX_ROW_INDEX,
+            lib.MAX_COL_INDEX,
+            get_piece_index(chess.ROOK, Players.OPPONENT),
+        ] = 0
+        encodings[
+            move_range[king_side_indices],
+            lib.MAX_ROW_INDEX,
+            5,
+            get_piece_index(chess.ROOK, Players.OPPONENT),
+        ] = 1
     if len(queen_side_indices[0]) > 0:
-        encodings[move_range[queen_side_indices], lib.MAX_ROW_INDEX, lib.MIN_COL_INDEX, get_piece_index(chess.ROOK, Players.OPPONENT)] = 0
-        encodings[move_range[queen_side_indices], lib.MAX_ROW_INDEX, 3, get_piece_index(chess.ROOK, Players.OPPONENT)] = 1
+        encodings[
+            move_range[queen_side_indices],
+            lib.MAX_ROW_INDEX,
+            lib.MIN_COL_INDEX,
+            get_piece_index(chess.ROOK, Players.OPPONENT),
+        ] = 0
+        encodings[
+            move_range[queen_side_indices],
+            lib.MAX_ROW_INDEX,
+            3,
+            get_piece_index(chess.ROOK, Players.OPPONENT),
+        ] = 1
 
     # adjust castling rights
 
     # determine if the king moved and undo castling rights if so
-    if encoding[0, 0, 12] == 1 or encoding[0, 0, 13] == 1:  # if the opponent had any caslting rights
-        king_movement_non_castling = np.where(piece_indices == get_piece_index(chess.KING, Players.OPPONENT))
+    if (
+        encoding[0, 0, 12] == 1 or encoding[0, 0, 13] == 1
+    ):  # if the opponent had any caslting rights
+        king_movement_non_castling = np.where(
+            piece_indices == get_piece_index(chess.KING, Players.OPPONENT)
+        )
 
         if len(king_movement_non_castling[0]) > 0:
             encodings[move_range[king_movement_non_castling], :, :, 14:16] = 0
@@ -273,7 +336,9 @@ def generate_board_encodings_from_moves(  # noqa: PLR0915
             encodings[move_range[king_side_indices], :, :, 14] = 0
 
     # look for three-fold repetition
-    counts = np.array([board_state_counter.get(board.tobytes(), 0) for board in encodings], dtype=np.uint8)
+    counts = np.array(
+        [board_state_counter.get(board.tobytes(), 0) for board in encodings], dtype=np.uint8
+    )
     repetition_indices = np.where(counts > 1)
 
     if len(repetition_indices[0]) > 0:
@@ -293,7 +358,8 @@ def get_piece_index(piece_type: chess.PieceType, player: Players) -> int:
         Type of piece as defined by chess library
     player : Players
         Player type.
-        **Note**: not piece color, but whether or not the piece belongs to the player the encoding is being created for.
+        **Note**: not piece color, but whether or not the piece belongs to the player the encoding
+        is being created for.
 
     Returns
     -------
@@ -321,3 +387,23 @@ def square_indices(square: chess.Square, player_color: chess.Color) -> tuple[int
         row and column index of square in encoding space
     """
     return square // 8 if player_color == chess.WHITE else 7 - square // 8, square % 8
+
+
+def get_action(move: chess.Move, vector: MoveVector) -> Action:
+    """
+
+    Obtain the action that gives the selected move from the given move vector.
+
+    Parameters
+    ----------
+    move : chess.Move
+        move to create action for
+    vector : MoveVector
+        current move vector
+
+    Returns
+    -------
+    Action
+        index of given move in move vector
+    """
+    return vector.index(move)

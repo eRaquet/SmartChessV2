@@ -6,9 +6,10 @@ import chess
 import numpy as np
 
 from modules.chess_types import (
+    RESIGN,
     Action,
     BoardOutcome,
-    DisplayMode,
+    MoveVector,
     Observation,
     Trajectory,
 )
@@ -22,7 +23,7 @@ from modules.tools import (
 class Board:
     """Chess board environment with generation of valid moves and creation of observations."""
 
-    def __init__(self, rendering_mode: DisplayMode = DisplayMode.NONE) -> None:
+    def __init__(self) -> None:
         """Initiate a board object."""
         self._board = chess.Board()
         self._encoding = encode_board(self._board)
@@ -34,11 +35,7 @@ class Board:
 
         # allocate the observation space
         self._observation: Observation = np.array([], dtype=np.uint8)
-        self.observe()
-
-        self._rendering_mode = rendering_mode
-        if self._rendering_mode is DisplayMode.GUI:
-            self._display = Display()
+        self._observe()
 
     def reset(self) -> None:
         """Reset board position."""
@@ -47,8 +44,8 @@ class Board:
         self._state_list = [self._encoding.copy()]
         self._board_state_counter = Counter(self._encoding.tobytes())
         self._moves = list(self._board.legal_moves)
-        self.observe()
-        self.render()
+        self._observe()
+        self._render()
 
     def step(self, action: Action) -> None:
         """
@@ -61,29 +58,36 @@ class Board:
             Action performed on the board (chess move)
         """
         if self._status not in BoardOutcome.TERMINATED:
-            self.update_state(action)
+            if action != RESIGN:
+                self.update_state(action)
 
-            # check for end conditions
-            if self._board.is_checkmate():
+                # check for end conditions
+                if self._board.is_checkmate():
+                    self._status = (
+                        BoardOutcome.BLACK
+                        if self._board.turn == chess.WHITE
+                        else BoardOutcome.WHITE
+                    )
+                elif (
+                    self._board.is_repetition()
+                    or self._board.is_fifty_moves()
+                    or self._board.is_insufficient_material()
+                    or self._board.is_stalemate()
+                ):
+                    self._status = BoardOutcome.DRAW
+
+                self._observe()
+
+                self._render()
+            else:
                 self._status = (
                     BoardOutcome.BLACK if self._board.turn == chess.WHITE else BoardOutcome.WHITE
                 )
-            elif (
-                self._board.is_repetition()
-                or self._board.is_fifty_moves()
-                or self._board.is_insufficient_material()
-                or self._board.is_stalemate()
-            ):
-                self._status = BoardOutcome.DRAW
-
-            self.observe()
-
-            self.render()
         else:
             msg = "Board is in terminal state, and cannot be stepped."
             raise RuntimeError(msg)
 
-    def observe(self) -> None:
+    def _observe(self) -> None:
         """Make the environment reflect the board state and generate an observation."""
         if self._status not in BoardOutcome.TERMINATED:
             # create observation encodings
@@ -96,7 +100,7 @@ class Board:
     def update_state(self, action: Action) -> None:
         """
 
-        Update the state of the environment without generating an observation.
+        Update the state of the environment without generating an observation or rendering.
 
         Parameters
         ----------
@@ -110,27 +114,19 @@ class Board:
         self._state_list.append(self._encoding.copy())
         self._board_state_counter.update(self._encoding.tobytes())
 
-    def render(self) -> None:
-        """Render the board object according to the set render mode."""
-        if self._rendering_mode is DisplayMode.NONE:
-            return
-        if self._rendering_mode is DisplayMode.ASCII:
-            print("\033[2J\033[H", end="")
-            print("-" * 15)
-            print(self._board)
-            print("-" * 15)
-        if self._rendering_mode is DisplayMode.GUI:
-            self._display.display_board(self._board, self._board.piece_map())
+    def _render(self) -> None:
+        """Render method for board, empty for base class."""
+        return
 
     @property
-    def moves(self) -> list[chess.Move]:
+    def moves(self) -> MoveVector:
         """
 
         List of possible moves from the current board state.
 
         Returns
         -------
-        list[chess.Move]
+        MoveVector
             list of moves
         """
         return self._moves
@@ -232,3 +228,38 @@ class Board:
         int
         """
         return self._board.ply()
+
+
+class ASCIIBoard(Board):
+    """Board with simple ASCII visualization."""
+
+    def _render(self) -> None:
+        """Render board as ASCII."""
+        print("-" * 15)
+        print(self._board)
+        print("-" * 15)
+
+
+class GUIBoard(Board):
+    """Board with full pygame gui."""
+
+    def __init__(self) -> None:
+        super().__init__()
+
+        self._display = Display()
+
+    def _render(self) -> None:
+        """Render board display."""
+        self._display.display_board(self._board)
+
+    def get_user_input(self) -> Action | None:
+        """
+
+        Check if the user has given GUI input, and return the move if possible.
+
+        Returns
+        -------
+        Action | None
+            Action selected by the user, or None if no action is yet selected
+        """
+        return self._display.get_user_input(self._board, self._moves)

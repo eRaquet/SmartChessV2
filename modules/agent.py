@@ -5,10 +5,11 @@ from typing import Any
 import numpy as np
 from scipy.special import softmax
 
-from modules.board import Board
+from modules.board import Board, GUIBoard
 from modules.chess_types import (
     Action,
 )
+from modules.config import DEFAULT_CONFIDENCE
 from modules.model import ModelBase
 
 
@@ -63,7 +64,9 @@ class RandomAgent(AgentBase):
 class StandardAgent(AgentBase):
     """Agent that picks a move based on its underlying model."""
 
-    def __init__(self, model: ModelBase, confidence_factor: float | None) -> None:
+    def __init__(
+        self, model: ModelBase, confidence_factor: float | None = DEFAULT_CONFIDENCE
+    ) -> None:
         self.model = model
         self.rng = np.random.default_rng()
         self.confidence_factor = confidence_factor
@@ -91,3 +94,30 @@ class StandardAgent(AgentBase):
         choice_distribution = softmax(evals * self.confidence_factor)
 
         return self.rng.choice(len(choice_distribution), p=choice_distribution)
+
+
+class UIAgent(AgentBase):
+    """Agent that gets user input from a board with a GUI."""
+
+    def __init__(self, board: GUIBoard) -> None:
+        if type(board) is not GUIBoard:
+            msg = "UI Agents can only be instantiated from a GUI Board."
+            raise TypeError(msg)
+
+        # core objects that a UIAgent contains
+        self._board = board
+
+    def act(self, _: Board) -> Action:
+        """
+
+        Get the user input.
+
+        Returns
+        -------
+        Action
+            action to take, specified by user
+        """
+        action = None
+        while action is None:
+            action = self._board.get_user_input()
+        return action
