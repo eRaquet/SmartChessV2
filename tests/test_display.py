@@ -1,7 +1,12 @@
 # ruff: noqa: S101
 """Tests for display class."""
 
+import os
+
 import chess
+
+# make a blank rendering backend for testing
+os.environ["SDL_VIDEODRIVER"] = "dummy"
 
 from modules.display import Display
 
