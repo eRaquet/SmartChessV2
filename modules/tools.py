@@ -5,10 +5,15 @@ from collections import Counter
 import chess
 import numpy as np
 
-import modules.conventions as lib
 from modules.chess_types import (
     BOARD_ENCODING_SHAPE,
+    MAX_COL_INDEX,
+    MAX_ROW_INDEX,
+    MIN_COL_INDEX,
     PIECE_ENCODING_SHAPE,
+    PIECE_INDEX,
+    ROOK_CASTLE_FILE_KINGSIDE,
+    ROOK_CASTLE_FILE_QUEENSIDE,
     Action,
     BoardEncoding,
     MoveVector,
@@ -216,10 +221,24 @@ def generate_board_encodings_from_moves(  # noqa: PLR0915
         )  # the pawn moved twice (since it will always be opponent movement, I don't need abs())
         & (
             (
-                np.any(encodings[move_range, to_squares_row, np.clip(to_squares_col + 1, 0, 7), 0])
+                np.any(
+                    encodings[
+                        move_range,
+                        to_squares_row,
+                        np.clip(to_squares_col + 1, MIN_COL_INDEX, MAX_COL_INDEX),
+                        0,
+                    ]
+                )
             )  # self pawn to the right
             | (
-                np.any(encodings[move_range, to_squares_row, np.clip(to_squares_col - 1, 0, 7), 0])
+                np.any(
+                    encodings[
+                        move_range,
+                        to_squares_row,
+                        np.clip(to_squares_col - 1, MIN_COL_INDEX, MAX_COL_INDEX),
+                        0,
+                    ]
+                )
             )  # self pawn to the left
         )
     )
@@ -274,27 +293,27 @@ def generate_board_encodings_from_moves(  # noqa: PLR0915
     if len(king_side_indices[0]) > 0:
         encodings[
             move_range[king_side_indices],
-            lib.MAX_ROW_INDEX,
-            lib.MAX_COL_INDEX,
+            MAX_ROW_INDEX,
+            MAX_COL_INDEX,
             get_piece_index(chess.ROOK, Players.OPPONENT),
         ] = 0
         encodings[
             move_range[king_side_indices],
-            lib.MAX_ROW_INDEX,
-            5,
+            MAX_ROW_INDEX,
+            ROOK_CASTLE_FILE_KINGSIDE,
             get_piece_index(chess.ROOK, Players.OPPONENT),
         ] = 1
     if len(queen_side_indices[0]) > 0:
         encodings[
             move_range[queen_side_indices],
-            lib.MAX_ROW_INDEX,
-            lib.MIN_COL_INDEX,
+            MAX_ROW_INDEX,
+            MIN_COL_INDEX,
             get_piece_index(chess.ROOK, Players.OPPONENT),
         ] = 0
         encodings[
             move_range[queen_side_indices],
-            lib.MAX_ROW_INDEX,
-            3,
+            MAX_ROW_INDEX,
+            ROOK_CASTLE_FILE_QUEENSIDE,
             get_piece_index(chess.ROOK, Players.OPPONENT),
         ] = 1
 
@@ -315,8 +334,8 @@ def generate_board_encodings_from_moves(  # noqa: PLR0915
     if encoding[0, 0, 12] == 1:
         queen_side_rook_movement = np.where(
             (piece_indices == get_piece_index(chess.ROOK, Players.OPPONENT))  # piece is a rook
-            & (from_squares_col == lib.MIN_COL_INDEX)  # piece moved from the left of the chessboard
-            & (from_squares_row == lib.MAX_ROW_INDEX)  # piece moved from the top of the chessboard
+            & (from_squares_col == MIN_COL_INDEX)  # piece moved from the left of the chessboard
+            & (from_squares_row == MAX_ROW_INDEX)  # piece moved from the top of the chessboard
         )
         if len(queen_side_rook_movement[0]) > 0:
             encodings[move_range[queen_side_rook_movement], :, :, 15] = 0
@@ -327,8 +346,8 @@ def generate_board_encodings_from_moves(  # noqa: PLR0915
     if encoding[0, 0, 13] == 1:
         king_side_rook_movement = np.where(
             (piece_indices == get_piece_index(chess.ROOK, Players.OPPONENT))  # piece is a rook
-            & (from_squares_col == lib.MAX_COL_INDEX)  # piece moved from the left of the chessboard
-            & (from_squares_row == lib.MAX_ROW_INDEX)  # piece moved from the top of the chessboard
+            & (from_squares_col == MAX_COL_INDEX)  # piece moved from the left of the chessboard
+            & (from_squares_row == MAX_ROW_INDEX)  # piece moved from the top of the chessboard
         )
         if len(king_side_rook_movement[0]) > 0:
             encodings[move_range[king_side_rook_movement], :, :, 14] = 0
@@ -366,7 +385,7 @@ def get_piece_index(piece_type: chess.PieceType, player: Players) -> int:
     int
         Piece index into board encoding
     """
-    return lib.piece_index[(piece_type, player)]
+    return PIECE_INDEX[(piece_type, player)]
 
 
 def square_indices(square: chess.Square, player_color: chess.Color) -> tuple[int, int]:
