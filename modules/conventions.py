@@ -4,10 +4,6 @@ import chess
 
 from modules.chess_types import Players
 
-# board array representation:
-#    array of bools with shape (8, 8, 12)
-#    with description of (rank, file, piece type)
-
 # piece type index in observation space (used because reflection not switches side)
 piece_index = {
     (chess.PAWN, Players.SELF): 0,
