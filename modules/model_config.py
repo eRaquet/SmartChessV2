@@ -1,6 +1,9 @@
 """Python file that contains some model configurations parameters."""
 
 import os
+import warnings
+
+warnings.filterwarnings("ignore", category=UserWarning)
 
 KERAS_BACKEND = "mlx"
 
