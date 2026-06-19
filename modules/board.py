@@ -14,7 +14,7 @@ from modules.chess_types import (
     Trajectory,
 )
 from modules.display import Display
-from modules.tools import (
+from modules.utils import (
     encode_board,
     generate_board_encodings_from_moves,
 )

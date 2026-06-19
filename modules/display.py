@@ -2,7 +2,7 @@
 
 import os
 
-from modules.tools import get_action
+from modules.utils import get_action
 
 os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "1"  # disable the pygame welcome message
 
