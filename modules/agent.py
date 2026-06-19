@@ -1,5 +1,6 @@
 """Module for defining chess agents."""
 
+from abc import ABC, abstractmethod
 from typing import Any
 
 import numpy as np
@@ -13,9 +14,10 @@ from modules.config import DEFAULT_CONFIDENCE
 from modules.model import ModelBase
 
 
-class AgentBase:
+class AgentBase(ABC):
     """Agent base class, specifying structure."""
 
+    @abstractmethod
     def act(self, board: Board, *args: Any, **kwargs: Any) -> Action:
         """
 
@@ -35,7 +37,6 @@ class AgentBase:
         ------
         NotImplementedError
         """
-        raise NotImplementedError
 
 
 class RandomAgent(AgentBase):

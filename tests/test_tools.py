@@ -8,11 +8,11 @@ import chess
 import numpy as np
 import pytest
 
-from modules.config import PROJECT_PATH
-from modules.conventions import (
+from modules.chess_types import (
     Players,
 )
-from modules.tools import (
+from modules.config import PROJECT_PATH
+from modules.utils import (
     encode_board,
     generate_board_encodings_from_moves,
     get_action,
