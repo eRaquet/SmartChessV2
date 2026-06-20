@@ -1,5 +1,6 @@
 """File for containing all the type aliases and structures used in SmartChessV2."""
 
+from dataclasses import dataclass
 from enum import Enum, IntFlag, auto
 from typing import (
     TypedDict,
@@ -142,6 +143,27 @@ class DataTerminationType(IntFlag):
 # - timestamp {INTEGER}
 
 
+@dataclass
+class GameData:
+    """Data class for storing metadata to go into the game table of the game database."""
+
+    id: int | None = None
+    white_agent_id: int | None = None
+    black_agent_id: int | None = None
+
+    result: DataResult | None = None
+    termination_type: DataTerminationType | None = None
+
+    ply_number: int | None = None
+
+    starting_fen: str | None = None
+
+    average_agent_entropy_white: float | None = None
+    average_agent_entropy_black: float | None = None
+
+    timestamp: int | None = None
+
+
 ## agent table
 
 # - id {INTEGER}
@@ -149,6 +171,17 @@ class DataTerminationType(IntFlag):
 # - strain (NULL if no strain) {INTEGER}
 # - generation (NULL if no generation) {INTEGER}
 # - timestamp (NULL if not a model-based agent) {INTEGER}
+
+
+@dataclass
+class AgentData:
+    """Data class for storing metadata to go into the agent table of the game database."""
+
+    id: int | None = None
+    agent_type: str | None = None
+    strain: int | None = None
+    generation: int | None = None
+    timestamp: int | None = None
 
 
 ## move table
@@ -179,5 +212,32 @@ class DataCastleType(IntFlag):
     QUEENSIDE = 1
 
 
-# - position zobrist hash {INTEGER}
+# - zobrist hash after move {INTEGER}
 # - legal move count {INTEGER}
+
+
+@dataclass
+class MoveData:
+    """Data class for storing metadata to go into the move table of the game database."""
+
+    id: int | None = None
+    game_id: int | None = None
+    agent_id: int | None = None
+    ply: int | None = None
+
+    uci: str | None = None
+    promotion: int | None = None
+    side_to_move: int | None = None
+    piece_type: int | None = None
+
+    position_eval_after_move: float | None = None
+    policy_entropy: float | None = None
+    probability_of_choice: float | None = None
+
+    capture_piece_type: int | None = None
+    is_en_passant: bool | None = None
+    is_check: bool | None = None
+    castle_type: DataCastleType | None = None
+
+    zobrist_after_move: int | None = None
+    legal_move_count: int | None = None
