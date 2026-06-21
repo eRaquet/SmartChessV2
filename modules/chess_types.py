@@ -111,13 +111,14 @@ ROOK_CASTLE_FILE_QUEENSIDE = 3
 # - id {INTEGER}
 # - white agent id {INTEGER}
 # - black agent id {INTEGER}
-# - result (white win, black win, draw) {INTEGER}
+# - result (white win, black win, draw, unresolved) {INTEGER}
 class LogResult(IntFlag):
     """Enum for mapping integer values to game results for the database."""
 
     WHITE = 0
     BLACK = 1
     DRAW = 2
+    UNRESOLVED = 3
 
 
 # - termination type
