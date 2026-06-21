@@ -34,7 +34,6 @@ BOARD_ENCODING_SHAPE = (8, 8, 18)
 # observations)
 type SetEncoding = NDArray[np.uint8]  # has a shape of (n, 8, 8, 18)
 type Observation = SetEncoding
-type Trajectory = SetEncoding
 # vector of all possible moves for a given state
 # the order must be static, as as Action is defined as an index into the move vector
 type MoveVector = list[chess.Move]

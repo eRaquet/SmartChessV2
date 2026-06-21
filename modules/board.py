@@ -11,7 +11,6 @@ from modules.chess_types import (
     BoardOutcome,
     MoveVector,
     Observation,
-    Trajectory,
 )
 from modules.display import Display
 from modules.utils import (
@@ -157,22 +156,6 @@ class Board:
         if self._status in BoardOutcome.WON:
             return chess.WHITE if BoardOutcome.WHITE else chess.BLACK
         return None
-
-    @property
-    def trajectory(self) -> Trajectory:
-        """
-
-        Trajectory of game states as a SetEncoding.
-
-        Returns
-        -------
-        Trajectory
-            shape (n, 8, 8, 18), where n is the index of each successive board state
-        """
-        if self._status in BoardOutcome.TERMINATED:
-            return np.array(self._state_list, dtype=np.uint8)
-        msg = "Board is not in terminal state, and does not contain a valid trajectory."
-        raise RuntimeError(msg)
 
     @property
     def observation(self) -> Observation:

@@ -4,7 +4,6 @@ import chess
 
 from modules.agent import AgentBase
 from modules.board import Board
-from modules.chess_types import Trajectory
 
 
 class Game:
@@ -22,16 +21,3 @@ class Game:
         while not self._board.terminated:
             action = self._agents[self._board.turn].act(self._board)
             self._board.step(action)
-
-    @property
-    def trajectory(self) -> Trajectory:
-        """
-
-        Trajectory of the game.
-
-        Returns
-        -------
-        Trajectory
-            shape (n, 8, 8, 18) where n is the number of board states
-        """
-        return self._board.trajectory
