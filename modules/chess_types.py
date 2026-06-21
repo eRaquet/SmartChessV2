@@ -113,7 +113,7 @@ ROOK_CASTLE_FILE_QUEENSIDE = 3
 # - white agent id {INTEGER}
 # - black agent id {INTEGER}
 # - result (white win, black win, draw) {INTEGER}
-class DataResult(IntFlag):
+class LogResult(IntFlag):
     """Enum for mapping integer values to game results for the database."""
 
     WHITE = 0
@@ -123,7 +123,7 @@ class DataResult(IntFlag):
 
 # - termination type
 #   (checkmate, stalemate, repetition, fifty moves, insufficient material, abort) {INTEGER}
-class DataTerminationType(IntFlag):
+class LogTerminationType(IntFlag):
     """Enum for mapping integer values to causes for game termination for the database."""
 
     CHECKMATE = 0
@@ -144,15 +144,15 @@ class DataTerminationType(IntFlag):
 
 
 @dataclass
-class GameData:
+class GameLogEntry:
     """Data class for storing metadata to go into the game table of the game database."""
 
     id: int | None = None
     white_agent_id: int | None = None
     black_agent_id: int | None = None
 
-    result: DataResult | None = None
-    termination_type: DataTerminationType | None = None
+    result: LogResult | None = None
+    termination_type: LogTerminationType | None = None
 
     ply_number: int | None = None
 
@@ -174,7 +174,7 @@ class GameData:
 
 
 @dataclass
-class AgentData:
+class AgentLogEntry:
     """Data class for storing metadata to go into the agent table of the game database."""
 
     id: int | None = None
@@ -205,7 +205,7 @@ class AgentData:
 # - is en passant {INTEGER}
 # - is check {INTEGER}
 # - castle type (NULL if no castle) {INTEGER}
-class DataCastleType(IntFlag):
+class LogCastleType(IntFlag):
     """Enum for mapping integer values to castling sides for the database."""
 
     KINGSIDE = 0
@@ -217,7 +217,7 @@ class DataCastleType(IntFlag):
 
 
 @dataclass
-class MoveData:
+class MoveLogEntry:
     """Data class for storing metadata to go into the move table of the game database."""
 
     id: int | None = None
@@ -237,7 +237,7 @@ class MoveData:
     capture_piece_type: int | None = None
     is_en_passant: bool | None = None
     is_check: bool | None = None
-    castle_type: DataCastleType | None = None
+    castle_type: LogCastleType | None = None
 
     zobrist_after_move: int | None = None
     legal_move_count: int | None = None
