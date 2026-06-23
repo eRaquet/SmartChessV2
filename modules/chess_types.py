@@ -226,15 +226,15 @@ class MoveLogEntry:
     ply: int | None = None
 
     uci: str | None = None
-    promotion: int | None = None
-    side_to_move: int | None = None
-    piece_type: int | None = None
+    promotion: chess.PieceType | None = None
+    side_to_move: chess.Color | None = None
+    piece_type: chess.PieceType | None = None
 
     position_eval_after_move: float | None = None
     policy_entropy: float | None = None
     probability_of_choice: float | None = None
 
-    capture_piece_type: int | None = None
+    capture_piece_type: chess.PieceType | None = None
     is_en_passant: bool | None = None
     is_check: bool | None = None
     castle_type: LogCastleType | None = None

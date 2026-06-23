@@ -426,3 +426,16 @@ def get_action(move: chess.Move, vector: MoveVector) -> Action:
         index of given move in move vector
     """
     return vector.index(move)
+
+
+def get_new_id() -> int:
+    """
+
+    Temporary function to return dummy "id's" for testing.
+
+    Returns
+    -------
+    int
+        returned id
+    """
+    return np.random.Generator().integers(0, 2**16 - 1)
