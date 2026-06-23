@@ -142,7 +142,7 @@ def generate_board_encodings_from_moves(  # noqa: PLR0915
     Returns
     -------
     SetEncoding
-        The returned board encodings,
+        The returned board encodings, as seen by the other player
         shape: (number of moves, 8, 8, 18)
     """
     num_moves = len(moves)

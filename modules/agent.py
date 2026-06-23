@@ -87,7 +87,7 @@ class StandardAgent(AgentBase):
         Action
             chosen action
         """
-        evals = self.model.predict_batch(board.observation)
+        evals = 1 - self.model.predict_batch(board.observation)
 
         if self.confidence_factor is None:
             return np.argmax(evals)
