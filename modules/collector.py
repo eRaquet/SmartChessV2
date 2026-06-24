@@ -1,15 +1,20 @@
 """Module that defines datacollectors to abstract data flow from actual objects."""
 
+import time
+
 import chess
 import numpy as np
 from chess.polyglot import zobrist_hash
 
+from modules.agent import AgentBase, StandardAgent
 from modules.chess_types import (
     PMF,
     Action,
     AgentLogEntry,
     GameLogEntry,
     LogCastleType,
+    LogResult,
+    LogTerminationType,
     MoveLogEntry,
     MoveVector,
     SetEvaluation,
@@ -21,13 +26,32 @@ class LogCollector:
     """Class that can accept and store metadata from various parts of games for useage elsewhere."""
 
     def __init__(self) -> None:
-        self._game = GameLogEntry()
+        self._game = None
         self._moves: list[MoveLogEntry] = []
         self._current_move: MoveLogEntry | None = None
         self._agents = {
-            chess.WHITE: AgentLogEntry(),
-            chess.BLACK: AgentLogEntry(),
+            chess.WHITE: None,
+            chess.BLACK: None,
         }
+
+    def select_agent(self, agent: AgentBase, color: chess.Color) -> None:
+        """Select the agent playing the specific color."""
+        self._agents[color] = AgentLogEntry(
+            id=get_new_id(),
+            agent_type=type(agent).__name__,
+            strain=agent.strain if isinstance(agent, StandardAgent) else None,
+            generation=agent.generation if isinstance(agent, StandardAgent) else None,
+            timestamp=time.time_ns(),
+        )
+
+    def new_game(self) -> None:
+        """Create a new game log entry."""
+        self._game = GameLogEntry(
+            id=get_new_id(),
+            white_agent_id=self._agents[chess.WHITE].id,
+            black_agent_id=self._agents[chess.BLACK].id,
+            timestamp=time.time_ns(),
+        )
 
     def new_move(self) -> None:
         """Create a new move log object to insert to."""
@@ -40,8 +64,45 @@ class LogCollector:
             ply=ply,
             agent_id=self._agents[side_to_move].id,
             side_to_move=side_to_move,
+            timestamp=time.time_ns(),
         )
         self._moves.append(self._current_move)
+
+    def terminate_game(self, board: chess.Board) -> None:
+        """Terminate the game for this collector."""
+        outcome = board.outcome()
+        if outcome:
+            if outcome.winner is chess.WHITE:
+                self._game.result = LogResult.WHITE
+            elif outcome.winner is chess.BLACK:
+                self._game.result = LogResult.BLACK
+            else:
+                self._game.result = LogResult.DRAW
+
+            if outcome.termination is chess.Termination.CHECKMATE:
+                self._game.termination_type = LogTerminationType.CHECKMATE
+            elif outcome.termination is chess.Termination.STALEMATE:
+                self._game.termination_type = LogTerminationType.STALEMATE
+            elif outcome.termination in (
+                chess.Termination.FIVEFOLD_REPETITION,
+                chess.Termination.THREEFOLD_REPETITION,
+            ):
+                self._game.termination_type = LogTerminationType.REPETITION
+            elif outcome.termination in (
+                chess.Termination.FIFTY_MOVES,
+                chess.Termination.SEVENTYFIVE_MOVES,
+            ):
+                self._game.termination_type = LogTerminationType.FIFTY_MOVES
+            elif outcome.termination is chess.Termination.INSUFFICIENT_MATERIAL:
+                self._game.termination_type = LogTerminationType.INSUFFICIENT_MATERIAL
+            else:
+                self._game.termination_type = LogTerminationType.ABORT
+
+        else:
+            self._game.result = LogResult.UNRESOLVED
+            self._game.termination_type = LogTerminationType.ABORT
+
+        self._game.ply_number = len(self._moves)
 
     def insert_model_action(
         self, evaluation: SetEvaluation, distribution: PMF, action: Action
