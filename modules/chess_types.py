@@ -138,10 +138,8 @@ class LogTerminationType(IntFlag):
 # - ply number {INTEGER}
 
 # - starting fen (NULL if standard starting fen) {TEXT}
-# - average agent entropy white (NULL if not model based) {REAL}
-# - average agent entropy black (NULL if not model based) {REAL}
 
-# - timestamp {INTEGER}
+# - timestamp in nanoseconds since last Unix epoch {INTEGER}
 
 
 @dataclass
@@ -159,9 +157,6 @@ class GameLogEntry:
 
     starting_fen: str | None = None
 
-    average_agent_entropy_white: float | None = None
-    average_agent_entropy_black: float | None = None
-
     timestamp: int | None = None
 
 
@@ -171,7 +166,7 @@ class GameLogEntry:
 # - agent type (name of class, "StandardAgent" for example) {TEXT}
 # - strain (NULL if no strain) {INTEGER}
 # - generation (NULL if no generation) {INTEGER}
-# - timestamp (NULL if not a model-based agent) {INTEGER}
+# - timestamp in nanoseconds since last Unix epoch {INTEGER}
 
 
 @dataclass
@@ -216,6 +211,8 @@ class LogCastleType(IntFlag):
 # - zobrist hash after move {INTEGER} populated by board
 # - legal move count {INTEGER} populated by board
 
+# - timestamp in nanoseconds since last Unix epoch {INTEGER}
+
 
 @dataclass
 class MoveLogEntry:
@@ -241,3 +238,5 @@ class MoveLogEntry:
 
     zobrist_after_move: int | None = None
     legal_move_count: int | None = None
+
+    timestamp: int | None = None
