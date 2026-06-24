@@ -1,10 +1,13 @@
 """Module that defines datacollectors to abstract data flow from actual objects."""
 
 import time
+from dataclasses import fields
+from pathlib import Path
 
 import chess
 import numpy as np
 from chess.polyglot import zobrist_hash
+from tabulate import tabulate
 
 from modules.agent import AgentBase, StandardAgent
 from modules.chess_types import (
@@ -103,6 +106,25 @@ class LogCollector:
             self._game.termination_type = LogTerminationType.ABORT
 
         self._game.ply_number = len(self._moves)
+
+    def write_game(self) -> None:
+        """Write game to output (currently just a text file)."""
+        game_headers = [f.name for f in fields(GameLogEntry)]
+        agent_headers = [f.move for f in fields(AgentLogEntry)]
+        move_headers = [f.name for f in fields(MoveLogEntry)]
+
+        game_data = [list(self._game.astuple())]
+        agent_data = [list(agent.astuple()) for agent in self._agents.values()]
+        move_data = [list(move.astuple()) for move in self._moves]
+
+        game_string = tabulate(game_data, headers=game_headers, tablefmt="grid")
+        agent_string = tabulate(agent_data, headers=agent_headers, tablefmt="grid")
+        move_string = tabulate(move_data, headers=move_headers, tablefmt="grid")
+
+        with Path.open("temp.txt", "w") as file:
+            print(game_string, file=file)
+            print(agent_string, file=file)
+            print(move_string, file=file)
 
     def insert_model_action(
         self, evaluation: SetEvaluation, distribution: PMF, action: Action
