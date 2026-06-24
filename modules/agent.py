@@ -12,7 +12,7 @@ from modules.chess_types import (
 )
 from modules.collector import LogCollector
 from modules.config import DEFAULT_CONFIDENCE
-from modules.model import ModelBase
+from modules.model import ModelBase, StandardModel
 
 
 class AgentBase(ABC):
@@ -74,9 +74,11 @@ class StandardAgent(AgentBase):
         confidence_factor: float | None = DEFAULT_CONFIDENCE,
         log_collector: LogCollector | None = None,
     ) -> None:
-        self.model = model
+        self._model = model
         self._confidence_factor = confidence_factor
         self._log_collector = log_collector
+        self.strain = model.strain if isinstance(model, StandardModel) else None
+        self.generation = model.generation if isinstance(model, StandardModel) else None
 
     def act(self, board: Board) -> Action:
         """
@@ -93,7 +95,7 @@ class StandardAgent(AgentBase):
         Action
             chosen action
         """
-        evals = 1 - self.model.predict_batch(board.observation)
+        evals = 1 - self._model.predict_batch(board.observation)
 
         if self._confidence_factor is None:
             action = np.argmax(evals)
