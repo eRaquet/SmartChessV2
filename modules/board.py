@@ -88,6 +88,9 @@ class Board:
             msg = "Board is in terminal state, and cannot be stepped."
             raise RuntimeError(msg)
 
+        if self._log_collector and self._status in BoardOutcome.TERMINATED:
+            self._log_collector.terminate_game(self._board)
+
     def _observe(self) -> None:
         """Make the environment reflect the board state and generate an observation."""
         if self._status not in BoardOutcome.TERMINATED:
