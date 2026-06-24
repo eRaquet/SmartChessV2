@@ -12,6 +12,7 @@ from modules.chess_types import (
     MoveVector,
     Observation,
 )
+from modules.collector import LogCollector
 from modules.display import Display
 from modules.utils import (
     encode_board,
@@ -22,13 +23,14 @@ from modules.utils import (
 class Board:
     """Chess board environment with generation of valid moves and creation of observations."""
 
-    def __init__(self) -> None:
+    def __init__(self, log_collector: LogCollector | None = None) -> None:
         """Initiate a board object."""
         self._board = chess.Board()
         self._encoding = encode_board(self._board)
         self._state_list = [self._encoding.copy()]
         self._board_state_counter = Counter(self._encoding.tobytes())
         self._moves = list(self._board.legal_moves)
+        self._log_collector = log_collector
 
         self._status = BoardOutcome.UNDECIDED
 
@@ -107,7 +109,15 @@ class Board:
             played action, represented by the index of move to play
         """
         move = self._moves[action]
-        self._board.push(move)
+
+        if self._log_collector:
+            self._log_collector.insert_board_action_pre(move, self._moves, self._board)
+            self._board.push(move)
+            self._log_collector.insert_board_action_post(self._board)
+
+        else:
+            self._board.push(move)
+
         self._moves = list(self._board.legal_moves)
         self._encoding = encode_board(self._board)
         self._state_list.append(self._encoding.copy())

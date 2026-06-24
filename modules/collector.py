@@ -2,6 +2,7 @@
 
 import chess
 import numpy as np
+from chess.polyglot import zobrist_hash
 
 from modules.chess_types import (
     PMF,
@@ -10,6 +11,7 @@ from modules.chess_types import (
     GameLogEntry,
     LogCastleType,
     MoveLogEntry,
+    MoveVector,
     SetEvaluation,
 )
 from modules.utils import get_new_id
@@ -41,19 +43,6 @@ class LogCollector:
         )
         self._moves.append(self._current_move)
 
-    def insert_chess_move(self, chess_move: chess.Move) -> None:
-        """
-
-        Insert the information from a `chess.Move` object into the collector.
-
-        Parameters
-        ----------
-        chess_move : chess.Move
-            chess move object to log info from
-        """
-        self._current_move.uci = chess_move.uci()
-        self._current_move.promotion = chess_move.promotion
-
     def insert_model_action(
         self, evaluation: SetEvaluation, distribution: PMF, action: Action
     ) -> None:
@@ -74,79 +63,44 @@ class LogCollector:
         self._current_move.policy_entropy = -np.sum(distribution * np.log2(distribution))
         self._current_move.probability_of_choice = distribution[action]
 
-    def insert_piece_type(self, piece_type: chess.PieceType) -> None:
+    def insert_board_action_pre(
+        self, move: chess.Move, move_vector: MoveVector, board: chess.Board
+    ) -> None:
         """
 
-        Insert a specific piece type to the current move.
+        Insert the move log info that corresponds to a board action before move actually happens.
 
         Parameters
         ----------
-        piece_type : chess.PieceType
+        move : chess.Move
+            chosen chess move
+        move_vector : MoveVector
+            list of possible moves
+        board : chess.Board
+            chess board the move will be played on
         """
-        self._current_move.piece_type = piece_type
+        self._current_move.uci = move.uci()
+        self._current_move.promotion = move.promotion
+        self._current_move.piece_type = board.piece_at(move.from_square)
+        self._current_move.capture_piece_type = board.piece_at(move.to_square)
+        self._current_move.castle_type = (
+            LogCastleType.KINGSIDE
+            if board.is_kingside_castling(move)
+            else LogCastleType.QUEENSIDE
+            if board.is_queenside_castling(move)
+            else None
+        )
+        self._current_move.legal_move_count = len(move_vector)
 
-    def insert_capture_piece_type(self, piece_type: chess.PieceType) -> None:
+    def insert_board_action_post(self, board: chess.Board) -> None:
         """
 
-        Insert a specific capture piece type to the current move.
+        Insert the move log info that corresponds to a board action after move is played.
 
         Parameters
         ----------
-        piece_type : chess.PieceType
+        board : chess.Board
+            chess board the move will be played on
         """
-        self._current_move.capture_piece_type = piece_type
-
-    def insert_is_en_passant(self, *, is_en_passant: bool) -> None:
-        """
-
-        Insert the is en passant flag to the current move.
-
-        Parameters
-        ----------
-        is_en_passant : bool
-        """
-        self._current_move.is_en_passant = is_en_passant
-
-    def insert_is_check(self, *, is_check: bool) -> None:
-        """
-
-        Insert the is check flag to the current move.
-
-        Parameters
-        ----------
-        is_check : bool
-        """
-        self._current_move.is_check = is_check
-
-    def insert_castle_type(self, castle_type: LogCastleType) -> None:
-        """
-
-        Insert the castle type into the current move.
-
-        Parameters
-        ----------
-        castle_type : LogCastleType
-        """
-        self._current_move.castle_type = castle_type
-
-    def insert_legal_move_count(self, legal_move_count: int) -> None:
-        """
-
-        Insert the number of legal moves from which the current move was chosen.
-
-        Parameters
-        ----------
-        legal_move_count : int
-        """
-        self._current_move.legal_move_count = legal_move_count
-
-    def insert_zobrist_after_move(self, zobrist_hash: int) -> None:
-        """
-
-        Insert the zobrist hash of the position after the current move.
-
-        Parameters
-        ----------
-        zobrist_hash : int
-        """
-        self._current_move.zobrist_after_move = zobrist_hash
+        self._current_move.is_check = board.is_check()
+        self._current_move.zobrist_after_move = zobrist_hash(board)
