@@ -22,6 +22,8 @@ from modules.chess_types import (
     SetEncoding,
 )
 
+rng = np.random.default_rng()
+
 
 def encode_pieces(
     piece_map: dict[chess.Square, chess.Piece], color_to_move: chess.Color
@@ -438,4 +440,4 @@ def get_new_id() -> int:
     int
         returned id
     """
-    return np.random.Generator().integers(0, 2**16 - 1)
+    return rng.integers(0, 2**16 - 1)

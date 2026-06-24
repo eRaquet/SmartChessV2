@@ -1,7 +1,14 @@
 """Module that defines datacollectors to abstract data flow from actual objects."""
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from modules.agent import AgentBase
+
 import time
-from dataclasses import fields
+from dataclasses import astuple, fields
 from pathlib import Path
 
 import chess
@@ -9,7 +16,6 @@ import numpy as np
 from chess.polyglot import zobrist_hash
 from tabulate import tabulate
 
-from modules.agent import AgentBase, StandardAgent
 from modules.chess_types import (
     PMF,
     Action,
@@ -42,8 +48,6 @@ class LogCollector:
         self._agents[color] = AgentLogEntry(
             id=get_new_id(),
             agent_type=type(agent).__name__,
-            strain=agent.strain if isinstance(agent, StandardAgent) else None,
-            generation=agent.generation if isinstance(agent, StandardAgent) else None,
             timestamp=time.time_ns(),
         )
 
@@ -110,20 +114,23 @@ class LogCollector:
     def write_game(self) -> None:
         """Write game to output (currently just a text file)."""
         game_headers = [f.name for f in fields(GameLogEntry)]
-        agent_headers = [f.move for f in fields(AgentLogEntry)]
+        agent_headers = [f.name for f in fields(AgentLogEntry)]
         move_headers = [f.name for f in fields(MoveLogEntry)]
 
-        game_data = [list(self._game.astuple())]
-        agent_data = [list(agent.astuple()) for agent in self._agents.values()]
-        move_data = [list(move.astuple()) for move in self._moves]
+        game_data = [list(astuple(self._game))]
+        agent_data = [list(astuple(agent)) for agent in self._agents.values()]
+        move_data = [list(astuple(move)) for move in self._moves]
 
         game_string = tabulate(game_data, headers=game_headers, tablefmt="grid")
         agent_string = tabulate(agent_data, headers=agent_headers, tablefmt="grid")
         move_string = tabulate(move_data, headers=move_headers, tablefmt="grid")
 
         with Path.open("temp.txt", "w") as file:
+            print("Game Data", file=file)
             print(game_string, file=file)
+            print("\nAgent Data", file=file)
             print(agent_string, file=file)
+            print("\nMove Data", file=file)
             print(move_string, file=file)
 
     def insert_model_action(
@@ -164,8 +171,11 @@ class LogCollector:
         """
         self._current_move.uci = move.uci()
         self._current_move.promotion = move.promotion
-        self._current_move.piece_type = board.piece_at(move.from_square)
-        self._current_move.capture_piece_type = board.piece_at(move.to_square)
+        self._current_move.piece_type = board.piece_at(move.from_square).piece_type
+        captured_piece = board.piece_at(move.to_square)
+        self._current_move.capture_piece_type = (
+            captured_piece.piece_type if captured_piece else None
+        )
         self._current_move.castle_type = (
             LogCastleType.KINGSIDE
             if board.is_kingside_castling(move)
