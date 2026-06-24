@@ -1,17 +1,21 @@
 """Module that defines datacollectors to abstract data flow from actual objects."""
 
 import chess
+import numpy as np
 
 from modules.chess_types import (
+    PMF,
+    Action,
     AgentLogEntry,
     GameLogEntry,
     LogCastleType,
     MoveLogEntry,
+    SetEvaluation,
 )
 from modules.utils import get_new_id
 
 
-class GameMetadataCollector:
+class LogCollector:
     """Class that can accept and store metadata from various parts of games for useage elsewhere."""
 
     def __init__(self) -> None:
@@ -49,6 +53,26 @@ class GameMetadataCollector:
         """
         self._current_move.uci = chess_move.uci()
         self._current_move.promotion = chess_move.promotion
+
+    def insert_model_action(
+        self, evaluation: SetEvaluation, distribution: PMF, action: Action
+    ) -> None:
+        """
+
+        Insert the move log info that corresponds to a model evaluation.
+
+        Parameters
+        ----------
+        evaluation : SetEvaluation
+            raw evaluation
+        distribution : PMF
+            actual distribution that the agent picks from
+        action : Action
+            chosen action
+        """
+        self._current_move.position_eval_after_move = evaluation[action]
+        self._current_move.policy_entropy = -np.sum(distribution * np.log2(distribution))
+        self._current_move.probability_of_choice = distribution[action]
 
     def insert_piece_type(self, piece_type: chess.PieceType) -> None:
         """
@@ -126,36 +150,3 @@ class GameMetadataCollector:
         zobrist_hash : int
         """
         self._current_move.zobrist_after_move = zobrist_hash
-
-    def insert_position_eval_after_move(self, evaluation: float) -> None:
-        """
-
-        Insert the model evaluation of the position after the move was made.
-
-        Parameters
-        ----------
-        eval : float
-        """
-        self._current_move.position_eval_after_move = evaluation
-
-    def insert_policy_entropy(self, entropy: float) -> None:
-        """
-
-        Insert the policy entropy for this move.
-
-        Parameters
-        ----------
-        entropy : float
-        """
-        self._current_move.policy_entropy = entropy
-
-    def insert_probability_of_choice(self, probability: float) -> None:
-        """
-
-        Insert the actual probability that this move would be picked (after applying confidence).
-
-        Parameters
-        ----------
-        probability : float
-        """
-        self._current_move.probability_of_choice = probability

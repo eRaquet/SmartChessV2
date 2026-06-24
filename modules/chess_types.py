@@ -46,6 +46,7 @@ RESIGN: Action = -1
 
 type Evaluation = float
 type SetEvaluation = NDArray[np.double]
+type PMF = NDArray[np.double]
 
 
 class BoardOutcome(IntFlag):
@@ -186,25 +187,25 @@ class AgentLogEntry:
 
 ## move table
 
-# - id {INTEGER}
-# - game id {INTEGER}
-# - agent id {INTEGER}
-# - ply {INTEGER}
+# - id {INTEGER} populated by collector
+# - game id {INTEGER} populated by collector
+# - agent id {INTEGER} populated by collector
+# - ply {INTEGER} populated by collector
 
-# - uci {TEXT}
-# - promotion (NULL if no promotion, using chess.Piece) {INTEGER}
-# - side to move (using chess.Color) {INTEGER}
-# - piece type (using chess.Piece) {INTEGER}
+# - uci {TEXT} populated by board
+# - promotion (NULL if no promotion, using chess.Piece) {INTEGER} populated by board
+# - side to move (using chess.Color) {INTEGER} populated by collector
+# - piece type (using chess.Piece) {INTEGER} populated by board
 
-# - position evaluation after move (NULL if no model) {REAL}
-# - policy entropy {REAL}
-# - probability of choice for selected move (NULL if random agent or human agent) {REAL}
+# - position evaluation (for current player) after move (NULL if no model) {REAL} populated by agent
+# - policy entropy {REAL} populated by agent
+# - probability of choice for selected move (NULL if random agent or human agent) {REAL} populated
+#   by agent
 
 
-# - capture piece type (NULL if no capture, using chess.Piece) {INTEGER}
-# - is en passant {INTEGER}
-# - is check {INTEGER}
-# - castle type (NULL if no castle) {INTEGER}
+# - capture piece type (NULL if no capture, using chess.Piece) {INTEGER} populated by board
+# - is check {INTEGER} populated by board
+# - castle type (NULL if no castle) {INTEGER} populated by board
 class LogCastleType(IntFlag):
     """Enum for mapping integer values to castling sides for the database."""
 
@@ -212,8 +213,8 @@ class LogCastleType(IntFlag):
     QUEENSIDE = 1
 
 
-# - zobrist hash after move {INTEGER}
-# - legal move count {INTEGER}
+# - zobrist hash after move {INTEGER} populated by board
+# - legal move count {INTEGER} populated by board
 
 
 @dataclass
@@ -235,7 +236,6 @@ class MoveLogEntry:
     probability_of_choice: float | None = None
 
     capture_piece_type: chess.PieceType | None = None
-    is_en_passant: bool | None = None
     is_check: bool | None = None
     castle_type: LogCastleType | None = None
 

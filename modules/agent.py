@@ -10,6 +10,7 @@ from modules.board import Board, GUIBoard
 from modules.chess_types import (
     Action,
 )
+from modules.collector import LogCollector
 from modules.config import DEFAULT_CONFIDENCE
 from modules.model import ModelBase
 
@@ -42,7 +43,7 @@ class AgentBase(ABC):
 class RandomAgent(AgentBase):
     """Agent that picks a random move."""
 
-    rng = np.random.default_rng()
+    _rng = np.random.default_rng()
 
     def act(self, board: Board) -> Action:
         """
@@ -59,18 +60,23 @@ class RandomAgent(AgentBase):
         Action
             randomly chosen action
         """
-        return self.rng.integers(len(board.moves))
+        return self._rng.integers(len(board.moves))
 
 
 class StandardAgent(AgentBase):
     """Agent that picks a move based on its underlying model."""
 
+    _rng = np.random.default_rng()
+
     def __init__(
-        self, model: ModelBase, confidence_factor: float | None = DEFAULT_CONFIDENCE
+        self,
+        model: ModelBase,
+        confidence_factor: float | None = DEFAULT_CONFIDENCE,
+        log_collector: LogCollector | None = None,
     ) -> None:
         self.model = model
-        self.rng = np.random.default_rng()
-        self.confidence_factor = confidence_factor
+        self._confidence_factor = confidence_factor
+        self._log_collector = log_collector
 
     def act(self, board: Board) -> Action:
         """
@@ -89,12 +95,25 @@ class StandardAgent(AgentBase):
         """
         evals = 1 - self.model.predict_batch(board.observation)
 
-        if self.confidence_factor is None:
-            return np.argmax(evals)
+        if self._confidence_factor is None:
+            action = np.argmax(evals)
 
-        choice_distribution = softmax(evals * self.confidence_factor)
+            if self._log_collector:
+                # create distribution associated with an infinite confidence
+                dist = np.zeros(evals.shape)
+                dist[action] = 1
 
-        return self.rng.choice(len(choice_distribution), p=choice_distribution)
+                self._log_collector.insert_model_action(evals, dist, action)
+
+        else:
+            choice_distribution = softmax(evals * self._confidence_factor)
+
+            action = self._rng.choice(len(choice_distribution), p=choice_distribution)
+
+            if self._log_collector:
+                self._log_collector.insert_model_action(evals, choice_distribution, action)
+
+        return action
 
 
 class UIAgent(AgentBase):
