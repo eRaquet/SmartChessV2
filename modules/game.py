@@ -4,7 +4,7 @@ import chess
 
 from modules.agent import AgentBase
 from modules.board import Board
-from modules.collector import LogCollector
+from modules.collector import Collector
 
 
 class Game:
@@ -15,29 +15,37 @@ class Game:
         agent_white: AgentBase,
         agent_black: AgentBase,
         board: Board,
-        log_collector: LogCollector | None = None,
+        collector: Collector | None = None,
     ) -> None:
         self._agents = {
             chess.WHITE: agent_white,
             chess.BLACK: agent_black,
         }
         self._board = board
-        self._log_collector = log_collector
-        if self._log_collector:
-            self._log_collector.select_agent(agent_white, chess.WHITE)
-            self._log_collector.select_agent(agent_black, chess.BLACK)
+        self._collector = collector
+        if self._collector:
+            self._collector.select_agent(agent_white, chess.WHITE)
+            self._collector.select_agent(agent_black, chess.BLACK)
 
     def play_game(self) -> None:
         """Play through a game on the board."""
-        if self._log_collector:
-            self._log_collector.new_game()
+        if self._collector:
+            self._collector.start_game()
 
         while not self._board.terminated:
-            if self._log_collector:
-                self._log_collector.new_move()
+            if self._collector:
+                self._collector.start_move()
 
-            action = self._agents[self._board.turn].act(self._board)
+            current_agent = self._agents[self._board.turn]
+            action = current_agent.act(self._board)
+
             self._board.step(action)
 
-        if self._log_collector:
-            self._log_collector.write_game()
+            if self._collector:
+                self._collector.get_agent_action(current_agent)
+                self._collector.get_board_action(self._board)
+                self._collector.finish_move()
+
+        if self._collector:
+            game_log = self._collector.finish_game(self._board.outcome)
+            self._collector.write_game(game_log)  # this will be depricated

@@ -4,6 +4,7 @@ from collections import Counter
 
 import chess
 import numpy as np
+from scipy.stats import entropy
 
 from modules.chess_types import (
     BOARD_ENCODING_SHAPE,
@@ -12,6 +13,7 @@ from modules.chess_types import (
     MIN_COL_INDEX,
     PIECE_ENCODING_SHAPE,
     PIECE_INDEX,
+    PMF,
     ROOK_CASTLE_FILE_KINGSIDE,
     ROOK_CASTLE_FILE_QUEENSIDE,
     Action,
@@ -428,6 +430,26 @@ def get_action(move: chess.Move, vector: MoveVector) -> Action:
         index of given move in move vector
     """
     return vector.index(move)
+
+
+def calculate_policy_entropy(dist: PMF | None) -> float | None:
+    """
+
+    Calculate the policy entropy from the provided distribution.
+
+    Parameters
+    ----------
+    dist : PMF | None
+        choice distribution of policy, None if no N/A
+
+    Returns
+    -------
+    float | None
+        returned Shannon entropy, or None if not applicable
+    """
+    if dist is not None:
+        return entropy(dist)
+    return None
 
 
 def get_new_id() -> int:

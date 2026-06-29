@@ -113,6 +113,16 @@ ROOK_CASTLE_FILE_QUEENSIDE = 3
 # - white agent id {INTEGER}
 # - black agent id {INTEGER}
 # - result (white win, black win, draw, unresolved) {INTEGER}
+
+# - termination type
+#   (checkmate, stalemate, repetition, fifty moves, insufficient material, abort) {INTEGER}
+# - ply number {INTEGER}
+# - starting fen (NULL if standard starting fen) {TEXT}
+
+# - timestamp in nanoseconds since last Unix epoch {INTEGER}
+# - dt in nanoseconds for the duration of the game {INTEGER}
+
+
 class LogResult(IntFlag):
     """Enum for mapping integer values to game results for the database."""
 
@@ -122,8 +132,6 @@ class LogResult(IntFlag):
     UNRESOLVED = 3
 
 
-# - termination type
-#   (checkmate, stalemate, repetition, fifty moves, insufficient material, abort) {INTEGER}
 class LogTerminationType(IntFlag):
     """Enum for mapping integer values to causes for game termination for the database."""
 
@@ -135,14 +143,7 @@ class LogTerminationType(IntFlag):
     ABORT = 5
 
 
-# - ply number {INTEGER}
-
-# - starting fen (NULL if standard starting fen) {TEXT}
-
-# - timestamp in nanoseconds since last Unix epoch {INTEGER}
-
-
-@dataclass
+@dataclass(slots=True)
 class GameLogEntry:
     """Data class for storing metadata to go into the game table of the game database."""
 
@@ -158,6 +159,7 @@ class GameLogEntry:
     starting_fen: str | None = None
 
     timestamp: int | None = None
+    dt: int | None = None
 
 
 ## agent table
@@ -169,7 +171,7 @@ class GameLogEntry:
 # - timestamp in nanoseconds since last Unix epoch {INTEGER}
 
 
-@dataclass
+@dataclass(slots=True, frozen=True)
 class AgentLogEntry:
     """Data class for storing metadata to go into the agent table of the game database."""
 
@@ -178,6 +180,15 @@ class AgentLogEntry:
     strain: int | None = None
     generation: int | None = None
     timestamp: int | None = None
+
+
+@dataclass(slots=True, frozen=True, kw_only=True)
+class AgentActionSnapshot:
+    """Data class for capturing agent action metadata for collector to access."""
+
+    evals: SetEvaluation | None
+    dist: PMF | None
+    action: Action
 
 
 ## move table
@@ -197,10 +208,16 @@ class AgentLogEntry:
 # - probability of choice for selected move (NULL if random agent or human agent) {REAL} populated
 #   by agent
 
-
 # - capture piece type (NULL if no capture, using chess.Piece) {INTEGER} populated by board
 # - is check {INTEGER} populated by board
 # - castle type (NULL if no castle) {INTEGER} populated by board
+# - zobrist hash after move {INTEGER} populated by board
+# - legal move count {INTEGER} populated by board
+
+# - timestamp in nanoseconds since last Unix epoch {INTEGER}
+# - dt in nanoseconds between the beginning and the end of a move {INTEGER}
+
+
 class LogCastleType(IntFlag):
     """Enum for mapping integer values to castling sides for the database."""
 
@@ -208,13 +225,7 @@ class LogCastleType(IntFlag):
     QUEENSIDE = 1
 
 
-# - zobrist hash after move {INTEGER} populated by board
-# - legal move count {INTEGER} populated by board
-
-# - timestamp in nanoseconds since last Unix epoch {INTEGER}
-
-
-@dataclass
+@dataclass(slots=True, frozen=True)
 class MoveLogEntry:
     """Data class for storing metadata to go into the move table of the game database."""
 
@@ -240,3 +251,32 @@ class MoveLogEntry:
     legal_move_count: int | None = None
 
     timestamp: int | None = None
+    dt: int | None = None
+
+
+@dataclass(slots=True, frozen=True, kw_only=True)
+class BoardStepSnapshotPre:
+    """Data class for capturing board state for collector before stepping the board position."""
+
+    move: chess.Move
+    move_piece: chess.Piece
+    num_moves: int
+    capture_piece: chess.Piece | None
+    castle_type: LogCastleType | None
+
+
+@dataclass(slots=True, frozen=True, kw_only=True)
+class BoardStepSnapshotPost:
+    """Data class for capturing board state for collector after stepping the board position."""
+
+    is_check: bool
+    pos_hash: int
+
+
+@dataclass(slots=True, frozen=True)
+class GameLog:
+    """Data class that stores a completed, immutable game log."""
+
+    game: GameLogEntry
+    agents: tuple[AgentLogEntry]  # NOTE: ensure that the insertion order corresponds to chess.Color
+    moves: tuple[MoveLogEntry]

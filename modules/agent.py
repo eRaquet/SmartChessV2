@@ -7,16 +7,15 @@ import numpy as np
 from scipy.special import softmax
 
 from modules.board import Board, GUIBoard
-from modules.chess_types import (
-    Action,
-)
-from modules.collector import LogCollector
+from modules.chess_types import PMF, Action, AgentActionSnapshot, SetEvaluation
 from modules.config import DEFAULT_CONFIDENCE
 from modules.model import ModelBase, StandardModel
 
 
 class AgentBase(ABC):
     """Agent base class, specifying structure."""
+
+    snapshot: AgentActionSnapshot | None = None
 
     @abstractmethod
     def act(self, board: Board, *args: Any, **kwargs: Any) -> Action:
@@ -39,6 +38,10 @@ class AgentBase(ABC):
         NotImplementedError
         """
 
+    @abstractmethod
+    def _capture(self, *args: Any, **kwargs: Any) -> None:
+        """Capture the agent's action to the snapshot."""
+
 
 class RandomAgent(AgentBase):
     """Agent that picks a random move."""
@@ -60,7 +63,14 @@ class RandomAgent(AgentBase):
         Action
             randomly chosen action
         """
+        action = self._rng.integers(len(board.moves))
+
+        self._capture(action)
+
         return self._rng.integers(len(board.moves))
+
+    def _capture(self, action: Action) -> None:
+        self.snapshot = AgentActionSnapshot(evals=None, dist=None, action=action)
 
 
 class StandardAgent(AgentBase):
@@ -69,14 +79,10 @@ class StandardAgent(AgentBase):
     _rng = np.random.default_rng()
 
     def __init__(
-        self,
-        model: ModelBase,
-        confidence_factor: float | None = DEFAULT_CONFIDENCE,
-        log_collector: LogCollector | None = None,
+        self, model: ModelBase, confidence_factor: float | None = DEFAULT_CONFIDENCE
     ) -> None:
         self._model = model
         self._confidence_factor = confidence_factor
-        self._log_collector = log_collector
         self.strain = model.strain if isinstance(model, StandardModel) else None
         self.generation = model.generation if isinstance(model, StandardModel) else None
 
@@ -95,27 +101,26 @@ class StandardAgent(AgentBase):
         Action
             chosen action
         """
-        evals = 1 - self._model.predict_batch(board.observation)
+        evals = 1 - self._model.predict_batch(board.observation)  # evaluation as seen by agent
 
         if self._confidence_factor is None:
             action = np.argmax(evals)
 
-            if self._log_collector:
-                # create distribution associated with an infinite confidence
-                dist = np.zeros(evals.shape)
-                dist[action] = 1
-
-                self._log_collector.insert_model_action(evals, dist, action)
+            # create distribution associated with an infinite confidence
+            choice_distribution = np.zeros(evals.shape)
+            choice_distribution[action] = 1
 
         else:
             choice_distribution = softmax(evals * self._confidence_factor)
 
             action = self._rng.choice(len(choice_distribution), p=choice_distribution)
 
-            if self._log_collector:
-                self._log_collector.insert_model_action(evals, choice_distribution, action)
+        self._capture(evals, choice_distribution, action)
 
         return action
+
+    def _capture(self, evals: SetEvaluation, dist: PMF, action: Action) -> None:
+        self.snapshot = AgentActionSnapshot(evals=evals, dist=dist, action=action)
 
 
 class UIAgent(AgentBase):
@@ -142,4 +147,10 @@ class UIAgent(AgentBase):
         action = None
         while action is None:
             action = self._board.get_user_input()
+
+        self._capture(action)
+
         return action
+
+    def _capture(self, action: Action) -> None:
+        self.snapshot = AgentActionSnapshot(evals=None, dist=None, action=action)
