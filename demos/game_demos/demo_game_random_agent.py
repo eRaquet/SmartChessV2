@@ -7,6 +7,7 @@ import chess
 
 from modules.agent import RandomAgent
 from modules.board import ASCIIBoard, Board, GUIBoard
+from modules.collector import Collector
 from modules.game import Game
 
 if __name__ == "__main__":
@@ -17,6 +18,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--ascii", action="store_true", help="display the game with ASCII in terminal"
     )
+    parser.add_argument("--log", action="store_true", help="log game to database")
 
     args = parser.parse_args()
 
@@ -27,7 +29,10 @@ if __name__ == "__main__":
     board = ASCIIBoard() if args.ascii else GUIBoard() if args.gui else Board()
     white_agent = RandomAgent()
     black_agent = RandomAgent()
-    game = Game(white_agent, black_agent, board)
+
+    collector = Collector() if args.log else None
+
+    game = Game(white_agent, black_agent, board, collector)
 
     game.play_game()
 
