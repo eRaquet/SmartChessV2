@@ -1,11 +1,8 @@
 """Module that defines datacollectors to abstract data flow from actual objects."""
 
 import time
-from dataclasses import astuple, fields
-from pathlib import Path
 
 import chess
-from tabulate import tabulate
 
 from modules.agent import AgentBase
 from modules.board import Board
@@ -48,6 +45,14 @@ class Collector:
             msg = "Provided agent has incorrect type."
             raise TypeError(msg)
 
+        if self._game is not None:
+            msg = "Collector cannot select an agent when a game is currently active."
+            raise RuntimeError(msg)
+
+        if self._active_move:
+            msg = "Collector cannot select an agent when a move is active."
+            raise RuntimeError(msg)
+
         try:
             strain = agent.strain
             generation = agent.generation
@@ -71,6 +76,7 @@ class Collector:
 
         if not self._is_agents_populated():
             msg = "Agents must be selected before starting a game."
+            raise RuntimeError(msg)
 
         self._game = GameLogEntry(
             id=get_new_id(),
@@ -89,6 +95,14 @@ class Collector:
         GameLog
             Log that contains all relevant metadata for the game.
         """
+        if self._game is None:
+            msg = "Cannot finish a non-existant game!"
+            raise RuntimeError(msg)
+
+        if self._active_move:
+            msg = "Cannot finish a game with an unresolved move."
+            raise RuntimeError(msg)
+
         self._close_game_entry(outcome)
 
         log = GameLog(
@@ -103,6 +117,9 @@ class Collector:
 
     def start_move(self) -> None:
         """Start a new move."""
+        if self._game is None:
+            msg = "Cannot start a new move on a non-existant game."
+            raise RuntimeError(msg)
         if self._active_move:
             msg = "Cannot start a new move when there is already an active move."
             raise RuntimeError(msg)
@@ -111,8 +128,17 @@ class Collector:
 
         self._move_start_time = time.time_ns()
 
+    def reset_move(self) -> None:
+        """Clear the current move metadata (useful for aborts)."""
+        self._active_move = False
+        self._clear_metadata()
+
     def finish_move(self) -> None:
-        """Create  completed move into the move list."""
+        """Create completed move into the move list."""
+        if not self._active_move:
+            msg = "Cannot finish a non-active move."
+            raise RuntimeError(msg)
+
         self._move_stop_time = time.time_ns()
 
         if not self._is_move_populated():
@@ -248,10 +274,10 @@ class Collector:
             promotion=self._board_action_pre_snapshot.move.promotion,
             side_to_move=side_to_move,
             piece_type=self._board_action_pre_snapshot.move_piece.piece_type,
-            position_eval_after_move=evals[action] if evals else None,
+            position_eval_after_move=evals[action] if evals is not None else None,
             policy_entropy=calculate_policy_entropy(self._agent_action_snapshot.dist),
-            probability_of_choice=dist[action] if dist else None,
-            capture_piece_type=capture_piece.piece_type if capture_piece else None,
+            probability_of_choice=dist[action] if dist is not None else None,
+            capture_piece_type=capture_piece.piece_type if capture_piece is not None else None,
             is_check=self._board_action_post_snapshot.is_check,
             castle_type=self._board_action_pre_snapshot.castle_type,
             zobrist_after_move=self._board_action_post_snapshot.pos_hash,
