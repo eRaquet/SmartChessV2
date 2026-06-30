@@ -5,6 +5,7 @@ import chess
 from modules.agent import AgentBase
 from modules.board import Board
 from modules.collector import Collector
+from modules.utils import write_game
 
 
 class Game:
@@ -48,4 +49,4 @@ class Game:
 
         if self._collector:
             game_log = self._collector.finish_game(self._board.outcome)
-            self._collector.write_game(game_log)  # this will be depricated
+            write_game(game_log)  # this will be depricated

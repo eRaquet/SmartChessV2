@@ -1,10 +1,13 @@
 """File containing helper functions for chess bot."""
 
 from collections import Counter
+from dataclasses import astuple, fields
+from pathlib import Path
 
 import chess
 import numpy as np
 from scipy.stats import entropy
+from tabulate import tabulate
 
 from modules.chess_types import (
     BOARD_ENCODING_SHAPE,
@@ -17,7 +20,11 @@ from modules.chess_types import (
     ROOK_CASTLE_FILE_KINGSIDE,
     ROOK_CASTLE_FILE_QUEENSIDE,
     Action,
+    AgentLogEntry,
     BoardEncoding,
+    GameLog,
+    GameLogEntry,
+    MoveLogEntry,
     MoveVector,
     PieceEncoding,
     Players,
@@ -463,3 +470,26 @@ def get_new_id() -> int:
         returned id
     """
     return rng.integers(0, 2**16 - 1)
+
+
+def write_game(game_log: GameLog) -> None:
+    """Write game to output (currently just a text file)."""
+    game_headers = [f.name for f in fields(GameLogEntry)]
+    agent_headers = [f.name for f in fields(AgentLogEntry)]
+    move_headers = [f.name for f in fields(MoveLogEntry)]
+
+    game_data = [list(astuple(game_log.game))]
+    agent_data = [list(astuple(agent)) for agent in game_log.agents]
+    move_data = [list(astuple(move)) for move in game_log.moves]
+
+    game_string = tabulate(game_data, headers=game_headers, tablefmt="grid")
+    agent_string = tabulate(agent_data, headers=agent_headers, tablefmt="grid")
+    move_string = tabulate(move_data, headers=move_headers, tablefmt="grid")
+
+    with Path.open("temp.txt", "w") as file:
+        print("Game Data", file=file)
+        print(game_string, file=file)
+        print("\nAgent Data", file=file)
+        print(agent_string, file=file)
+        print("\nMove Data", file=file)
+        print(move_string, file=file)
