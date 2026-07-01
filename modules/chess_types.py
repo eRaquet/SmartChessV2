@@ -141,7 +141,7 @@ class LogTerminationType(IntFlag):
     ABORT = 5
 
 
-@dataclass(slots=True)
+@dataclass(slots=True, kw_only=True)
 class GameLogEntry:
     """Data class for storing metadata to go into the game table of the game database."""
 
@@ -165,7 +165,7 @@ class GameLogEntry:
 # - timestamp in nanoseconds since last Unix epoch {INTEGER}
 
 
-@dataclass(slots=True, frozen=True)
+@dataclass(slots=True, kw_only=True)
 class AgentLogEntry:
     """Data class for storing metadata to go into the agent table of the game database."""
 
@@ -176,7 +176,7 @@ class AgentLogEntry:
     timestamp: int | None = None
 
 
-@dataclass(slots=True, frozen=True, kw_only=True)
+@dataclass(slots=True, kw_only=True)
 class AgentActionSnapshot:
     """Data class for capturing agent action metadata for collector to access."""
 
@@ -215,7 +215,7 @@ class LogCastleType(IntFlag):
     QUEENSIDE = 1
 
 
-@dataclass(slots=True, frozen=True)
+@dataclass(slots=True, kw_only=True)
 class MoveLogEntry:
     """Data class for storing metadata to go into the move table of the game database."""
 
@@ -239,7 +239,7 @@ class MoveLogEntry:
     dt: int | None = None
 
 
-@dataclass(slots=True, frozen=True, kw_only=True)
+@dataclass(slots=True, kw_only=True)
 class BoardStepSnapshotPre:
     """Data class for capturing board state for collector before stepping the board position."""
 
@@ -250,7 +250,7 @@ class BoardStepSnapshotPre:
     castle_type: LogCastleType | None
 
 
-@dataclass(slots=True, frozen=True, kw_only=True)
+@dataclass(slots=True, kw_only=True)
 class BoardStepSnapshotPost:
     """Data class for capturing board state for collector after stepping the board position."""
 
@@ -258,7 +258,7 @@ class BoardStepSnapshotPost:
     pos_hash: int
 
 
-@dataclass(slots=True, frozen=True)
+@dataclass(slots=True, kw_only=True)
 class GameLog:
     """Data class that stores a completed, immutable game log."""
 
