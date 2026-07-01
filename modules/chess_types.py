@@ -113,12 +113,10 @@ ROOK_CASTLE_FILE_QUEENSIDE = 3
 # - white agent id {INTEGER}
 # - black agent id {INTEGER}
 # - result (white win, black win, draw, unresolved) {INTEGER}
-
 # - termination type
 #   (checkmate, stalemate, repetition, fifty moves, insufficient material, abort) {INTEGER}
 # - ply number {INTEGER}
 # - starting fen (NULL if standard starting fen) {TEXT}
-
 # - timestamp in nanoseconds since last Unix epoch {INTEGER}
 # - dt in nanoseconds for the duration of the game {INTEGER}
 
@@ -150,14 +148,10 @@ class GameLogEntry:
     id: int | None = None
     white_agent_id: int | None = None
     black_agent_id: int | None = None
-
     result: LogResult | None = None
     termination_type: LogTerminationType | None = None
-
     ply_number: int | None = None
-
     starting_fen: str | None = None
-
     timestamp: int | None = None
     dt: int | None = None
 
@@ -197,23 +191,19 @@ class AgentActionSnapshot:
 # - game id {INTEGER} populated by collector
 # - agent id {INTEGER} populated by collector
 # - ply {INTEGER} populated by collector
-
 # - uci {TEXT} populated by board
 # - promotion (NULL if no promotion, using chess.Piece) {INTEGER} populated by board
 # - side to move (using chess.Color) {INTEGER} populated by collector
 # - piece type (using chess.Piece) {INTEGER} populated by board
-
 # - position evaluation (for current player) after move (NULL if no model) {REAL} populated by agent
 # - policy entropy {REAL} populated by agent
 # - probability of choice for selected move (NULL if random agent or human agent) {REAL} populated
 #   by agent
-
 # - capture piece type (NULL if no capture, using chess.Piece) {INTEGER} populated by board
 # - is check {INTEGER} populated by board
 # - castle type (NULL if no castle) {INTEGER} populated by board
 # - zobrist hash after move {INTEGER} populated by board
 # - legal move count {INTEGER} populated by board
-
 # - timestamp in nanoseconds since last Unix epoch {INTEGER}
 # - dt in nanoseconds between the beginning and the end of a move {INTEGER}
 
@@ -233,23 +223,18 @@ class MoveLogEntry:
     game_id: int | None = None
     agent_id: int | None = None
     ply: int | None = None
-
     uci: str | None = None
     promotion: chess.PieceType | None = None
     side_to_move: chess.Color | None = None
     piece_type: chess.PieceType | None = None
-
     position_eval_after_move: float | None = None
     policy_entropy: float | None = None
     probability_of_choice: float | None = None
-
     capture_piece_type: chess.PieceType | None = None
     is_check: bool | None = None
     castle_type: LogCastleType | None = None
-
     zobrist_after_move: int | None = None
     legal_move_count: int | None = None
-
     timestamp: int | None = None
     dt: int | None = None
 
