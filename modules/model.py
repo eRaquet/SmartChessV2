@@ -346,3 +346,27 @@ class StandardModel(ModelBase):
         opt = Adam()
         self._model = Model(inputs=input_layer, outputs=output_layer, name=self.name)
         self._model.compile(optimizer=opt, loss="mean_squared_error")
+
+    @property
+    def strain(self) -> int:
+        """
+
+        Get the strain of the model.
+
+        Returns
+        -------
+        int
+        """
+        return self._strain
+
+    @property
+    def generation(self) -> int:
+        """
+
+        Get the generation of the model.
+
+        Returns
+        -------
+        int
+        """
+        return self._generation

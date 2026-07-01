@@ -4,14 +4,17 @@ from collections import Counter
 
 import chess
 import numpy as np
+from chess.polyglot import zobrist_hash
 
 from modules.chess_types import (
-    RESIGN,
+    ABORT_ACTION,
     Action,
     BoardOutcome,
+    BoardStepSnapshotPost,
+    BoardStepSnapshotPre,
+    LogCastleType,
     MoveVector,
     Observation,
-    Trajectory,
 )
 from modules.display import Display
 from modules.utils import (
@@ -22,6 +25,9 @@ from modules.utils import (
 
 class Board:
     """Chess board environment with generation of valid moves and creation of observations."""
+
+    snapshot_pre: BoardStepSnapshotPre | None = None
+    snapshot_post: BoardStepSnapshotPost | None = None
 
     def __init__(self) -> None:
         """Initiate a board object."""
@@ -58,7 +64,7 @@ class Board:
             Action performed on the board (chess move)
         """
         if self._status not in BoardOutcome.TERMINATED:
-            if action != RESIGN:
+            if action != ABORT_ACTION:
                 self.update_state(action)
 
                 # check for end conditions
@@ -80,9 +86,7 @@ class Board:
 
                 self._render()
             else:
-                self._status = (
-                    BoardOutcome.BLACK if self._board.turn == chess.WHITE else BoardOutcome.WHITE
-                )
+                self._status = BoardOutcome.ABORT
         else:
             msg = "Board is in terminal state, and cannot be stepped."
             raise RuntimeError(msg)
@@ -108,7 +112,13 @@ class Board:
             played action, represented by the index of move to play
         """
         move = self._moves[action]
+
+        self._capture_pre(move)
+
         self._board.push(move)
+
+        self._capture_post()
+
         self._moves = list(self._board.legal_moves)
         self._encoding = encode_board(self._board)
         self._state_list.append(self._encoding.copy())
@@ -144,6 +154,18 @@ class Board:
         return self._status in BoardOutcome.TERMINATED
 
     @property
+    def outcome(self) -> chess.Outcome | None:
+        """
+
+        The outcome of the board, or None if not terminated.
+
+        Returns
+        -------
+        chess.Outcome | None
+        """
+        return self._board.outcome(claim_draw=True)
+
+    @property
     def winner(self) -> chess.Color | None:
         """
 
@@ -157,22 +179,6 @@ class Board:
         if self._status in BoardOutcome.WON:
             return chess.WHITE if BoardOutcome.WHITE else chess.BLACK
         return None
-
-    @property
-    def trajectory(self) -> Trajectory:
-        """
-
-        Trajectory of game states as a SetEncoding.
-
-        Returns
-        -------
-        Trajectory
-            shape (n, 8, 8, 18), where n is the index of each successive board state
-        """
-        if self._status in BoardOutcome.TERMINATED:
-            return np.array(self._state_list, dtype=np.uint8)
-        msg = "Board is not in terminal state, and does not contain a valid trajectory."
-        raise RuntimeError(msg)
 
     @property
     def observation(self) -> Observation:
@@ -228,6 +234,26 @@ class Board:
         int
         """
         return self._board.ply()
+
+    def _capture_pre(self, move: chess.Move) -> None:
+        self.snapshot_pre = BoardStepSnapshotPre(
+            move=move,
+            move_piece=self._board.piece_at(move.from_square),
+            capture_piece=self._board.piece_at(move.to_square),
+            castle_type=(
+                LogCastleType.KINGSIDE
+                if self._board.is_kingside_castling(move)
+                else LogCastleType.QUEENSIDE
+                if self._board.is_queenside_castling(move)
+                else None
+            ),
+            num_moves=len(self._moves),
+        )
+
+    def _capture_post(self) -> None:
+        self.snapshot_post = BoardStepSnapshotPost(
+            is_check=self._board.is_check(), pos_hash=zobrist_hash(self._board)
+        )
 
 
 class ASCIIBoard(Board):

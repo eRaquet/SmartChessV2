@@ -1,9 +1,13 @@
 """File containing helper functions for chess bot."""
 
 from collections import Counter
+from dataclasses import astuple, fields
+from pathlib import Path
 
 import chess
 import numpy as np
+from scipy.stats import entropy
+from tabulate import tabulate
 
 from modules.chess_types import (
     BOARD_ENCODING_SHAPE,
@@ -12,15 +16,22 @@ from modules.chess_types import (
     MIN_COL_INDEX,
     PIECE_ENCODING_SHAPE,
     PIECE_INDEX,
+    PMF,
     ROOK_CASTLE_FILE_KINGSIDE,
     ROOK_CASTLE_FILE_QUEENSIDE,
     Action,
+    AgentLogEntry,
     BoardEncoding,
+    GameLog,
+    GameLogEntry,
+    MoveLogEntry,
     MoveVector,
     PieceEncoding,
     Players,
     SetEncoding,
 )
+
+rng = np.random.default_rng()
 
 
 def encode_pieces(
@@ -142,7 +153,7 @@ def generate_board_encodings_from_moves(  # noqa: PLR0915
     Returns
     -------
     SetEncoding
-        The returned board encodings,
+        The returned board encodings, as seen by the other player
         shape: (number of moves, 8, 8, 18)
     """
     num_moves = len(moves)
@@ -426,3 +437,59 @@ def get_action(move: chess.Move, vector: MoveVector) -> Action:
         index of given move in move vector
     """
     return vector.index(move)
+
+
+def calculate_policy_entropy(dist: PMF | None) -> float | None:
+    """
+
+    Calculate the policy entropy from the provided distribution.
+
+    Parameters
+    ----------
+    dist : PMF | None
+        choice distribution of policy, None if no N/A
+
+    Returns
+    -------
+    float | None
+        returned Shannon entropy, or None if not applicable
+    """
+    if dist is not None:
+        return entropy(dist)
+    return None
+
+
+def get_new_id() -> int:
+    """
+
+    Temporary function to return dummy "id's" for testing.
+
+    Returns
+    -------
+    int
+        returned id
+    """
+    return rng.integers(0, 2**16 - 1)
+
+
+def write_game(game_log: GameLog) -> None:
+    """Write game to output (currently just a text file)."""
+    game_headers = [f.name for f in fields(GameLogEntry)]
+    agent_headers = [f.name for f in fields(AgentLogEntry)]
+    move_headers = [f.name for f in fields(MoveLogEntry)]
+
+    game_data = [list(astuple(game_log.game))]
+    agent_data = [list(astuple(agent)) for agent in game_log.agents]
+    move_data = [list(astuple(move)) for move in game_log.moves]
+
+    game_string = tabulate(game_data, headers=game_headers, tablefmt="grid")
+    agent_string = tabulate(agent_data, headers=agent_headers, tablefmt="grid")
+    move_string = tabulate(move_data, headers=move_headers, tablefmt="grid")
+
+    with Path.open("temp.txt", "w") as file:
+        print("Game Data", file=file)
+        print(game_string, file=file)
+        print("\nAgent Data", file=file)
+        print(agent_string, file=file)
+        print("\nMove Data", file=file)
+        print(move_string, file=file)

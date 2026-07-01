@@ -7,15 +7,15 @@ import numpy as np
 from scipy.special import softmax
 
 from modules.board import Board, GUIBoard
-from modules.chess_types import (
-    Action,
-)
+from modules.chess_types import PMF, Action, AgentActionSnapshot, SetEvaluation
 from modules.config import DEFAULT_CONFIDENCE
-from modules.model import ModelBase
+from modules.model import ModelBase, StandardModel
 
 
 class AgentBase(ABC):
     """Agent base class, specifying structure."""
+
+    snapshot: AgentActionSnapshot | None = None
 
     @abstractmethod
     def act(self, board: Board, *args: Any, **kwargs: Any) -> Action:
@@ -38,11 +38,15 @@ class AgentBase(ABC):
         NotImplementedError
         """
 
+    @abstractmethod
+    def _capture(self, *args: Any, **kwargs: Any) -> None:
+        """Capture the agent's action to the snapshot."""
+
 
 class RandomAgent(AgentBase):
     """Agent that picks a random move."""
 
-    rng = np.random.default_rng()
+    _rng = np.random.default_rng()
 
     def act(self, board: Board) -> Action:
         """
@@ -59,18 +63,28 @@ class RandomAgent(AgentBase):
         Action
             randomly chosen action
         """
-        return self.rng.integers(len(board.moves))
+        action = self._rng.integers(len(board.moves))
+
+        self._capture(action)
+
+        return self._rng.integers(len(board.moves))
+
+    def _capture(self, action: Action) -> None:
+        self.snapshot = AgentActionSnapshot(evals=None, dist=None, action=action)
 
 
 class StandardAgent(AgentBase):
     """Agent that picks a move based on its underlying model."""
 
+    _rng = np.random.default_rng()
+
     def __init__(
         self, model: ModelBase, confidence_factor: float | None = DEFAULT_CONFIDENCE
     ) -> None:
-        self.model = model
-        self.rng = np.random.default_rng()
-        self.confidence_factor = confidence_factor
+        self._model = model
+        self._confidence_factor = confidence_factor
+        self.strain = model.strain if isinstance(model, StandardModel) else None
+        self.generation = model.generation if isinstance(model, StandardModel) else None
 
     def act(self, board: Board) -> Action:
         """
@@ -87,14 +101,26 @@ class StandardAgent(AgentBase):
         Action
             chosen action
         """
-        evals = self.model.predict_batch(board.observation)
+        evals = 1 - self._model.predict_batch(board.observation)  # evaluation as seen by agent
 
-        if self.confidence_factor is None:
-            return np.argmax(evals)
+        if self._confidence_factor is None:
+            action = np.argmax(evals)
 
-        choice_distribution = softmax(evals * self.confidence_factor)
+            # create distribution associated with an infinite confidence
+            choice_distribution = np.zeros(evals.shape)
+            choice_distribution[action] = 1
 
-        return self.rng.choice(len(choice_distribution), p=choice_distribution)
+        else:
+            choice_distribution = softmax(evals * self._confidence_factor)
+
+            action = self._rng.choice(len(choice_distribution), p=choice_distribution)
+
+        self._capture(evals, choice_distribution, action)
+
+        return action
+
+    def _capture(self, evals: SetEvaluation, dist: PMF, action: Action) -> None:
+        self.snapshot = AgentActionSnapshot(evals=evals, dist=dist, action=action)
 
 
 class UIAgent(AgentBase):
@@ -121,4 +147,10 @@ class UIAgent(AgentBase):
         action = None
         while action is None:
             action = self._board.get_user_input()
+
+        self._capture(action)
+
         return action
+
+    def _capture(self, action: Action) -> None:
+        self.snapshot = AgentActionSnapshot(evals=None, dist=None, action=action)
