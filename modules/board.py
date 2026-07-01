@@ -7,7 +7,7 @@ import numpy as np
 from chess.polyglot import zobrist_hash
 
 from modules.chess_types import (
-    RESIGN,
+    ABORT_ACTION,
     Action,
     BoardOutcome,
     BoardStepSnapshotPost,
@@ -64,7 +64,7 @@ class Board:
             Action performed on the board (chess move)
         """
         if self._status not in BoardOutcome.TERMINATED:
-            if action != RESIGN:
+            if action != ABORT_ACTION:
                 self.update_state(action)
 
                 # check for end conditions
@@ -86,9 +86,7 @@ class Board:
 
                 self._render()
             else:
-                self._status = (
-                    BoardOutcome.BLACK if self._board.turn == chess.WHITE else BoardOutcome.WHITE
-                )
+                self._status = BoardOutcome.ABORT
         else:
             msg = "Board is in terminal state, and cannot be stepped."
             raise RuntimeError(msg)

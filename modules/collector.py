@@ -7,6 +7,7 @@ import chess
 from modules.agent import AgentBase
 from modules.board import Board
 from modules.chess_types import (
+    ABORT_ACTION,
     AgentActionSnapshot,
     AgentLogEntry,
     BoardStepSnapshotPost,
@@ -248,43 +249,76 @@ class Collector:
         -------
         bool
         """
-        return (
-            self._agent_action_snapshot is not None
-            and self._board_action_pre_snapshot is not None
-            and self._board_action_post_snapshot is not None
-            and self._move_start_time is not None
-            and self._move_stop_time is not None
-        )
+        if self._agent_action_snapshot is None:
+            return False
+
+        populated = self._move_start_time is not None and self._move_stop_time is not None
+        if self._agent_action_snapshot.action != ABORT_ACTION:
+            populated = (
+                populated
+                and self._board_action_pre_snapshot is not None
+                and self._board_action_post_snapshot is not None
+            )
+
+        return populated
 
     def _create_current_move_entry(self) -> None:
         """Create the current move entry from the collected metadata."""
         move_id = get_new_id()
         ply = len(self._moves) + 1
         side_to_move = chess.WHITE if ply % 2 == 1 else chess.BLACK
-        action = self._agent_action_snapshot.action
-        evals = self._agent_action_snapshot.evals
-        dist = self._agent_action_snapshot.dist
-        capture_piece = self._board_action_pre_snapshot.capture_piece
         self._current_move = MoveLogEntry(
             id=move_id,
             game_id=self._game.id,
             agent_id=self._agents[side_to_move].id,
             ply=ply,
-            uci=self._board_action_pre_snapshot.move.uci(),
-            promotion=self._board_action_pre_snapshot.move.promotion,
             side_to_move=side_to_move,
-            piece_type=self._board_action_pre_snapshot.move_piece.piece_type,
-            position_eval_after_move=evals[action] if evals is not None else None,
-            policy_entropy=calculate_policy_entropy(self._agent_action_snapshot.dist),
-            probability_of_choice=dist[action] if dist is not None else None,
-            capture_piece_type=capture_piece.piece_type if capture_piece is not None else None,
-            is_check=self._board_action_post_snapshot.is_check,
-            castle_type=self._board_action_pre_snapshot.castle_type,
-            zobrist_after_move=self._board_action_post_snapshot.pos_hash,
-            legal_move_count=self._board_action_pre_snapshot.num_moves,
             timestamp=self._move_start_time,
             dt=self._move_stop_time - self._move_start_time,
         )
+
+        self._populate_agent_action()
+        self._populate_board_action()
+
+    def _populate_agent_action(self) -> None:
+        """Populate the fields of the current move that pertain to the agent action."""
+        if self._agent_action_snapshot is None:
+            return
+
+        action = self._agent_action_snapshot.action
+        evals = self._agent_action_snapshot.evals
+        dist = self._agent_action_snapshot.dist
+
+        if evals is not None:
+            self._current_move.position_eval_after_move = (
+                evals[action] if action != ABORT_ACTION else None
+            )
+        if dist is not None:
+            self._current_move.probability_of_choice = (
+                dist[action] if action != ABORT_ACTION else None
+            )
+            self._current_move.policy_entropy = calculate_policy_entropy(dist)
+
+    def _populate_board_action(self) -> None:
+        """Populate the fields of the current move that pertain to the board action."""
+        if self._board_action_pre_snapshot is not None:
+            move_piece = self._board_action_pre_snapshot.move_piece
+            capture_piece = self._board_action_pre_snapshot.capture_piece
+            move = self._board_action_pre_snapshot.move
+
+            self._current_move.uci = move.uci()
+            self._current_move.promotion = move.promotion
+            self._current_move.piece_type = move_piece.piece_type
+            self._current_move.capture_piece_type = (
+                capture_piece.piece_type if capture_piece is not None else None
+            )
+
+            self._current_move.castle_type = self._board_action_pre_snapshot.castle_type
+            self._current_move.legal_move_count = self._board_action_pre_snapshot.num_moves
+
+        if self._board_action_post_snapshot is not None:
+            self._current_move.zobrist_after_move = self._board_action_post_snapshot.pos_hash
+            self._current_move.is_check = self._board_action_post_snapshot.is_check
 
     def _clear_metadata(self) -> None:
         """Clear the current move metadata fields."""
