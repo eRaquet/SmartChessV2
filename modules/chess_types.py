@@ -41,7 +41,7 @@ type MoveVector = list[chess.Move]
 # alias for gym.Env terminology
 # corresponds to the index of the chosen move
 # -1 means a resignation
-type Action = int
+Action = int
 ABORT_ACTION: Action = -1
 
 type Evaluation = float
@@ -107,19 +107,7 @@ ROOK_CASTLE_FILE_QUEENSIDE = 3
 ### Game Storage Table Schemes
 
 
-## game table
-
-
-# - id {INTEGER}
-# - white agent id {INTEGER}
-# - black agent id {INTEGER}
-# - result (white win, black win, draw, unresolved) {INTEGER}
-# - termination type
-#   (checkmate, stalemate, repetition, fifty moves, insufficient material, abort) {INTEGER}
-# - ply number {INTEGER}
-# - starting fen (NULL if standard starting fen) {TEXT}
-# - timestamp in nanoseconds since last Unix epoch {INTEGER}
-# - dt in nanoseconds for the duration of the game {INTEGER}
+## Data Enums
 
 
 class LogResult(IntFlag):
@@ -142,22 +130,28 @@ class LogTerminationType(IntFlag):
     ABORT = 5
 
 
-@dataclass(slots=True, kw_only=True)
-class GameLogEntry:
-    """Data class for storing metadata to go into the game table of the game database."""
+class LogCastleType(IntFlag):
+    """Enum for mapping integer values to castling sides for the database."""
 
-    id: int | None = None
-    white_agent_id: int | None = None
-    black_agent_id: int | None = None
-    result: LogResult | None = None
-    termination_type: LogTerminationType | None = None
-    ply_number: int | None = None
-    starting_fen: str | None = None
-    timestamp: int | None = None
-    dt: int | None = None
+    KINGSIDE = 0
+    QUEENSIDE = 1
 
 
-## agent table
+## Game Table
+
+# - id {INTEGER}
+# - white agent id {INTEGER}
+# - black agent id {INTEGER}
+# - result (white win, black win, draw, unresolved) {INTEGER}
+# - termination type
+#   (checkmate, stalemate, repetition, fifty moves, insufficient material, abort) {INTEGER}
+# - ply number {INTEGER}
+# - starting fen (NULL if standard starting fen) {TEXT}
+# - timestamp in nanoseconds since last Unix epoch {INTEGER}
+# - dt in nanoseconds for the duration of the game {INTEGER}
+
+
+## Agent Table
 
 # - id {INTEGER}
 # - agent type (name of class, "StandardAgent" for example) {TEXT}
@@ -166,27 +160,7 @@ class GameLogEntry:
 # - timestamp in nanoseconds since last Unix epoch {INTEGER}
 
 
-@dataclass(slots=True, kw_only=True)
-class AgentLogEntry:
-    """Data class for storing metadata to go into the agent table of the game database."""
-
-    id: int | None = None
-    agent_type: str | None = None
-    strain: int | None = None
-    generation: int | None = None
-    timestamp: int | None = None
-
-
-@dataclass(slots=True, kw_only=True)
-class AgentActionSnapshot:
-    """Data class for capturing agent action metadata for collector to access."""
-
-    evals: SetEvaluation | None
-    dist: PMF | None
-    action: Action
-
-
-## move table
+## Move Table
 
 # - id {INTEGER} populated by collector
 # - game id {INTEGER} populated by collector
@@ -209,20 +183,35 @@ class AgentActionSnapshot:
 # - dt in nanoseconds between the beginning and the end of a move {INTEGER}
 
 
-class LogCastleType(IntFlag):
-    """Enum for mapping integer values to castling sides for the database."""
+## Log Entry Dataclasses
 
-    KINGSIDE = 0
-    QUEENSIDE = 1
+
+@dataclass(slots=True, kw_only=True)
+class GameLogEntry:
+    """Data class for storing metadata to go into the game table of the game database."""
+
+    result: LogResult | None = None
+    termination_type: LogTerminationType | None = None
+    ply_number: int | None = None
+    starting_fen: str | None = None
+    timestamp: int | None = None
+    dt: int | None = None
+
+
+@dataclass(slots=True, kw_only=True)
+class AgentLogEntry:
+    """Data class for storing metadata to go into the agent table of the game database."""
+
+    agent_type: str | None = None
+    strain: int | None = None
+    generation: int | None = None
+    timestamp: int | None = None
 
 
 @dataclass(slots=True, kw_only=True)
 class MoveLogEntry:
     """Data class for storing metadata to go into the move table of the game database."""
 
-    id: int | None = None
-    game_id: int | None = None
-    agent_id: int | None = None
     ply: int | None = None
     uci: str | None = None
     promotion: chess.PieceType | None = None
@@ -240,21 +229,36 @@ class MoveLogEntry:
     dt: int | None = None
 
 
-@dataclass(slots=True, kw_only=True)
-class BoardStepSnapshotPre:
-    """Data class for capturing board state for collector before stepping the board position."""
+### Collector Data Classes
 
-    move: chess.Move
-    move_piece: chess.Piece
-    num_moves: int
-    capture_piece: chess.Piece | None
+
+@dataclass(slots=True, kw_only=True)
+class MoveContext:
+    """Data class for storing the move context information."""
+
+    side_to_move: chess.Color
+    ply: int
+
+
+@dataclass(slots=True, kw_only=True)
+class AgentDecision:
+    """Data class for capturing agent action metadata for collector to access."""
+
+    evals: SetEvaluation | None
+    dist: PMF | None
+    action: Action
+
+
+@dataclass(slots=True, kw_only=True)
+class BoardStepResult:
+    """Data class for capturing the results from a give agent action."""
+
+    uci: str
+    promotion: chess.PieceType | None
+    move_piece: chess.PieceType
+    capture_piece: chess.PieceType | None
     castle_type: LogCastleType | None
-
-
-@dataclass(slots=True, kw_only=True)
-class BoardStepSnapshotPost:
-    """Data class for capturing board state for collector after stepping the board position."""
-
+    legal_move_count: int
     is_check: bool
     pos_hash: int
 
@@ -264,5 +268,5 @@ class GameLog:
     """Data class that stores a completed, immutable game log."""
 
     game: GameLogEntry
-    agents: tuple[AgentLogEntry]  # NOTE: ensure that the insertion order corresponds to chess.Color
+    agents: dict[chess.Color, AgentLogEntry]
     moves: tuple[MoveLogEntry]

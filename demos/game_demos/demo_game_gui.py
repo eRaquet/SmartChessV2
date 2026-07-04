@@ -9,6 +9,7 @@ from modules.board import GUIBoard
 from modules.collector import Collector
 from modules.game import Game
 from modules.model import StandardModel
+from modules.utils import write_game
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -88,9 +89,12 @@ if __name__ == "__main__":
 
     print("Start")
 
-    game.play_game()
+    log = game.play_game()
 
     print("End")
+
+    if log:
+        write_game(log)
 
     print(
         f"Winner: {

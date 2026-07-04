@@ -4,8 +4,8 @@ import chess
 
 from modules.agent import AgentBase
 from modules.board import Board
+from modules.chess_types import GameLog, MoveContext
 from modules.collector import Collector
-from modules.utils import write_game
 
 
 class Game:
@@ -28,25 +28,33 @@ class Game:
             self._collector.select_agent(agent_white, chess.WHITE)
             self._collector.select_agent(agent_black, chess.BLACK)
 
-    def play_game(self) -> None:
-        """Play through a game on the board."""
+    def play_game(self) -> GameLog | None:
+        """
+
+        Play through game on the board, returning the game log if a collector was provided.
+
+        Returns
+        -------
+        GameLog | None
+        """
         if self._collector:
             self._collector.start_game()
 
         while not self._board.terminated:
             if self._collector:
+                context = MoveContext(
+                    side_to_move=self._board.turn, ply=self._board.half_move_count + 1
+                )
                 self._collector.start_move()
 
             current_agent = self._agents[self._board.turn]
-            action = current_agent.act(self._board)
+            decision = current_agent.act(self._board)
 
-            self._board.step(action)
+            result = self._board.step(decision.action)
 
             if self._collector:
-                self._collector.get_agent_action(current_agent)
-                self._collector.get_board_action(self._board)
-                self._collector.finish_move()
+                self._collector.record_move(context, decision, result)
 
         if self._collector:
-            game_log = self._collector.finish_game(self._board.outcome)
-            write_game(game_log)  # this will be depricated
+            return self._collector.finish_game(self._board.outcome)
+        return None

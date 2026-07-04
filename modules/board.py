@@ -10,8 +10,7 @@ from modules.chess_types import (
     ABORT_ACTION,
     Action,
     BoardOutcome,
-    BoardStepSnapshotPost,
-    BoardStepSnapshotPre,
+    BoardStepResult,
     LogCastleType,
     MoveVector,
     Observation,
@@ -25,9 +24,6 @@ from modules.utils import (
 
 class Board:
     """Chess board environment with generation of valid moves and creation of observations."""
-
-    snapshot_pre: BoardStepSnapshotPre | None = None
-    snapshot_post: BoardStepSnapshotPost | None = None
 
     def __init__(self) -> None:
         """Initiate a board object."""
@@ -53,7 +49,7 @@ class Board:
         self._observe()
         self._render()
 
-    def step(self, action: Action) -> None:
+    def step(self, action: Action) -> BoardStepResult | None:
         """
 
         Step the board through one move, encoded by `action`.
@@ -62,10 +58,15 @@ class Board:
         ----------
         action : Action
             Action performed on the board (chess move)
+
+        Returns
+        -------
+        BoardStepResult | None
+            result from step, or None if step not performed
         """
         if self._status not in BoardOutcome.TERMINATED:
             if action != ABORT_ACTION:
-                self.update_state(action)
+                result = self.update_state(action)
 
                 # check for end conditions
                 if self._board.is_checkmate():
@@ -85,11 +86,13 @@ class Board:
                 self._observe()
 
                 self._render()
-            else:
-                self._status = BoardOutcome.ABORT
-        else:
-            msg = "Board is in terminal state, and cannot be stepped."
-            raise RuntimeError(msg)
+
+                return result
+            self._status = BoardOutcome.ABORT
+            self._observe()
+            return None
+        msg = "Board is in terminal state, and cannot be stepped."
+        raise RuntimeError(msg)
 
     def _observe(self) -> None:
         """Make the environment reflect the board state and generate an observation."""
@@ -101,7 +104,7 @@ class Board:
         else:
             self._observation = np.array([], dtype=np.uint8)
 
-    def update_state(self, action: Action) -> None:
+    def update_state(self, action: Action) -> BoardStepResult:
         """
 
         Update the state of the environment without generating an observation or rendering.
@@ -110,19 +113,26 @@ class Board:
         ----------
         action : Action
             played action, represented by the index of move to play
+
+        Returns
+        -------
+        BoardStepResult
+            the result from the updating the board
         """
         move = self._moves[action]
 
-        self._capture_pre(move)
+        result = self._capture_pre(move)
 
         self._board.push(move)
 
-        self._capture_post()
+        result = self._capture_post(result)
 
         self._moves = list(self._board.legal_moves)
         self._encoding = encode_board(self._board)
         self._state_list.append(self._encoding.copy())
         self._board_state_counter.update(self._encoding.tobytes())
+
+        return result
 
     def _render(self) -> None:
         """Render method for board, empty for base class."""
@@ -177,7 +187,7 @@ class Board:
             The winning color, or None if no winner is determined (draw or unfinished game)
         """
         if self._status in BoardOutcome.WON:
-            return chess.WHITE if BoardOutcome.WHITE else chess.BLACK
+            return chess.WHITE if self._statis is BoardOutcome.WHITE else chess.BLACK
         return None
 
     @property
@@ -235,25 +245,39 @@ class Board:
         """
         return self._board.ply()
 
-    def _capture_pre(self, move: chess.Move) -> None:
-        self.snapshot_pre = BoardStepSnapshotPre(
-            move=move,
-            move_piece=self._board.piece_at(move.from_square),
-            capture_piece=self._board.piece_at(move.to_square),
-            castle_type=(
-                LogCastleType.KINGSIDE
-                if self._board.is_kingside_castling(move)
-                else LogCastleType.QUEENSIDE
-                if self._board.is_queenside_castling(move)
-                else None
-            ),
-            num_moves=len(self._moves),
+    def _capture_pre(self, move: chess.Move) -> BoardStepResult:
+        move_piece = self._board.piece_at(move.from_square).piece_type
+        captured = self._board.piece_at(move.to_square)
+        capture_piece = (
+            captured.piece_type
+            if captured is not None
+            else chess.PAWN
+            if self._board.is_en_passant(move)
+            else None
+        )
+        castle_type = (
+            LogCastleType.KINGSIDE
+            if self._board.is_kingside_castling(move)
+            else LogCastleType.QUEENSIDE
+            if self._board.is_queenside_castling(move)
+            else None
         )
 
-    def _capture_post(self) -> None:
-        self.snapshot_post = BoardStepSnapshotPost(
-            is_check=self._board.is_check(), pos_hash=zobrist_hash(self._board)
+        return BoardStepResult(
+            uci=move.uci(),
+            promotion=move.promotion,
+            move_piece=move_piece,
+            capture_piece=capture_piece,
+            castle_type=castle_type,
+            legal_move_count=len(self._moves),
+            is_check=False,  # dummy value to be filled in after move
+            pos_hash=-1,  # dummy value to be filled in after move
         )
+
+    def _capture_post(self, result: BoardStepResult) -> BoardStepResult:
+        result.is_check = self._board.is_check()
+        result.pos_hash = zobrist_hash(self._board)
+        return result
 
 
 class ASCIIBoard(Board):

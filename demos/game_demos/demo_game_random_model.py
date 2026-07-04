@@ -10,6 +10,7 @@ from modules.board import ASCIIBoard, Board, GUIBoard
 from modules.collector import Collector
 from modules.game import Game
 from modules.model import RandomModel
+from modules.utils import write_game
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -34,9 +35,12 @@ if __name__ == "__main__":
     collector = Collector() if args.log else None
     game = Game(white_agent, black_agent, board, collector)
 
-    game.play_game()
+    log = game.play_game()
 
     end = time.perf_counter()
+
+    if log:
+        write_game(log)
 
     print(f"Done with {((end - start) / board.half_move_count * 1e3):.3f} ms per move")
     print(
