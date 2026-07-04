@@ -475,11 +475,11 @@ def get_new_id() -> int:
 def write_game(game_log: GameLog) -> None:
     """Write game to output (currently just a text file)."""
     game_headers = [f.name for f in fields(GameLogEntry)]
-    agent_headers = [f.name for f in fields(AgentLogEntry)]
+    agent_headers = ["agent_color", *[f.name for f in fields(AgentLogEntry)]]
     move_headers = [f.name for f in fields(MoveLogEntry)]
 
     game_data = [list(astuple(game_log.game))]
-    agent_data = [list(astuple(agent)) for agent in game_log.agents]
+    agent_data = [[color, *astuple(game_log.agents[color])] for color in [chess.BLACK, chess.WHITE]]
     move_data = [list(astuple(move)) for move in game_log.moves]
 
     game_string = tabulate(game_data, headers=game_headers, tablefmt="grid")
