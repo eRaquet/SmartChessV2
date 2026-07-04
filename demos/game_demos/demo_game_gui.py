@@ -55,6 +55,7 @@ if __name__ == "__main__":
                 raise ValueError(msg)
         else:
             msg = "Invalid number of arguments for [--white] option"
+            raise ValueError(msg)
     else:
         white_agent = UIAgent(board)
 
@@ -80,6 +81,7 @@ if __name__ == "__main__":
                 raise ValueError(msg)
         else:
             msg = "Invalid number of arguments for [--black] option"
+            raise ValueError(msg)
     else:
         black_agent = UIAgent(board)
 

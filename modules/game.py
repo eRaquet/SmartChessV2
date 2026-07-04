@@ -53,7 +53,7 @@ class Game:
             result = self._board.step(decision.action)
 
             if self._collector:
-                self._collector.record_move(context, decision, result)
+                self._collector.record_move(context, decision, result)  # ty:ignore[possibly-unresolved-reference]
 
         if self._collector:
             return self._collector.finish_game(self._board.outcome)
