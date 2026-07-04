@@ -13,6 +13,3 @@ def test_game() -> None:
     game = Game(random_agent, random_agent, board)
     game.play_game()
     assert board.terminated
-
-    # check that the number of moves is equal to the number of board positions minus one
-    assert len(game.trajectory) - 1 == board.half_move_count

@@ -6,8 +6,10 @@ import chess
 
 from modules.agent import RandomAgent, StandardAgent, UIAgent
 from modules.board import GUIBoard
+from modules.collector import Collector
 from modules.game import Game
 from modules.model import StandardModel
+from modules.utils import write_game
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -25,6 +27,7 @@ if __name__ == "__main__":
         default=["human"],
         help='Options: "h" or "human", "r" or "random", "<strain>", or "<strain> <generation>"',
     )
+    parser.add_argument("--log", action="store_true", help="log game to database")
 
     args = parser.parse_args()
 
@@ -80,13 +83,18 @@ if __name__ == "__main__":
     else:
         black_agent = UIAgent(board)
 
-    game = Game(white_agent, black_agent, board)
+    collector = Collector() if args.log else None
+
+    game = Game(white_agent, black_agent, board, collector)
 
     print("Start")
 
-    game.play_game()
+    log = game.play_game()
 
     print("End")
+
+    if log:
+        write_game(log)
 
     print(
         f"Winner: {

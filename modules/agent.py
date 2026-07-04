@@ -7,18 +7,16 @@ import numpy as np
 from scipy.special import softmax
 
 from modules.board import Board, GUIBoard
-from modules.chess_types import (
-    Action,
-)
+from modules.chess_types import PMF, Action, AgentDecision, SetEvaluation
 from modules.config import DEFAULT_CONFIDENCE
-from modules.model import ModelBase
+from modules.model import ModelBase, StandardModel
 
 
 class AgentBase(ABC):
     """Agent base class, specifying structure."""
 
     @abstractmethod
-    def act(self, board: Board, *args: Any, **kwargs: Any) -> Action:
+    def act(self, board: Board, *args: Any, **kwargs: Any) -> AgentDecision:
         """
 
         Choose an action to play based on the provided observation.
@@ -30,21 +28,23 @@ class AgentBase(ABC):
 
         Returns
         -------
-        Action
-            index of chosen move
-
-        Raises
-        ------
-        NotImplementedError
+        AgentDecision
+            agent decision data
         """
+
+    def _capture(
+        self, action: Action, evals: SetEvaluation | None = None, dist: PMF | None = None
+    ) -> AgentDecision:
+        """Capture the agent's decision metadata."""
+        return AgentDecision(evals=evals, dist=dist, action=action)
 
 
 class RandomAgent(AgentBase):
     """Agent that picks a random move."""
 
-    rng = np.random.default_rng()
+    _rng = np.random.default_rng()
 
-    def act(self, board: Board) -> Action:
+    def act(self, board: Board) -> AgentDecision:
         """
 
         Choose a random action.
@@ -56,23 +56,28 @@ class RandomAgent(AgentBase):
 
         Returns
         -------
-        Action
+        AgentDecision
             randomly chosen action
         """
-        return self.rng.integers(len(board.moves))
+        action = int(self._rng.integers(len(board.moves)))
+
+        return self._capture(action)
 
 
 class StandardAgent(AgentBase):
     """Agent that picks a move based on its underlying model."""
 
+    _rng = np.random.default_rng()
+
     def __init__(
         self, model: ModelBase, confidence_factor: float | None = DEFAULT_CONFIDENCE
     ) -> None:
-        self.model = model
-        self.rng = np.random.default_rng()
-        self.confidence_factor = confidence_factor
+        self._model = model
+        self._confidence_factor = confidence_factor
+        self.strain = model.strain if isinstance(model, StandardModel) else None
+        self.generation = model.generation if isinstance(model, StandardModel) else None
 
-    def act(self, board: Board) -> Action:
+    def act(self, board: Board) -> AgentDecision:
         """
 
         Choose an action.
@@ -84,17 +89,24 @@ class StandardAgent(AgentBase):
 
         Returns
         -------
-        Action
-            chosen action
+        AgentDecision
+            chosen action data
         """
-        evals = self.model.predict_batch(board.observation)
+        evals = 1 - self._model.predict_batch(board.observation)  # evaluation as seen by agent
 
-        if self.confidence_factor is None:
-            return np.argmax(evals)
+        if self._confidence_factor is None:
+            action = int(np.argmax(evals))
 
-        choice_distribution = softmax(evals * self.confidence_factor)
+            # create distribution associated with an infinite confidence
+            choice_distribution = np.zeros(evals.shape)
+            choice_distribution[action] = 1
 
-        return self.rng.choice(len(choice_distribution), p=choice_distribution)
+        else:
+            choice_distribution = softmax(evals * self._confidence_factor)
+
+            action = int(self._rng.choice(len(choice_distribution), p=choice_distribution))
+
+        return self._capture(action, evals, choice_distribution)
 
 
 class UIAgent(AgentBase):
@@ -108,17 +120,18 @@ class UIAgent(AgentBase):
         # core objects that a UIAgent contains
         self._board = board
 
-    def act(self, _: Board) -> Action:
+    def act(self, _: Board) -> AgentDecision:
         """
 
         Get the user input.
 
         Returns
         -------
-        Action
+        AgentDecision
             action to take, specified by user
         """
         action = None
         while action is None:
             action = self._board.get_user_input()
-        return action
+
+        return self._capture(action)
