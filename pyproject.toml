@@ -21,16 +21,20 @@ readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "chess>=1.11.2",
-    "git-lfs>=1.6",
     "keras",
-    "line-profiler>=5.0.0",
     "matplotlib>=3.10.9",
     "mlx>=0.31.2",
     "numpy>=2.2.6",
     "pygame>=2.6.1",
-    "pytest>=8.4.1",
     "scipy>=1.15.3",
     "tabulate>=0.10.0",
+]
+
+[dependency-groups]
+dev = [
+    "git-lfs>=1.6",
+    "pytest>=9.1.1",
+    "ruff>=0.15.20",
 ]
 
 ########
