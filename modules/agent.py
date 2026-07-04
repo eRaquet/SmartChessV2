@@ -1,7 +1,7 @@
 """Module for defining chess agents."""
 
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, override
 
 import numpy as np
 from scipy.special import softmax
@@ -44,6 +44,7 @@ class RandomAgent(AgentBase):
 
     _rng = np.random.default_rng()
 
+    @override
     def act(self, board: Board) -> AgentDecision:
         """
 
@@ -77,6 +78,7 @@ class StandardAgent(AgentBase):
         self.strain = model.strain if isinstance(model, StandardModel) else None
         self.generation = model.generation if isinstance(model, StandardModel) else None
 
+    @override
     def act(self, board: Board) -> AgentDecision:
         """
 
@@ -120,6 +122,7 @@ class UIAgent(AgentBase):
         # core objects that a UIAgent contains
         self._board = board
 
+    @override
     def act(self, _: Board) -> AgentDecision:
         """
 

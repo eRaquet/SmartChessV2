@@ -1,10 +1,9 @@
 """Module to specify the behavior of a chess board inference model."""
 
 # import at top to configure keras backend
-from modules.model_config import MODEL_PARAMS  # noqa: I001
-
 import json
 from pathlib import Path
+from typing import override
 
 import numpy as np
 from keras import Input, Model
@@ -14,6 +13,7 @@ from keras.optimizers import Adam
 
 from modules.chess_types import BoardEncoding, Evaluation, SetEncoding, SetEvaluation
 from modules.config import PROJECT_PATH
+from modules.model_config import MODEL_PARAMS
 
 
 class ModelBase:
@@ -60,6 +60,7 @@ class RandomModel(ModelBase):
 
     rng = np.random.default_rng()
 
+    @override
     def predict(self, _: BoardEncoding) -> Evaluation:  # ty:ignore[invalid-method-override]
         """
 
@@ -72,6 +73,7 @@ class RandomModel(ModelBase):
         """
         return self.rng.random()
 
+    @override
     def predict_batch(self, encodings: SetEncoding) -> SetEvaluation:
         """
 
@@ -134,6 +136,7 @@ class StandardModel(ModelBase):
         else:
             self._load()
 
+    @override
     def predict(self, encoding: BoardEncoding) -> Evaluation:
         """
 
@@ -155,6 +158,7 @@ class StandardModel(ModelBase):
 
         return self._model.predict_on_batch(encoding_recasted)[0, 0]
 
+    @override
     def predict_batch(self, encodings: SetEncoding) -> SetEvaluation:
         """
 

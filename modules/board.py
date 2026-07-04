@@ -1,6 +1,7 @@
 """Module to define the board environment for training and playing."""
 
 from collections import Counter
+from typing import override
 
 import chess
 import numpy as np
@@ -284,6 +285,7 @@ class Board:
 class ASCIIBoard(Board):
     """Board with simple ASCII visualization."""
 
+    @override
     def _render(self) -> None:
         """Render board as ASCII."""
         print("-" * 15)
@@ -299,6 +301,7 @@ class GUIBoard(Board):
 
         self._display = Display()
 
+    @override
     def _render(self) -> None:
         """Render board display."""
         self._display.display_board(self._board)
