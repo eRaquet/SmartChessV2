@@ -1,6 +1,8 @@
 """Module to specify the behavior of a chess board inference model."""
 
 # import at top to configure keras backend
+from modules.model_config import MODEL_PARAMS  # noqa: I001
+
 import json
 from pathlib import Path
 from typing import override
@@ -13,7 +15,6 @@ from keras.optimizers import Adam
 
 from modules.chess_types import BoardEncoding, Evaluation, SetEncoding, SetEvaluation
 from modules.config import PROJECT_PATH
-from modules.model_config import MODEL_PARAMS
 
 
 class ModelBase:
