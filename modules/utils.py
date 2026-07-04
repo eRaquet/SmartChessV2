@@ -486,7 +486,9 @@ def write_game(game_log: GameLog) -> None:
     agent_string = tabulate(agent_data, headers=agent_headers, tablefmt="grid")
     move_string = tabulate(move_data, headers=move_headers, tablefmt="grid")
 
-    with Path.open("temp.txt", "w") as file:
+    path = Path("temp.txt")
+
+    with path.open("w") as file:
         print("Game Data", file=file)
         print(game_string, file=file)
         print("\nAgent Data", file=file)

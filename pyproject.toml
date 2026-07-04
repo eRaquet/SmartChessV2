@@ -43,7 +43,6 @@ python-version = "3.12"
 all = "error"
 invalid-return-type = "ignore"
 invalid-argument-type = "ignore"
-no-matching-overload = "ignore"
 
 
 ########
