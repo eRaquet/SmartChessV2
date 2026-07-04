@@ -1,6 +1,7 @@
 """Module that defines datacollectors to abstract data flow from actual objects."""
 
 import time
+from typing import cast
 
 import chess
 
@@ -50,8 +51,8 @@ class Collector:
             raise RuntimeError(msg)
 
         try:
-            strain = agent.strain  # ty:ignore[unresolved-attribute]
-            generation = agent.generation  # ty:ignore[unresolved-attribute]
+            strain = cast("int", agent.strain)  # ty:ignore[unresolved-attribute]
+            generation = cast("int", agent.generation)  # ty:ignore[unresolved-attribute]
         except AttributeError:
             strain = None
             generation = None
@@ -142,7 +143,7 @@ class Collector:
         result : BoardStepResult | None
             result when played on board, None if game was aborted before decision was played
         """
-        if not self._active_move:
+        if self._active_move is None:
             msg = "No active move."
             raise RuntimeError(msg)
 
@@ -160,12 +161,12 @@ class Collector:
 
     def _close_game_entry(self, outcome: chess.Outcome | None) -> None:
         """Terminate the game for this collector."""
-        game: GameLogEntry = self._game
+        game = cast("GameLogEntry", self._game)
 
-        game_start_time: int = game.timestamp
+        game_start_time: int = cast("int", game.timestamp)
         game_end_time = time.time_ns()
 
-        self._game.dt = game_end_time - game_start_time
+        game.dt = game_end_time - game_start_time
 
         if outcome:
             if outcome.winner is chess.WHITE:
@@ -221,8 +222,9 @@ class Collector:
         context : MoveContext
             move context metadata object
         """
-        self._active_move.side_to_move = context.side_to_move
-        self._active_move.ply = context.ply
+        move = cast("MoveLogEntry", self._active_move)
+        move.side_to_move = context.side_to_move
+        move.ply = context.ply
 
     def _write_decision(self, decision: AgentDecision) -> None:
         """
@@ -234,19 +236,17 @@ class Collector:
         decision : AgentDecision
             agent decision metadata object
         """
+        move = cast("MoveLogEntry", self._active_move)
+
         action = decision.action
         evals = decision.evals
         dist = decision.dist
 
         if evals is not None:
-            self._active_move.position_eval_after_move = (
-                evals[action] if action != ABORT_ACTION else None
-            )
+            move.position_eval_after_move = evals[action] if action != ABORT_ACTION else None
         if dist is not None:
-            self._active_move.probability_of_choice = (
-                dist[action] if action != ABORT_ACTION else None
-            )
-            self._active_move.policy_entropy = calculate_policy_entropy(dist)
+            move.probability_of_choice = dist[action] if action != ABORT_ACTION else None
+            move.policy_entropy = calculate_policy_entropy(dist)
 
     def _write_result(self, result: BoardStepResult) -> None:
         """
@@ -258,16 +258,20 @@ class Collector:
         result : BoardStepResult
             step result metadata object
         """
-        self._active_move.capture_piece_type = result.capture_piece
-        self._active_move.castle_type = result.castle_type
-        self._active_move.is_check = result.is_check
-        self._active_move.legal_move_count = result.legal_move_count
-        self._active_move.piece_type = result.move_piece
-        self._active_move.promotion = result.promotion
-        self._active_move.uci = result.uci
-        self._active_move.zobrist_after_move = result.pos_hash
+        move = cast("MoveLogEntry", self._active_move)
+
+        move.capture_piece_type = result.capture_piece
+        move.castle_type = result.castle_type
+        move.is_check = result.is_check
+        move.legal_move_count = result.legal_move_count
+        move.piece_type = result.move_piece
+        move.promotion = result.promotion
+        move.uci = result.uci
+        move.zobrist_after_move = result.pos_hash
 
     def _write_times(self) -> None:
         """Populate the fields of the current move that pertain to the start/stop timestamps."""
-        self._active_move.timestamp = self._move_start_time
-        self._active_move.dt = self._move_stop_time - self._move_start_time
+        move = cast("MoveLogEntry", self._active_move)
+
+        move.timestamp = self._move_start_time
+        move.dt = self._move_stop_time - self._move_start_time
