@@ -160,7 +160,7 @@ class Collector:
 
     def _close_game_entry(self, outcome: chess.Outcome | None) -> None:
         """Terminate the game for this collector."""
-        self._game.dt = time.time_ns() - self._game.timestamp
+        self._game.dt = time.time_ns() - self._game.timestamp  # ty:ignore[unsupported-operator]
 
         if outcome:
             if outcome.winner is chess.WHITE:
