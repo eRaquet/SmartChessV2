@@ -46,7 +46,6 @@ invalid-argument-type = "ignore"
 no-matching-overload = "ignore"
 missing-override-decorator = "ignore"
 invalid-assignment = "ignore"
-invalid-method-override = "ignore"
 
 
 ########
