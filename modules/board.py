@@ -187,7 +187,7 @@ class Board:
             The winning color, or None if no winner is determined (draw or unfinished game)
         """
         if self._status in BoardOutcome.WON:
-            return chess.WHITE if self._statis is BoardOutcome.WHITE else chess.BLACK
+            return chess.WHITE if self._status == BoardOutcome.WHITE else chess.BLACK
         return None
 
     @property
@@ -246,7 +246,8 @@ class Board:
         return self._board.ply()
 
     def _capture_pre(self, move: chess.Move) -> BoardStepResult:
-        move_piece = self._board.piece_at(move.from_square).piece_type
+        moved = self._board.piece_at(move.from_square)
+        move_piece = moved.piece_type  # ty:ignore[unresolved-attribute]
         captured = self._board.piece_at(move.to_square)
         capture_piece = (
             captured.piece_type

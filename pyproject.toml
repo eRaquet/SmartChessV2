@@ -48,7 +48,6 @@ missing-override-decorator = "ignore"
 invalid-assignment = "ignore"
 invalid-method-override = "ignore"
 possibly-unresolved-reference = "ignore"
-unresolved-attribute = "ignore"
 
 
 ########

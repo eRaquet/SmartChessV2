@@ -50,8 +50,8 @@ class Collector:
             raise RuntimeError(msg)
 
         try:
-            strain = agent.strain
-            generation = agent.generation
+            strain = agent.strain  # ty:ignore[unresolved-attribute]
+            generation = agent.generation  # ty:ignore[unresolved-attribute]
         except AttributeError:
             strain = None
             generation = None
@@ -160,40 +160,45 @@ class Collector:
 
     def _close_game_entry(self, outcome: chess.Outcome | None) -> None:
         """Terminate the game for this collector."""
-        self._game.dt = time.time_ns() - self._game.timestamp  # ty:ignore[unsupported-operator]
+        game: GameLogEntry = self._game
+
+        game_start_time: int = game.timestamp
+        game_end_time = time.time_ns()
+
+        self._game.dt = game_end_time - game_start_time
 
         if outcome:
             if outcome.winner is chess.WHITE:
-                self._game.result = LogResult.WHITE
+                game.result = LogResult.WHITE
             elif outcome.winner is chess.BLACK:
-                self._game.result = LogResult.BLACK
+                game.result = LogResult.BLACK
             else:
-                self._game.result = LogResult.DRAW
+                game.result = LogResult.DRAW
 
             if outcome.termination is chess.Termination.CHECKMATE:
-                self._game.termination_type = LogTerminationType.CHECKMATE
+                game.termination_type = LogTerminationType.CHECKMATE
             elif outcome.termination is chess.Termination.STALEMATE:
-                self._game.termination_type = LogTerminationType.STALEMATE
+                game.termination_type = LogTerminationType.STALEMATE
             elif outcome.termination in (
                 chess.Termination.FIVEFOLD_REPETITION,
                 chess.Termination.THREEFOLD_REPETITION,
             ):
-                self._game.termination_type = LogTerminationType.REPETITION
+                game.termination_type = LogTerminationType.REPETITION
             elif outcome.termination in (
                 chess.Termination.FIFTY_MOVES,
                 chess.Termination.SEVENTYFIVE_MOVES,
             ):
-                self._game.termination_type = LogTerminationType.FIFTY_MOVES
+                game.termination_type = LogTerminationType.FIFTY_MOVES
             elif outcome.termination is chess.Termination.INSUFFICIENT_MATERIAL:
-                self._game.termination_type = LogTerminationType.INSUFFICIENT_MATERIAL
+                game.termination_type = LogTerminationType.INSUFFICIENT_MATERIAL
             else:
-                self._game.termination_type = LogTerminationType.ABORT
+                game.termination_type = LogTerminationType.ABORT
 
         else:
-            self._game.result = LogResult.UNRESOLVED
-            self._game.termination_type = LogTerminationType.ABORT
+            game.result = LogResult.UNRESOLVED
+            game.termination_type = LogTerminationType.ABORT
 
-        self._game.ply_number = len(self._moves)
+        game.ply_number = len(self._moves)
 
     def _is_agents_populated(self) -> bool:
         """
