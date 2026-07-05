@@ -3,6 +3,7 @@
 from collections import Counter
 from dataclasses import astuple, fields
 from pathlib import Path
+from typing import cast
 
 import chess
 import numpy as np
@@ -123,7 +124,8 @@ def encode_board(board: chess.Board) -> BoardEncoding:
         encoded_board[:, :, 16] = zero_board
 
     if board.has_legal_en_passant():
-        encoded_board[*square_indices(board.ep_square, board.turn), 17] = 1  # type: ignore[arg-type]
+        ep_square = cast("int", board.ep_square)
+        encoded_board[*square_indices(ep_square, board.turn), 17] = 1  # type: ignore[arg-type]
 
     return encoded_board
 

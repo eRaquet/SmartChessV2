@@ -2,12 +2,16 @@
 
 import argparse
 import time
+from typing import TYPE_CHECKING, cast
 
 import numpy as np
 from matplotlib import pyplot as plt
 
 from modules.config import PROJECT_PATH
 from modules.model import StandardModel
+
+if TYPE_CHECKING:
+    from modules.chess_types import SetEncoding
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -35,7 +39,7 @@ if __name__ == "__main__":
 
     for i in range(len(N)):
         for _ in range(num_iterations):
-            encodings = rng.integers(0, 2, (N[i], 8, 8, 18), dtype=np.uint8)
+            encodings = cast("SetEncoding", rng.integers(0, 2, (N[i], 8, 8, 18), dtype=np.uint8))
 
             # evaluate random encodings as a batch
             t = time.perf_counter()

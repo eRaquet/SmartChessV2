@@ -94,17 +94,19 @@ class StandardAgent(AgentBase):
         AgentDecision
             chosen action data
         """
-        evals = 1 - self._model.predict_batch(board.observation)  # evaluation as seen by agent
+        evals: SetEvaluation = 1 - self._model.predict_batch(
+            board.observation
+        )  # evaluation as seen by agent
 
         if self._confidence_factor is None:
             action = int(np.argmax(evals))
 
             # create distribution associated with an infinite confidence
-            choice_distribution = np.zeros(evals.shape)
+            choice_distribution: PMF = np.zeros(evals.shape)
             choice_distribution[action] = 1
 
         else:
-            choice_distribution = softmax(evals * self._confidence_factor)
+            choice_distribution: PMF = softmax(evals * self._confidence_factor)
 
             action = int(self._rng.choice(len(choice_distribution), p=choice_distribution))
 
@@ -120,7 +122,7 @@ class UIAgent(AgentBase):
             raise TypeError(msg)
 
         # core objects that a UIAgent contains
-        self._board = board
+        self._board: GUIBoard = board
 
     @override
     def act(self, _: Board) -> AgentDecision:

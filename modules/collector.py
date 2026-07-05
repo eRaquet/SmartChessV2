@@ -8,6 +8,8 @@ import chess
 from modules.agent import AgentBase
 from modules.chess_types import (
     ABORT_ACTION,
+    PMF,
+    Action,
     AgentDecision,
     AgentLogEntry,
     BoardStepResult,
@@ -17,6 +19,7 @@ from modules.chess_types import (
     LogTerminationType,
     MoveContext,
     MoveLogEntry,
+    SetEvaluation,
 )
 from modules.utils import calculate_policy_entropy
 
@@ -28,7 +31,7 @@ class Collector:
         self._game = None
         self._moves: list[MoveLogEntry] = []
         self._active_move: MoveLogEntry | None = None
-        self._agents = {
+        self._agents: dict[chess.Color, AgentLogEntry | None] = {
             chess.WHITE: None,
             chess.BLACK: None,
         }
@@ -103,9 +106,11 @@ class Collector:
 
         self._close_game_entry(outcome)
 
+        agents = cast("dict[chess.Color, AgentLogEntry]", self._agents)
+
         log = GameLog(
             game=self._game,
-            agents=self._agents,
+            agents=agents,
             moves=tuple(self._moves),
         )
 
@@ -161,7 +166,7 @@ class Collector:
 
     def _close_game_entry(self, outcome: chess.Outcome | None) -> None:
         """Terminate the game for this collector."""
-        game = cast("GameLogEntry", self._game)
+        game: GameLogEntry = cast("GameLogEntry", self._game)
 
         game_start_time: int = cast("int", game.timestamp)
         game_end_time = time.time_ns()
@@ -222,7 +227,7 @@ class Collector:
         context : MoveContext
             move context metadata object
         """
-        move = cast("MoveLogEntry", self._active_move)
+        move: MoveLogEntry = cast("MoveLogEntry", self._active_move)
         move.side_to_move = context.side_to_move
         move.ply = context.ply
 
@@ -236,11 +241,11 @@ class Collector:
         decision : AgentDecision
             agent decision metadata object
         """
-        move = cast("MoveLogEntry", self._active_move)
+        move: MoveLogEntry = cast("MoveLogEntry", self._active_move)
 
-        action = decision.action
-        evals = decision.evals
-        dist = decision.dist
+        action: Action = decision.action
+        evals: SetEvaluation | None = decision.evals
+        dist: PMF | None = decision.dist
 
         if evals is not None:
             move.position_eval_after_move = evals[action] if action != ABORT_ACTION else None
@@ -258,7 +263,7 @@ class Collector:
         result : BoardStepResult
             step result metadata object
         """
-        move = cast("MoveLogEntry", self._active_move)
+        move: MoveLogEntry = cast("MoveLogEntry", self._active_move)
 
         move.capture_piece_type = result.capture_piece
         move.castle_type = result.castle_type
@@ -271,7 +276,7 @@ class Collector:
 
     def _write_times(self) -> None:
         """Populate the fields of the current move that pertain to the start/stop timestamps."""
-        move = cast("MoveLogEntry", self._active_move)
+        move: MoveLogEntry = cast("MoveLogEntry", self._active_move)
 
         move.timestamp = self._move_start_time
         move.dt = self._move_stop_time - self._move_start_time

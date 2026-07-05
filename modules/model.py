@@ -4,8 +4,9 @@
 from modules.model_config import MODEL_PARAMS  # noqa: I001
 
 import json
+from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import override
+from typing import TYPE_CHECKING, override
 
 import numpy as np
 from keras import Input, Model
@@ -16,10 +17,14 @@ from keras.optimizers import Adam
 from modules.chess_types import BoardEncoding, Evaluation, SetEncoding, SetEvaluation
 from modules.config import PROJECT_PATH
 
+if TYPE_CHECKING:
+    from numpy.typing import NDArray
 
-class ModelBase:
+
+class ModelBase(ABC):
     """Model base class that specifies structure."""
 
+    @abstractmethod
     def predict(self, encoding: BoardEncoding) -> Evaluation:
         """
 
@@ -36,8 +41,8 @@ class ModelBase:
             Probability of winning from current position,
             between 0 and 1 normally, unless the model is badly trained.
         """
-        raise NotImplementedError
 
+    @abstractmethod
     def predict_batch(self, encodings: SetEncoding) -> SetEvaluation:
         """
 
@@ -53,7 +58,6 @@ class ModelBase:
         SetEvaluation
             Array of predictions
         """
-        raise NotImplementedError
 
 
 class RandomModel(ModelBase):
@@ -117,7 +121,7 @@ class StandardModel(ModelBase):
         """
         self._strain = strain
 
-        if generation:
+        if generation is not None:
             self._generation = generation
         else:
             self._generation = self.get_curr_generation()
@@ -155,7 +159,9 @@ class StandardModel(ModelBase):
             between 0 and 1 normally, unless the model is badly trained.
         """
         # cast encoding to the proper shape and data type
-        encoding_recasted = encoding.astype(np.float16).reshape((1, *encoding.shape))
+        encoding_recasted: NDArray[np.float16] = encoding.astype(np.float16).reshape(
+            (1, *encoding.shape)
+        )
 
         return self._model.predict_on_batch(encoding_recasted)[0, 0]
 
@@ -176,7 +182,7 @@ class StandardModel(ModelBase):
             random evaluation between 0 and 1
         """
         # cast encoding to the proper shape and data type
-        encodings_recasted = encodings.astype(np.float16)
+        encodings_recasted: NDArray[np.float16] = encodings.astype(np.float16)
 
         return self._model.predict(encodings_recasted, verbose=0).reshape(
             (len(encodings_recasted),)

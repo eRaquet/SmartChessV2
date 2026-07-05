@@ -2,16 +2,14 @@
 
 from dataclasses import dataclass
 from enum import Enum, IntFlag, auto
-from typing import (
-    TypedDict,
-)
+from typing import TypedDict
 
 import chess
-import numpy as np
+from numpy import float64, uint8
 from numpy.typing import NDArray
 
 # a piece encoding is the datatype that contains the information about piece positions
-type PieceEncoding = NDArray[np.uint8]  # has a shape of (8, 8, 12)
+type PieceEncoding = NDArray[uint8]  # has a shape of (8, 8, 12)
 PIECE_ENCODING_SHAPE = (8, 8, 12)
 
 # a board encoding is the datatype that contains the information of a board that is given to a model
@@ -27,12 +25,12 @@ PIECE_ENCODING_SHAPE = (8, 8, 12)
 #       - 16 Draw Conditions (all Rows and Columns are 1 if the position could be a draw)
 #       - 17 Aun Passant (squares where an Aun Passant capture could happen)
 # NOTE: board encodings always represent the board from the perspect of the player whose turn it is.
-type BoardEncoding = NDArray[np.uint8]  # has a shape of (8, 8, 18)
+type BoardEncoding = NDArray[uint8]  # has a shape of (8, 8, 18)
 BOARD_ENCODING_SHAPE = (8, 8, 18)
 
 # an set of some number of board encodings, to be kept together (i.e. game trajectories or
 # observations)
-type SetEncoding = NDArray[np.uint8]  # has a shape of (n, 8, 8, 18)
+type SetEncoding = NDArray[uint8]  # has a shape of (n, 8, 8, 18)
 type Observation = SetEncoding
 # vector of all possible moves for a given state
 # the order must be static, as as Action is defined as an index into the move vector
@@ -41,12 +39,12 @@ type MoveVector = list[chess.Move]
 # alias for gym.Env terminology
 # corresponds to the index of the chosen move
 # -1 means a resignation
-Action = int
+type Action = int
 ABORT_ACTION: Action = -1
 
 type Evaluation = float
-type SetEvaluation = NDArray[np.double]
-type PMF = NDArray[np.double]
+type SetEvaluation = NDArray[float64]
+type PMF = NDArray[float64]
 
 
 class BoardOutcome(IntFlag):
@@ -269,4 +267,4 @@ class GameLog:
 
     game: GameLogEntry
     agents: dict[chess.Color, AgentLogEntry]
-    moves: tuple[MoveLogEntry]
+    moves: tuple[MoveLogEntry, ...]

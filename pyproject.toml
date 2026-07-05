@@ -42,7 +42,6 @@ python-version = "3.12"
 [tool.ty.rules]
 all = "error"
 invalid-return-type = "ignore"
-invalid-argument-type = "ignore"
 
 
 ########
