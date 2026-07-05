@@ -471,7 +471,7 @@ def get_new_id() -> int:
     int
         returned id
     """
-    return rng.integers(0, 2**16 - 1)
+    return int(rng.integers(0, 2**16 - 1))
 
 
 def write_game(game_log: GameLog) -> None:
