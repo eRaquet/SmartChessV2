@@ -125,7 +125,7 @@ def encode_board(board: chess.Board) -> BoardEncoding:
 
     if board.has_legal_en_passant():
         ep_square = cast("int", board.ep_square)
-        encoded_board[*square_indices(ep_square, board.turn), 17] = 1  # type: ignore[arg-type]
+        encoded_board[*square_indices(ep_square, board.turn), 17] = 1
 
     return encoded_board
 

@@ -1,7 +1,7 @@
 """Module to define the board environment for training and playing."""
 
 from collections import Counter
-from typing import override
+from typing import cast, override
 
 import chess
 import numpy as np
@@ -248,8 +248,8 @@ class Board:
         return self._board.ply()
 
     def _capture_pre(self, move: chess.Move) -> BoardStepResult:
-        moved = self._board.piece_at(move.from_square)
-        move_piece = moved.piece_type  # ty:ignore[unresolved-attribute]
+        moved = cast("chess.Piece", self._board.piece_at(move.from_square))
+        move_piece = moved.piece_type
         captured = self._board.piece_at(move.to_square)
         capture_piece = (
             captured.piece_type

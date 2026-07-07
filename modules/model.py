@@ -66,7 +66,7 @@ class RandomModel(ModelBase):
     rng = np.random.default_rng()
 
     @override
-    def predict(self, _: BoardEncoding) -> Evaluation:  # ty:ignore[invalid-method-override]
+    def predict(self, encoding: BoardEncoding) -> Evaluation:
         """
 
         Make a random prediction of the probability of winning from the given position.

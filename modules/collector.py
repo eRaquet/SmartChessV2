@@ -53,10 +53,10 @@ class Collector:
             msg = "Collector cannot select an agent when a move is active."
             raise RuntimeError(msg)
 
-        try:
-            strain = cast("int", agent.strain)  # ty:ignore[unresolved-attribute]
-            generation = cast("int", agent.generation)  # ty:ignore[unresolved-attribute]
-        except AttributeError:
+        if hasattr(agent, "strain") and hasattr(agent, "generation"):
+            strain = cast("int", agent.strain)
+            generation = cast("int", agent.generation)
+        else:
             strain = None
             generation = None
 
