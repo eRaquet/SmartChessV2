@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      KERAS_BACKEND: mlx
+      KERAS_BACKEND: jax
       KERAS_DTYPE_POLICY: mixed_float16
       PYGAME_HIDE_SUPPORT_PROMPT: "1"
       SDL_VIDEODRIVER: dummy

@@ -31,7 +31,13 @@ dependencies = [
 ]
 
 [dependency-groups]
-dev = ["git-lfs>=1.6", "pytest>=9.1.1", "ruff>=0.15.20", "ty>=0.0.56"]
+dev = [
+    "git-lfs>=1.6",
+    "jax>=0.6.2",
+    "pytest>=9.1.1",
+    "ruff>=0.15.20",
+    "ty>=0.0.56",
+]
 
 ######
 # ty #
