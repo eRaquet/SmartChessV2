@@ -1,12 +1,15 @@
 """Module that defines datacollectors to abstract data flow from actual objects."""
 
 import time
+from typing import cast
 
 import chess
 
 from modules.agent import AgentBase
 from modules.chess_types import (
     ABORT_ACTION,
+    PMF,
+    Action,
     AgentDecision,
     AgentLogEntry,
     BoardStepResult,
@@ -16,6 +19,7 @@ from modules.chess_types import (
     LogTerminationType,
     MoveContext,
     MoveLogEntry,
+    SetEvaluation,
 )
 from modules.utils import calculate_policy_entropy
 
@@ -27,7 +31,7 @@ class Collector:
         self._game = None
         self._moves: list[MoveLogEntry] = []
         self._active_move: MoveLogEntry | None = None
-        self._agents = {
+        self._agents: dict[chess.Color, AgentLogEntry | None] = {
             chess.WHITE: None,
             chess.BLACK: None,
         }
@@ -49,10 +53,10 @@ class Collector:
             msg = "Collector cannot select an agent when a move is active."
             raise RuntimeError(msg)
 
-        try:
-            strain = agent.strain
-            generation = agent.generation
-        except AttributeError:
+        if hasattr(agent, "strain") and hasattr(agent, "generation"):
+            strain = cast("int", agent.strain)
+            generation = cast("int", agent.generation)
+        else:
             strain = None
             generation = None
 
@@ -102,9 +106,11 @@ class Collector:
 
         self._close_game_entry(outcome)
 
+        agents = cast("dict[chess.Color, AgentLogEntry]", self._agents)
+
         log = GameLog(
             game=self._game,
-            agents=self._agents,
+            agents=agents,
             moves=tuple(self._moves),
         )
 
@@ -142,7 +148,7 @@ class Collector:
         result : BoardStepResult | None
             result when played on board, None if game was aborted before decision was played
         """
-        if not self._active_move:
+        if self._active_move is None:
             msg = "No active move."
             raise RuntimeError(msg)
 
@@ -160,40 +166,45 @@ class Collector:
 
     def _close_game_entry(self, outcome: chess.Outcome | None) -> None:
         """Terminate the game for this collector."""
-        self._game.dt = time.time_ns() - self._game.timestamp
+        game: GameLogEntry = cast("GameLogEntry", self._game)
+
+        game_start_time: int = cast("int", game.timestamp)
+        game_end_time = time.time_ns()
+
+        game.dt = game_end_time - game_start_time
 
         if outcome:
             if outcome.winner is chess.WHITE:
-                self._game.result = LogResult.WHITE
+                game.result = LogResult.WHITE
             elif outcome.winner is chess.BLACK:
-                self._game.result = LogResult.BLACK
+                game.result = LogResult.BLACK
             else:
-                self._game.result = LogResult.DRAW
+                game.result = LogResult.DRAW
 
             if outcome.termination is chess.Termination.CHECKMATE:
-                self._game.termination_type = LogTerminationType.CHECKMATE
+                game.termination_type = LogTerminationType.CHECKMATE
             elif outcome.termination is chess.Termination.STALEMATE:
-                self._game.termination_type = LogTerminationType.STALEMATE
+                game.termination_type = LogTerminationType.STALEMATE
             elif outcome.termination in (
                 chess.Termination.FIVEFOLD_REPETITION,
                 chess.Termination.THREEFOLD_REPETITION,
             ):
-                self._game.termination_type = LogTerminationType.REPETITION
+                game.termination_type = LogTerminationType.REPETITION
             elif outcome.termination in (
                 chess.Termination.FIFTY_MOVES,
                 chess.Termination.SEVENTYFIVE_MOVES,
             ):
-                self._game.termination_type = LogTerminationType.FIFTY_MOVES
+                game.termination_type = LogTerminationType.FIFTY_MOVES
             elif outcome.termination is chess.Termination.INSUFFICIENT_MATERIAL:
-                self._game.termination_type = LogTerminationType.INSUFFICIENT_MATERIAL
+                game.termination_type = LogTerminationType.INSUFFICIENT_MATERIAL
             else:
-                self._game.termination_type = LogTerminationType.ABORT
+                game.termination_type = LogTerminationType.ABORT
 
         else:
-            self._game.result = LogResult.UNRESOLVED
-            self._game.termination_type = LogTerminationType.ABORT
+            game.result = LogResult.UNRESOLVED
+            game.termination_type = LogTerminationType.ABORT
 
-        self._game.ply_number = len(self._moves)
+        game.ply_number = len(self._moves)
 
     def _is_agents_populated(self) -> bool:
         """
@@ -216,8 +227,9 @@ class Collector:
         context : MoveContext
             move context metadata object
         """
-        self._active_move.side_to_move = context.side_to_move
-        self._active_move.ply = context.ply
+        move: MoveLogEntry = cast("MoveLogEntry", self._active_move)
+        move.side_to_move = context.side_to_move
+        move.ply = context.ply
 
     def _write_decision(self, decision: AgentDecision) -> None:
         """
@@ -229,19 +241,17 @@ class Collector:
         decision : AgentDecision
             agent decision metadata object
         """
-        action = decision.action
-        evals = decision.evals
-        dist = decision.dist
+        move: MoveLogEntry = cast("MoveLogEntry", self._active_move)
+
+        action: Action = decision.action
+        evals: SetEvaluation | None = decision.evals
+        dist: PMF | None = decision.dist
 
         if evals is not None:
-            self._active_move.position_eval_after_move = (
-                evals[action] if action != ABORT_ACTION else None
-            )
+            move.position_eval_after_move = evals[action] if action != ABORT_ACTION else None
         if dist is not None:
-            self._active_move.probability_of_choice = (
-                dist[action] if action != ABORT_ACTION else None
-            )
-            self._active_move.policy_entropy = calculate_policy_entropy(dist)
+            move.probability_of_choice = dist[action] if action != ABORT_ACTION else None
+            move.policy_entropy = calculate_policy_entropy(dist)
 
     def _write_result(self, result: BoardStepResult) -> None:
         """
@@ -253,16 +263,20 @@ class Collector:
         result : BoardStepResult
             step result metadata object
         """
-        self._active_move.capture_piece_type = result.capture_piece
-        self._active_move.castle_type = result.castle_type
-        self._active_move.is_check = result.is_check
-        self._active_move.legal_move_count = result.legal_move_count
-        self._active_move.piece_type = result.move_piece
-        self._active_move.promotion = result.promotion
-        self._active_move.uci = result.uci
-        self._active_move.zobrist_after_move = result.pos_hash
+        move: MoveLogEntry = cast("MoveLogEntry", self._active_move)
+
+        move.capture_piece_type = result.capture_piece
+        move.castle_type = result.castle_type
+        move.is_check = result.is_check
+        move.legal_move_count = result.legal_move_count
+        move.piece_type = result.move_piece
+        move.promotion = result.promotion
+        move.uci = result.uci
+        move.zobrist_after_move = result.pos_hash
 
     def _write_times(self) -> None:
         """Populate the fields of the current move that pertain to the start/stop timestamps."""
-        self._active_move.timestamp = self._move_start_time
-        self._active_move.dt = self._move_stop_time - self._move_start_time
+        move: MoveLogEntry = cast("MoveLogEntry", self._active_move)
+
+        move.timestamp = self._move_start_time
+        move.dt = self._move_stop_time - self._move_start_time

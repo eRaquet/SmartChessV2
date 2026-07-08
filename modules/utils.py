@@ -3,6 +3,7 @@
 from collections import Counter
 from dataclasses import astuple, fields
 from pathlib import Path
+from typing import cast
 
 import chess
 import numpy as np
@@ -123,7 +124,8 @@ def encode_board(board: chess.Board) -> BoardEncoding:
         encoded_board[:, :, 16] = zero_board
 
     if board.has_legal_en_passant():
-        encoded_board[*square_indices(board.ep_square, board.turn), 17] = 1  # type: ignore[arg-type]
+        ep_square = cast("int", board.ep_square)
+        encoded_board[*square_indices(ep_square, board.turn), 17] = 1
 
     return encoded_board
 
@@ -469,24 +471,26 @@ def get_new_id() -> int:
     int
         returned id
     """
-    return rng.integers(0, 2**16 - 1)
+    return int(rng.integers(0, 2**16 - 1))
 
 
 def write_game(game_log: GameLog) -> None:
     """Write game to output (currently just a text file)."""
     game_headers = [f.name for f in fields(GameLogEntry)]
-    agent_headers = [f.name for f in fields(AgentLogEntry)]
+    agent_headers = ["agent_color", *[f.name for f in fields(AgentLogEntry)]]
     move_headers = [f.name for f in fields(MoveLogEntry)]
 
     game_data = [list(astuple(game_log.game))]
-    agent_data = [list(astuple(agent)) for agent in game_log.agents]
+    agent_data = [[color, *astuple(game_log.agents[color])] for color in [chess.BLACK, chess.WHITE]]
     move_data = [list(astuple(move)) for move in game_log.moves]
 
     game_string = tabulate(game_data, headers=game_headers, tablefmt="grid")
     agent_string = tabulate(agent_data, headers=agent_headers, tablefmt="grid")
     move_string = tabulate(move_data, headers=move_headers, tablefmt="grid")
 
-    with Path.open("temp.txt", "w") as file:
+    path = Path("temp.txt")
+
+    with path.open("w") as file:
         print("Game Data", file=file)
         print(game_string, file=file)
         print("\nAgent Data", file=file)

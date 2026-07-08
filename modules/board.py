@@ -1,6 +1,7 @@
 """Module to define the board environment for training and playing."""
 
 from collections import Counter
+from typing import cast, override
 
 import chess
 import numpy as np
@@ -9,6 +10,7 @@ from chess.polyglot import zobrist_hash
 from modules.chess_types import (
     ABORT_ACTION,
     Action,
+    BoardEncoding,
     BoardOutcome,
     BoardStepResult,
     LogCastleType,
@@ -28,12 +30,12 @@ class Board:
     def __init__(self) -> None:
         """Initiate a board object."""
         self._board = chess.Board()
-        self._encoding = encode_board(self._board)
-        self._state_list = [self._encoding.copy()]
-        self._board_state_counter = Counter(self._encoding.tobytes())
-        self._moves = list(self._board.legal_moves)
+        self._encoding: BoardEncoding = encode_board(self._board)
+        self._state_list: list[BoardEncoding] = [self._encoding.copy()]
+        self._board_state_counter: Counter[bytes] = Counter([self._encoding.tobytes()])
+        self._moves: list[chess.Move] = list(self._board.legal_moves)
 
-        self._status = BoardOutcome.UNDECIDED
+        self._status: BoardOutcome = BoardOutcome.UNDECIDED
 
         # allocate the observation space
         self._observation: Observation = np.array([], dtype=np.uint8)
@@ -42,10 +44,10 @@ class Board:
     def reset(self) -> None:
         """Reset board position."""
         self._board.reset()
-        self._encoding = encode_board(self._board)
-        self._state_list = [self._encoding.copy()]
-        self._board_state_counter = Counter(self._encoding.tobytes())
-        self._moves = list(self._board.legal_moves)
+        self._encoding: BoardEncoding = encode_board(self._board)
+        self._state_list: list[BoardEncoding] = [self._encoding.copy()]
+        self._board_state_counter: Counter[bytes] = Counter([self._encoding.tobytes()])
+        self._moves: list[chess.Move] = list(self._board.legal_moves)
         self._observe()
         self._render()
 
@@ -102,7 +104,7 @@ class Board:
                 self._encoding, self._moves, self._board.turn, self._board_state_counter
             )
         else:
-            self._observation = np.array([], dtype=np.uint8)
+            self._observation: Observation = np.array([], dtype=np.uint8)
 
     def update_state(self, action: Action) -> BoardStepResult:
         """
@@ -130,7 +132,7 @@ class Board:
         self._moves = list(self._board.legal_moves)
         self._encoding = encode_board(self._board)
         self._state_list.append(self._encoding.copy())
-        self._board_state_counter.update(self._encoding.tobytes())
+        self._board_state_counter.update([self._encoding.tobytes()])
 
         return result
 
@@ -187,7 +189,7 @@ class Board:
             The winning color, or None if no winner is determined (draw or unfinished game)
         """
         if self._status in BoardOutcome.WON:
-            return chess.WHITE if self._statis is BoardOutcome.WHITE else chess.BLACK
+            return chess.WHITE if self._status == BoardOutcome.WHITE else chess.BLACK
         return None
 
     @property
@@ -246,7 +248,8 @@ class Board:
         return self._board.ply()
 
     def _capture_pre(self, move: chess.Move) -> BoardStepResult:
-        move_piece = self._board.piece_at(move.from_square).piece_type
+        moved = cast("chess.Piece", self._board.piece_at(move.from_square))
+        move_piece = moved.piece_type
         captured = self._board.piece_at(move.to_square)
         capture_piece = (
             captured.piece_type
@@ -283,6 +286,7 @@ class Board:
 class ASCIIBoard(Board):
     """Board with simple ASCII visualization."""
 
+    @override
     def _render(self) -> None:
         """Render board as ASCII."""
         print("-" * 15)
@@ -298,6 +302,7 @@ class GUIBoard(Board):
 
         self._display = Display()
 
+    @override
     def _render(self) -> None:
         """Render board display."""
         self._display.display_board(self._board)

@@ -7,7 +7,7 @@ where = ["."]
 exclude = ["tests"]
 
 [tool.setuptools.dynamic]
-version = {attr = "modules.__version__"}
+version = { attr = "modules.__version__" }
 
 ###########
 # project #
@@ -21,25 +21,33 @@ readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "chess>=1.11.2",
-    "git-lfs>=1.6",
     "keras",
-    "line-profiler>=5.0.0",
     "matplotlib>=3.10.9",
     "mlx>=0.31.2",
     "numpy>=2.2.6",
     "pygame>=2.6.1",
-    "pytest>=8.4.1",
     "scipy>=1.15.3",
     "tabulate>=0.10.0",
 ]
 
-########
-# mypy #
-########
-# For a list of configurations go to https://mypy.readthedocs.io/en/stable/config_file.html
-[tool.mypy]
-ignore_missing_imports = true
-files = "falcon_odin_tracking_and_guidence"
+[dependency-groups]
+dev = [
+    "git-lfs>=1.6",
+    "jax>=0.6.2",
+    "pytest>=9.1.1",
+    "ruff>=0.15.20",
+    "ty>=0.0.56",
+]
+
+######
+# ty #
+######
+[tool.ty.environment]
+python-version = "3.12"
+
+[tool.ty.rules]
+all = "error"
+
 
 ########
 # ruff #
@@ -65,36 +73,36 @@ select = ["ALL"]
 # Disabled Rules
 ignore = [
     # unnecessary
-    "AIR",     # Airflow -- Apache airflow scheduling
-    "DJ",      # flake8-django -- django projects
-    "EXE",     # flake8-executable -- shebang
-    "FAST",    # FastAPI -- web API development tool
-    "T20",     # flake8-print -- warns about print statements in code (use logging instead)
+    "AIR",  # Airflow -- Apache airflow scheduling
+    "DJ",   # flake8-django -- django projects
+    "EXE",  # flake8-executable -- shebang
+    "FAST", # FastAPI -- web API development tool
+    "T20",  # flake8-print -- warns about print statements in code (use logging instead)
     # deconflict
-    "D203",    # (conflicts with D211) one-blank-line-before-class -- is class definition docstring preceded by blank line?
-    "D213",    # (conflicts with D212) multi-line-summary-second-line -- is docstring summary line not positioned on the 2nd physical line?
+    "D203", # (conflicts with D211) one-blank-line-before-class -- is class definition docstring preceded by blank line?
+    "D213", # (conflicts with D212) multi-line-summary-second-line -- is docstring summary line not positioned on the 2nd physical line?
     # these checks are unnecessary if using ruff formatter
-    "W191",    # tab-indentation -- checks for indentation that uses tabs
-    "E111",    # indentation-with-invalid-multiple -- checks for indentation with a non-multiple of 4 spaces
-    "E114",    # indentation-with-invalid-multiple-comment -- checks for indentation of comments with a non-multiple of 4 spaces
-    "E117",    # over-indented -- checks for over-indented code
-    "D206",    # docstring-tab-indentation -- checks for docstrings that are indented with tabs
-    "D300",    # triple-single-quotes -- checks for docstrings that use triple single quotes instead of triple double quotes
-    "Q000",    # bad-quotes-inline-string -- checks for inline strings that use "lint.flake8-quotes.inline-quotes" quotes
-    "Q001",    # bad-quotes-multiline-string -- checks for multiline strings that use "lint.flake8-quotes.multiline-quotes" quotes
-    "Q002",    # bad-quotes-docstring -- checks for dosctrings that use "lint.flake8-quotes.docstring-quotes" quotes
-    "Q003",    # avoidable-escaped-quote -- checks for strings that include escaped quotes
-    "COM812",  # missing-trailing-comma -- checks for the absence of trailing commas
-    "COM819",  # prohibited-trailing-comma -- checks for the presence of prohibited trailing commas
-    "ISC001",  # single-line-implicit-string-concatenation -- checks for implicilty concatenated strings on a single line
-    "ISC002",  # multi-line-implicit-string-concatenation -- checks for implicitly concatenated strings that span multiple lines
+    "W191",   # tab-indentation -- checks for indentation that uses tabs
+    "E111",   # indentation-with-invalid-multiple -- checks for indentation with a non-multiple of 4 spaces
+    "E114",   # indentation-with-invalid-multiple-comment -- checks for indentation of comments with a non-multiple of 4 spaces
+    "E117",   # over-indented -- checks for over-indented code
+    "D206",   # docstring-tab-indentation -- checks for docstrings that are indented with tabs
+    "D300",   # triple-single-quotes -- checks for docstrings that use triple single quotes instead of triple double quotes
+    "Q000",   # bad-quotes-inline-string -- checks for inline strings that use "lint.flake8-quotes.inline-quotes" quotes
+    "Q001",   # bad-quotes-multiline-string -- checks for multiline strings that use "lint.flake8-quotes.multiline-quotes" quotes
+    "Q002",   # bad-quotes-docstring -- checks for dosctrings that use "lint.flake8-quotes.docstring-quotes" quotes
+    "Q003",   # avoidable-escaped-quote -- checks for strings that include escaped quotes
+    "COM812", # missing-trailing-comma -- checks for the absence of trailing commas
+    "COM819", # prohibited-trailing-comma -- checks for the presence of prohibited trailing commas
+    "ISC001", # single-line-implicit-string-concatenation -- checks for implicilty concatenated strings on a single line
+    "ISC002", # multi-line-implicit-string-concatenation -- checks for implicitly concatenated strings that span multiple lines
     # project-specific
-    "ANN401",  # any-type -- checks that function arguments are annotated with a more specific type than Any
+    "ANN401", # any-type -- checks that function arguments are annotated with a more specific type than Any
     ## "FBT001",  # boolean-type-hint-positional-argument -- checks for boolean positional arguments (based on type hint)
     ## "FBT002",  # boolean-default-value-positional-argument -- checks for boolean positional arguments (based on default value)
-    "FIX002",  # line-contains-todo -- checks for "TODO" comments
-    "SIM910",  # dict-get-with-none-default -- checks for dict.get() calls that pass None as the default value
-    "TD003",   # missing-todo-link -- checks that a TODO comment is associated with a link to a relevant issue or ticket
+    "FIX002", # line-contains-todo -- checks for "TODO" comments
+    "SIM910", # dict-get-with-none-default -- checks for dict.get() calls that pass None as the default value
+    "TD003",  # missing-todo-link -- checks that a TODO comment is associated with a link to a relevant issue or ticket
 ]
 
 # Allow fix for all enabled rules (when `--fix`) is provided.
@@ -107,9 +115,9 @@ typing-modules = []
 # ignore rules for specific files
 [tool.ruff.lint.per-file-ignores]
 "test/*.py" = [
-    "D103",  # undocumented-public-function (missing docstring in public function)
-    "S101",  # assert (use of assert detected)
-    "INP001",  # implicit-namespace-package (file is part of an implicit namespace package)
+    "D103",   # undocumented-public-function (missing docstring in public function)
+    "S101",   # assert (use of assert detected)
+    "INP001", # implicit-namespace-package (file is part of an implicit namespace package)
 ]
 
 [tool.ruff.lint.pydocstyle]
@@ -124,7 +132,7 @@ max-locals = 25
 max-branches = 20
 
 [tool.ruff.format]
-quote-style = "double"  # change to "double" or "single" if either is preferred
+quote-style = "double"            # change to "double" or "single" if either is preferred
 indent-style = "space"
 skip-magic-trailing-comma = false
 line-ending = "auto"

@@ -28,6 +28,11 @@ def test_standard_agent() -> None:
     decision_1 = agent_deterministic.act(board)
     decision_2 = agent_deterministic.act(board)
 
+    assert decision_1.evals is not None
+    assert decision_2.evals is not None
+    assert decision_1.dist is not None
+    assert decision_2.dist is not None
+
     assert 0 <= decision.action < len(board.moves)
     assert 0 <= decision_1.action < len(board.moves)
 
