@@ -209,7 +209,7 @@ __marimo__/
 ### Personal Additions
 
 # Ignore github copilot config stuff
-.github*
+.github/copilot-instructions.md
 
 # Ignore uv lock files
 # uv.lock

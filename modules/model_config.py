@@ -5,13 +5,14 @@ import warnings
 
 warnings.filterwarnings("ignore", category=UserWarning)
 
-KERAS_BACKEND = "mlx"
+KERAS_BACKEND = os.environ.get("KERAS_BACKEND", "mlx")
+KERAS_DTYPE_POLICY = os.environ.get("KERAS_DTYPE_POLICY", "mixed_float16")
 
 os.environ["KERAS_BACKEND"] = KERAS_BACKEND
 
 from keras.config import set_dtype_policy  # noqa: E402
 
-set_dtype_policy("mixed_float16")
+set_dtype_policy(KERAS_DTYPE_POLICY)
 
 # parameterize the model
 MODEL_PARAMS = {
