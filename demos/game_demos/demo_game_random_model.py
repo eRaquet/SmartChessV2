@@ -8,7 +8,7 @@ import chess
 from modules.agent import StandardAgent
 from modules.board import ASCIIBoard, Board, GUIBoard
 from modules.collector import Collector
-from modules.game import Game
+from modules.game import LoggedGame, StandardGame
 from modules.model import RandomModel
 from modules.utils import write_game
 
@@ -32,14 +32,17 @@ if __name__ == "__main__":
     white_agent = StandardAgent(RandomModel(), confidence_factor=1.0)
     black_agent = StandardAgent(RandomModel(), confidence_factor=1.0)
 
-    collector = Collector() if args.log else None
-    game = Game(white_agent, black_agent, board, collector)
+    if args.log:
+        collector = Collector()
+        game = LoggedGame(white_agent, black_agent, board, collector)
+    else:
+        game = StandardGame(white_agent, black_agent, board)
 
     log = game.play_game()
 
     end = time.perf_counter()
 
-    if log:
+    if log is not None:
         write_game(log)
 
     print(f"Done with {((end - start) / board.half_move_count * 1e3):.3f} ms per move")
