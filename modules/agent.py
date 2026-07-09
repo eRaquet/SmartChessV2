@@ -98,7 +98,16 @@ class StandardAgent(AgentBase):
             board.observation.encodings
         )  # evaluation as seen by agent
 
-        if self._confidence_factor is None:
+        # handle case where a mate in one was found
+        if board.observation.checkmate_action is not None:
+            action = board.observation.checkmate_action
+
+            # create distribution associated with an infinite confidence
+            choice_distribution: PMF = np.zeros(evals.shape)
+            choice_distribution[action] = 1
+
+        # handle case where agent is set to maximum confidence (i.e., pick the best move always)
+        elif self._confidence_factor is None:
             action = int(np.argmax(evals))
 
             # create distribution associated with an infinite confidence
