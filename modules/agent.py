@@ -95,7 +95,7 @@ class StandardAgent(AgentBase):
             chosen action data
         """
         evals: SetEvaluation = 1 - self._model.predict_batch(
-            board.observation
+            board.observation.encodings
         )  # evaluation as seen by agent
 
         if self._confidence_factor is None:

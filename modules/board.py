@@ -20,6 +20,7 @@ from modules.chess_types import (
 from modules.display import Display
 from modules.utils import (
     encode_board,
+    find_checkmate,
     generate_board_encodings_from_moves,
 )
 
@@ -38,7 +39,7 @@ class Board:
         self._status: BoardOutcome = BoardOutcome.UNDECIDED
 
         # allocate the observation space
-        self._observation: Observation = np.array([], dtype=np.uint8)
+        self._observation: Observation = Observation(np.array([], dtype=np.uint8), None)
         self._observe()
 
     def reset(self) -> None:
@@ -100,11 +101,13 @@ class Board:
         """Make the environment reflect the board state and generate an observation."""
         if self._status not in BoardOutcome.TERMINATED:
             # create observation encodings
-            self._observation = generate_board_encodings_from_moves(
+            encodings = generate_board_encodings_from_moves(
                 self._encoding, self._moves, self._board.turn, self._board_state_counter
             )
+            checkmate_action = find_checkmate(self._board, self._moves)
+            self._observation = Observation(encodings=encodings, checkmate_action=checkmate_action)
         else:
-            self._observation: Observation = np.array([], dtype=np.uint8)
+            self._observation: Observation = Observation(np.array([], dtype=np.uint8), None)
 
     def update_state(self, action: Action) -> BoardStepResult:
         """
