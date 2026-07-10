@@ -144,7 +144,7 @@ def encode_board(board: chess.Board, encoding_array: BoardEncoding | None = None
         encoded board
     """
     encoded_board: BoardEncoding = (
-        np.empty(BOARD_ENCODING_SHAPE, dtype=np.uint8) if encoding_array is None else encoding_array
+        np.zeros(BOARD_ENCODING_SHAPE, dtype=np.uint8) if encoding_array is None else encoding_array
     )
 
     # insert the piece encoding
@@ -153,30 +153,19 @@ def encode_board(board: chess.Board, encoding_array: BoardEncoding | None = None
     # insert the castling rights encoding
     if bool(board.castling_rights & (chess.BB_A1 if board.turn == chess.WHITE else chess.BB_A8)):
         encoded_board[:, :, 12] = 1
-    else:
-        encoded_board[:, :, 12] = 0
 
     if bool(board.castling_rights & (chess.BB_H1 if board.turn == chess.WHITE else chess.BB_H8)):
         encoded_board[:, :, 13] = 1
-    else:
-        encoded_board[:, :, 13] = 0
 
     if bool(board.castling_rights & (chess.BB_H8 if board.turn == chess.WHITE else chess.BB_H1)):
         encoded_board[:, :, 14] = 1
-    else:
-        encoded_board[:, :, 14] = 0
 
     if bool(board.castling_rights & (chess.BB_A8 if board.turn == chess.WHITE else chess.BB_A1)):
         encoded_board[:, :, 15] = 1
-    else:
-        encoded_board[:, :, 15] = 0
 
     if board.is_repetition() or board.is_fifty_moves():
         encoded_board[:, :, 16] = 1
-    else:
-        encoded_board[:, :, 16] = 0
 
-    encoded_board[:, :, 17] = 0
     if board.has_legal_en_passant():
         ep_square = cast("int", board.ep_square)
         encoded_board[*square_indices(ep_square, board.turn), 17] = 1
@@ -205,7 +194,7 @@ def generate_observation(board: chess.Board, moves: list[chess.Move]) -> Observa
         completed observation of board
     """
     num_moves = len(moves)
-    encodings: SetEncoding = np.empty((num_moves, 8, 8, 18), dtype=np.uint8)
+    encodings: SetEncoding = np.zeros((num_moves, 8, 8, 18), dtype=np.uint8)
     checkmate_action: Action | None = None
 
     for i, move in enumerate(moves):
