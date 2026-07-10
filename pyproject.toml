@@ -34,14 +34,31 @@ dependencies = [
 dev = [
     "git-lfs>=1.6",
     "jax>=0.6.2",
+    "poethepoet>=0.48.0",
     "pytest>=9.1.1",
     "ruff>=0.15.20",
     "ty>=0.0.56",
 ]
 
+#######
+# poe #
+#######
+
+[tool.poe.tasks]
+lint = "ruff check ."
+format_check = "ruff format --check ."
+format = "ruff format ."
+type_check = "ty check ."
+test = "pytest ."
+check = ["lint", "format_check", "type_check"]
+fix = ["format"]
+run = ["test"]
+all = ["check", "fix", "run"]
+
 ######
 # ty #
 ######
+
 [tool.ty.environment]
 python-version = "3.12"
 
