@@ -40,6 +40,21 @@ dev = [
     "ty>=0.0.56",
 ]
 
+#######
+# poe #
+#######
+
+[tool.poe.tasks]
+lint = "ruff check ."
+format_check = "ruff format --check ."
+format = "ruff format ."
+type_check = "ty check ."
+test = "pytest ."
+check = ["lint", "format_check", "type_check"]
+fix = ["format"]
+run = ["test"]
+all = ["check", "fix", "run"]
+
 ######
 # ty #
 ######
