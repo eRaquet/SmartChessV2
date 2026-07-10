@@ -14,6 +14,7 @@ from modules.chess_types import (
 from modules.config import PROJECT_PATH
 from modules.utils import (
     encode_board,
+    find_checkmate,
     generate_board_encodings_from_moves,
     get_action,
     get_piece_index,
@@ -72,6 +73,30 @@ def test_generate_board_encodings_from_moves() -> None:
     )
 
     assert np.allclose(encodings, encodings_truth)
+
+
+def test_find_checkmate() -> None:
+    """Test the fine checkmate function."""
+    # check the non-checkmate case with the default FEN
+    board = chess.Board()
+    moves_pre = list(board.legal_moves)
+    checkmate = find_checkmate(board, moves_pre)
+    moves_post = list(board.legal_moves)
+
+    assert checkmate is None
+    assert set(moves_post) == set(moves_pre)
+
+    # check the checkmate case with a FEN which has a mate in one move
+    board = chess.Board("r1bqkbnr/pppp1ppp/2n5/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 4 3")
+    moves_pre = list(board.legal_moves)
+    checkmate = find_checkmate(board, moves_pre)
+    moves_post = list(board.legal_moves)
+
+    assert checkmate is not None
+    assert set(moves_post) == set(moves_pre)
+
+    board.push(moves_pre[checkmate])
+    assert board.is_checkmate()
 
 
 def test_encode_board() -> None:

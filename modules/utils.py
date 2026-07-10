@@ -379,6 +379,38 @@ def generate_board_encodings_from_moves(  # noqa: PLR0915
     return encodings
 
 
+def find_checkmate(board: chess.Board, moves: list[chess.Move]) -> Action | None:
+    """
+
+    Find the action that leads to a mate it one, if possible.
+
+    This method is used to help in improving the performance of the chess bot.  While not
+    necessarily as fast as playing games without checking for mates in one, it leads to much better
+    game play, and often will actually shorten the game time, as it will take easy outs when they
+    appear.  It may be that very good bots will not need to use this function to learn how to play
+    better.
+
+    Parameters
+    ----------
+    board : chess.Board
+        Board to search, will leave the board in the same state, but avoids copy for efficiency.
+    moves : list[chess.Move]
+        List of legal moves, which has already been created and so can be passed in for efficiency.
+
+    Returns
+    -------
+    Action | None
+        First action that leads to checkmate, or None if none was found.
+    """
+    for i, move in enumerate(moves):
+        board.push(move)
+        if board.is_checkmate():
+            board.pop()
+            return i
+        board.pop()
+    return None
+
+
 def get_piece_index(piece_type: chess.PieceType, player: Players) -> int:
     """
 

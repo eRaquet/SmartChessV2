@@ -28,19 +28,28 @@ PIECE_ENCODING_SHAPE = (8, 8, 12)
 type BoardEncoding = NDArray[uint8]  # has a shape of (8, 8, 18)
 BOARD_ENCODING_SHAPE = (8, 8, 18)
 
-# an set of some number of board encodings, to be kept together (i.e. game trajectories or
-# observations)
-type SetEncoding = NDArray[uint8]  # has a shape of (n, 8, 8, 18)
-type Observation = SetEncoding
-# vector of all possible moves for a given state
-# the order must be static, as as Action is defined as an index into the move vector
-type MoveVector = list[chess.Move]
-
 # alias for gym.Env terminology
 # corresponds to the index of the chosen move
 # -1 means a resignation
 type Action = int
 ABORT_ACTION: Action = -1
+
+# an set of some number of board encodings, to be kept together (i.e. game trajectories or
+# observations)
+type SetEncoding = NDArray[uint8]  # has a shape of (n, 8, 8, 18)
+
+
+@dataclass(slots=True)
+class Observation:
+    """Dataclass that stores an observation of a board."""
+
+    encodings: SetEncoding
+    checkmate_action: Action | None
+
+
+# vector of all possible moves for a given state
+# the order must be static, as as Action is defined as an index into the move vector
+type MoveVector = list[chess.Move]
 
 type Evaluation = float
 type SetEvaluation = NDArray[float64]
