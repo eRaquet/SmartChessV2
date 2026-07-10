@@ -18,4 +18,4 @@ def test_board() -> None:
     test_encoding = np.load(
         PROJECT_PATH / "tests" / "data" / "test_position_board_initial_encoding.npy"
     )
-    assert np.allclose(board.observation, test_encoding)
+    assert np.allclose(board.observation.encodings, test_encoding)
