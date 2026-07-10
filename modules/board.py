@@ -1,6 +1,5 @@
 """Module to define the board environment for training and playing."""
 
-from collections import Counter
 from typing import cast, override
 
 import chess
@@ -10,7 +9,6 @@ from chess.polyglot import zobrist_hash
 from modules.chess_types import (
     ABORT_ACTION,
     Action,
-    BoardEncoding,
     BoardOutcome,
     BoardStepResult,
     LogCastleType,
@@ -19,9 +17,7 @@ from modules.chess_types import (
 )
 from modules.display import Display
 from modules.utils import (
-    encode_board,
-    find_checkmate,
-    generate_board_encodings_from_moves,
+    generate_observation,
 )
 
 
@@ -31,9 +27,6 @@ class Board:
     def __init__(self) -> None:
         """Initiate a board object."""
         self._board = chess.Board()
-        self._encoding: BoardEncoding = encode_board(self._board)
-        self._state_list: list[BoardEncoding] = [self._encoding.copy()]
-        self._board_state_counter: Counter[bytes] = Counter([self._encoding.tobytes()])
         self._moves: list[chess.Move] = list(self._board.legal_moves)
 
         self._status: BoardOutcome = BoardOutcome.UNDECIDED
@@ -45,9 +38,6 @@ class Board:
     def reset(self) -> None:
         """Reset board position."""
         self._board.reset()
-        self._encoding: BoardEncoding = encode_board(self._board)
-        self._state_list: list[BoardEncoding] = [self._encoding.copy()]
-        self._board_state_counter: Counter[bytes] = Counter([self._encoding.tobytes()])
         self._moves: list[chess.Move] = list(self._board.legal_moves)
         self._observe()
         self._render()
@@ -100,12 +90,7 @@ class Board:
     def _observe(self) -> None:
         """Make the environment reflect the board state and generate an observation."""
         if self._status not in BoardOutcome.TERMINATED:
-            # create observation encodings
-            encodings = generate_board_encodings_from_moves(
-                self._encoding, self._moves, self._board.turn, self._board_state_counter
-            )
-            checkmate_action = find_checkmate(self._board, self._moves)
-            self._observation = Observation(encodings=encodings, checkmate_action=checkmate_action)
+            self._observation = generate_observation(self._board, self._moves)
         else:
             self._observation: Observation = Observation(np.array([], dtype=np.uint8), None)
 
@@ -133,9 +118,6 @@ class Board:
         result = self._capture_post(result)
 
         self._moves = list(self._board.legal_moves)
-        self._encoding = encode_board(self._board)
-        self._state_list.append(self._encoding.copy())
-        self._board_state_counter.update([self._encoding.tobytes()])
 
         return result
 

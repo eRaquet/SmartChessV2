@@ -103,14 +103,6 @@ PIECE_INDEX = {
     (chess.PAWN, Players.OPPONENT): 11,
 }
 
-# constants for move identification
-MIN_ROW_INDEX = 0
-MAX_ROW_INDEX = 7
-MIN_COL_INDEX = 0
-MAX_COL_INDEX = 7
-ROOK_CASTLE_FILE_KINGSIDE = 5
-ROOK_CASTLE_FILE_QUEENSIDE = 3
-
 ### Game Storage Table Schemes
 
 
