@@ -6,7 +6,6 @@ from typing import cast
 
 import chess
 import numpy as np
-from scipy.stats import entropy
 from tabulate import tabulate
 
 from modules.chess_types import (
@@ -288,7 +287,8 @@ def calculate_policy_entropy(dist: PMF | None) -> float | None:
         returned Shannon entropy, or None if not applicable
     """
     if dist is not None:
-        return entropy(dist)
+        positive = dist > 0
+        return float(-np.dot(dist[positive], np.log2(dist[positive]))) + 0.0
     return None
 
 
