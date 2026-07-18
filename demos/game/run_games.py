@@ -18,7 +18,9 @@ import numpy as np
 
 from modules.agent import RandomAgent, StandardAgent
 from modules.board import Board
-from modules.chess_types import AgentDecision, BoardOutcome
+from modules.chess_types import BoardOutcome
+from modules.collector import Collector
+from modules.game import LoggedGame, StandardGame
 from modules.model import RandomModel, StandardModel
 
 NANOSECONDS_PER_SECOND = 1_000_000_000
@@ -44,7 +46,6 @@ class BenchmarkResult:
 
     games: int
     warmup_games: int
-    max_plies: int
     elapsed_seconds: float
     results: list[GameResult]
 
@@ -118,6 +119,7 @@ def parse_args() -> argparse.Namespace:
         default=DEFAULT_PROFILE_ROWS,
         help="number of cProfile rows to print",
     )
+    parser.add_argument("--log", action="store_true", help="run logging during games")
     return parser.parse_args()
 
 
@@ -168,15 +170,21 @@ def select_outcome(board: Board, *, capped: bool) -> BoardOutcome:
 def play_one_game(
     agents: dict[chess.Color, RandomAgent | StandardAgent],
     *,
-    max_plies: int,
+    log: bool,
 ) -> GameResult:
     """Play and time one benchmark game."""
     start_ns = time.perf_counter_ns()
+
     board = Board()
 
-    while not board.terminated and board.half_move_count < max_plies:
-        decision: AgentDecision = agents[board.turn].act(board)
-        board.step(decision.action)
+    if log:
+        collector = Collector()
+        game = LoggedGame(agents[chess.WHITE], agents[chess.BLACK], board, collector)
+
+    else:
+        game = StandardGame(agents[chess.WHITE], agents[chess.BLACK], board)
+
+    game.play_game()
 
     elapsed_seconds = (time.perf_counter_ns() - start_ns) / NANOSECONDS_PER_SECOND
     capped = not board.terminated
@@ -192,11 +200,11 @@ def run_games(
     *,
     games: int,
     warmup_games: int,
-    max_plies: int,
     agent_kind: str,
     strain: int,
     generation: int,
     confidence: float,
+    log: bool,
 ) -> BenchmarkResult:
     """Run warmup and timed benchmark games."""
     white_agent, black_agent = build_agents(
@@ -211,7 +219,7 @@ def run_games(
         agents=agents,
         games=games,
         warmup_games=warmup_games,
-        max_plies=max_plies,
+        log=log,
     )
 
 
@@ -220,20 +228,20 @@ def collect_benchmark(
     agents: dict[chess.Color, RandomAgent | StandardAgent],
     games: int,
     warmup_games: int,
-    max_plies: int,
+    log: bool,
 ) -> BenchmarkResult:
     """Run warmup and timed games with already constructed agents."""
     for _ in range(warmup_games):
         play_one_game(
             agents,
-            max_plies=max_plies,
+            log=log,
         )
 
     benchmark_start_ns = time.perf_counter_ns()
     results = [
         play_one_game(
             agents,
-            max_plies=max_plies,
+            log=log,
         )
         for _ in range(games)
     ]
@@ -242,7 +250,6 @@ def collect_benchmark(
     return BenchmarkResult(
         games=games,
         warmup_games=warmup_games,
-        max_plies=max_plies,
         elapsed_seconds=elapsed_seconds,
         results=results,
     )
@@ -301,11 +308,11 @@ def run_profiled(args: argparse.Namespace) -> BenchmarkResult:
         run_games,
         games=args.games,
         warmup_games=args.warmup_games,
-        max_plies=args.max_plies,
         agent_kind=args.agent,
         strain=args.strain,
         generation=args.generation,
         confidence=args.confidence,
+        log=args.log,
     )
 
     if args.profile_output is not None:
@@ -332,11 +339,11 @@ def main() -> None:
         result = run_games(
             games=args.games,
             warmup_games=args.warmup_games,
-            max_plies=args.max_plies,
             agent_kind=args.agent,
             strain=args.strain,
             generation=args.generation,
             confidence=args.confidence,
+            log=args.log,
         )
 
     print_summary(result)
