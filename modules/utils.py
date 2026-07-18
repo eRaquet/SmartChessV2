@@ -2,7 +2,6 @@
 
 from dataclasses import astuple, fields
 from pathlib import Path
-from typing import cast
 
 import chess
 import numpy as np
@@ -132,7 +131,8 @@ def encode_board(board: chess.Board, encoding_array: BoardEncoding | None = None
     board : chess.Board
         board to encode
     encoding_array : BoardEncoding | None
-        optional output array to encode the board into, default None
+        optional output array to encode the board into, assumed to be allocated with zeros, default
+        None
 
     Returns
     -------
@@ -159,11 +159,15 @@ def encode_board(board: chess.Board, encoding_array: BoardEncoding | None = None
     if bool(board.castling_rights & (chess.BB_A8 if board.turn == chess.WHITE else chess.BB_A1)):
         encoded_board[:, :, 15] = 1
 
-    if board.is_repetition() or board.is_fifty_moves():
+    is_draw = (len(board.move_stack) >= 4 and board.is_repetition()) or (  # noqa: PLR2004
+        board.halfmove_clock >= 100 and board.is_fifty_moves()  # noqa: PLR2004
+    )
+
+    if is_draw:
         encoded_board[:, :, 16] = 1
 
-    if board.has_legal_en_passant():
-        ep_square = cast("int", board.ep_square)
+    ep_square = board.ep_square
+    if ep_square is not None and board.has_legal_en_passant():
         encoded_board[*square_indices(ep_square, board.turn), 17] = 1
 
     return encoded_board
