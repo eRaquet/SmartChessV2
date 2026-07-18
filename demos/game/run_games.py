@@ -4,8 +4,6 @@ from __future__ import annotations
 
 import argparse
 import cProfile
-import io
-import pstats
 import statistics
 import sys
 import time
@@ -26,8 +24,7 @@ from modules.model import RandomModel, StandardModel
 NANOSECONDS_PER_SECOND = 1_000_000_000
 MILLISECONDS_PER_SECOND = 1_000
 DEFAULT_GAMES = 100
-DEFAULT_MAX_PLIES = 512
-DEFAULT_PROFILE_ROWS = 40
+DEFAULT_PROFILING_OUTPUT = Path("run.prof")
 
 
 @dataclass(frozen=True, slots=True)
@@ -70,12 +67,6 @@ def parse_args() -> argparse.Namespace:
         help="untimed games to run before collecting benchmark timings",
     )
     parser.add_argument(
-        "--max-plies",
-        type=int,
-        default=DEFAULT_MAX_PLIES,
-        help="maximum half-moves per game before the benchmark caps that game",
-    )
-    parser.add_argument(
         "--agent",
         choices=("random", "random-model", "standard-model"),
         default="random",
@@ -109,14 +100,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--profile-output",
         type=Path,
-        default=None,
+        default=DEFAULT_PROFILING_OUTPUT,
         help="write cProfile stats to this path when --profile cprofile is used",
-    )
-    parser.add_argument(
-        "--profile-rows",
-        type=int,
-        default=DEFAULT_PROFILE_ROWS,
-        help="number of cProfile rows to print",
     )
     parser.add_argument("--log", action="store_true", help="run logging during games")
     return parser.parse_args()
@@ -299,11 +284,6 @@ def run_profiled(args: argparse.Namespace) -> BenchmarkResult:
 
     if args.profile_output is not None:
         profiler.dump_stats(args.profile_output)
-
-    stats_stream = io.StringIO()
-    stats = pstats.Stats(profiler, stream=stats_stream).sort_stats("cumtime")
-    stats.print_stats(args.profile_rows)
-    print(stats_stream.getvalue())
 
     return result
 
