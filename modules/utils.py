@@ -70,12 +70,6 @@ def encode_pieces_slow(
     return encoded_pieces
 
 
-_rank_shifts_by_color = {
-    chess.WHITE: 8 * np.arange(0, 8, 1, dtype=np.uint64)[:, np.newaxis],
-    chess.BLACK: 8 * np.arange(7, -1, -1, dtype=np.uint64)[:, np.newaxis],
-}
-
-
 def encode_pieces(board: chess.Board) -> PieceEncoding:
     """
 
@@ -110,19 +104,21 @@ def encode_pieces(board: chess.Board) -> PieceEncoding:
             opponent & board.knights,
             opponent & board.pawns,
         ],
-        dtype=np.uint64,
+        dtype="<u8",
     )
 
-    # this step shifts each byteboard out into each rank, and then truncates to a single byte (which
-    # represents the file)
-    shifted_bytes = (bitboards >> _rank_shifts_by_color[turn]).astype(np.uint8)
+    # reinterpret the bitboards by partitioning them into individual bytes
+    rank_bytes = bitboards.view(np.uint8).reshape(12, 8).T
+
+    if turn == chess.BLACK:
+        rank_bytes = rank_bytes[::-1]
 
     # this step unpacks the remaining axis, using each byte
     return np.unpackbits(
-        shifted_bytes,
+        rank_bytes,
         axis=0,
         bitorder="little",
-    ).reshape((8, 8, 12))
+    ).reshape(PIECE_ENCODING_SHAPE)
 
 
 def encode_board(board: chess.Board, encoding_array: BoardEncoding | None = None) -> BoardEncoding:
