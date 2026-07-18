@@ -1,7 +1,7 @@
 """File for containing all the type aliases and structures used in SmartChessV2."""
 
 from dataclasses import dataclass
-from enum import Enum, IntFlag, auto
+from enum import Enum, IntFlag
 from typing import TypedDict
 
 import chess
@@ -56,19 +56,6 @@ type SetEvaluation = NDArray[float64]
 type PMF = NDArray[float64]
 
 
-class BoardOutcome(IntFlag):
-    """Enumeration of various states of outcome for a chess board."""
-
-    UNDECIDED = auto()
-    WHITE = auto()
-    BLACK = auto()
-    DRAW = auto()
-    ABORT = auto()
-
-    TERMINATED = WHITE | BLACK | DRAW | ABORT
-    WON = WHITE | BLACK
-
-
 # dictionary structure to specify the info read off from the board at each position
 class BoardInfo(TypedDict):
     """
@@ -109,16 +96,24 @@ PIECE_INDEX = {
 ## Data Enums
 
 
-class LogResult(IntFlag):
-    """Enum for mapping integer values to game results for the database."""
+class BoardStatus(IntFlag):
+    """Enumeration of various states for a chess board."""
 
-    WHITE = 0
-    BLACK = 1
-    DRAW = 2
-    UNRESOLVED = 3
+    # terminated states
+    WHITE = 1
+    BLACK = 2
+    DRAW = 4
+    UNDECIDED = 8
+
+    # unterminated states
+    UNTERMINATED = 16
+
+    # unions of board states (for checking only)
+    TERMINATED = WHITE | BLACK | DRAW | UNDECIDED
+    WON = WHITE | BLACK
 
 
-class LogTerminationType(IntFlag):
+class TerminationType(IntFlag):
     """Enum for mapping integer values to causes for game termination for the database."""
 
     CHECKMATE = 0
@@ -127,6 +122,14 @@ class LogTerminationType(IntFlag):
     FIFTY_MOVES = 3
     INSUFFICIENT_MATERIAL = 4
     ABORT = 5
+
+
+@dataclass(slots=True, kw_only=True)
+class Outcome:
+    """Dataclass that contains all relevant info for the current outcome of a chess board."""
+
+    status: BoardStatus = BoardStatus.UNTERMINATED
+    cause: TerminationType | None = None
 
 
 class LogCastleType(IntFlag):
@@ -189,8 +192,8 @@ class LogCastleType(IntFlag):
 class GameLogEntry:
     """Data class for storing metadata to go into the game table of the game database."""
 
-    result: LogResult | None = None
-    termination_type: LogTerminationType | None = None
+    result: BoardStatus | None = None
+    termination_type: TerminationType | None = None
     ply_number: int | None = None
     starting_fen: str | None = None
     timestamp: int | None = None

@@ -18,7 +18,7 @@ import numpy as np
 
 from modules.agent import RandomAgent, StandardAgent
 from modules.board import Board
-from modules.chess_types import BoardOutcome
+from modules.chess_types import BoardStatus, Outcome
 from modules.collector import Collector
 from modules.game import LoggedGame, StandardGame
 from modules.model import RandomModel, StandardModel
@@ -36,8 +36,7 @@ class GameResult:
 
     plies: int
     elapsed_seconds: float
-    outcome: BoardOutcome
-    capped: bool
+    outcome: Outcome
 
 
 @dataclass(frozen=True, slots=True)
@@ -154,19 +153,6 @@ def seed_random_generators(seed: int) -> None:
     RandomModel.rng = np.random.default_rng(seed + 2)
 
 
-def select_outcome(board: Board, *, capped: bool) -> BoardOutcome:
-    """Return the benchmark outcome for a board."""
-    if capped:
-        return BoardOutcome.ABORT
-    if board.winner == chess.WHITE:
-        return BoardOutcome.WHITE
-    if board.winner == chess.BLACK:
-        return BoardOutcome.BLACK
-    if board.terminated:
-        return BoardOutcome.DRAW
-    return BoardOutcome.UNDECIDED
-
-
 def play_one_game(
     agents: dict[chess.Color, RandomAgent | StandardAgent],
     *,
@@ -187,12 +173,10 @@ def play_one_game(
     game.play_game()
 
     elapsed_seconds = (time.perf_counter_ns() - start_ns) / NANOSECONDS_PER_SECOND
-    capped = not board.terminated
     return GameResult(
         plies=board.half_move_count,
         elapsed_seconds=elapsed_seconds,
-        outcome=select_outcome(board, capped=capped),
-        capped=capped,
+        outcome=board.outcome,
     )
 
 
@@ -267,14 +251,13 @@ def print_summary(result: BenchmarkResult, *, output: TextIO = sys.stdout) -> No
     plies = [game.plies for game in result.results]
     game_seconds = [game.elapsed_seconds for game in result.results]
     total_plies = sum(plies)
-    capped_games = sum(game.capped for game in result.results)
     outcomes = {
-        outcome.name: sum(game.outcome == outcome for game in result.results)
-        for outcome in (
-            BoardOutcome.WHITE,
-            BoardOutcome.BLACK,
-            BoardOutcome.DRAW,
-            BoardOutcome.ABORT,
+        status.name: sum(game.outcome.status == status for game in result.results)
+        for status in (
+            BoardStatus.WHITE,
+            BoardStatus.BLACK,
+            BoardStatus.DRAW,
+            BoardStatus.UNDECIDED,
         )
     }
 
@@ -282,7 +265,6 @@ def print_summary(result: BenchmarkResult, *, output: TextIO = sys.stdout) -> No
     print(f"  games:        {result.games}", file=output)
     print(f"  warmups:      {result.warmup_games}", file=output)
     print(f"  total plies:  {total_plies}", file=output)
-    print(f"  capped games: {capped_games} / {result.games}", file=output)
     print(f"  outcomes:     {outcomes}", file=output)
     print(f"  total time:   {result.elapsed_seconds:.3f} s", file=output)
     print(f"  per game:     {format_rate(result.elapsed_seconds, result.games)}", file=output)

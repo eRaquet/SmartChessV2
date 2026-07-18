@@ -15,10 +15,9 @@ from modules.chess_types import (
     BoardStepResult,
     GameLog,
     GameLogEntry,
-    LogResult,
-    LogTerminationType,
     MoveContext,
     MoveLogEntry,
+    Outcome,
     SetEvaluation,
 )
 from modules.utils import calculate_policy_entropy
@@ -81,15 +80,15 @@ class Collector:
             timestamp=time.time_ns(),
         )
 
-    def finish_game(self, outcome: chess.Outcome | None) -> GameLog:
+    def finish_game(self, outcome: Outcome) -> GameLog:
         """
 
         Close current log collection and return the completed game log.
 
         Parameters
         ----------
-        outcome : chess.Outcome | None
-            board outcome, if existant
+        outcome : Outcome
+            board outcome
 
         Returns
         -------
@@ -164,8 +163,12 @@ class Collector:
 
         self._active_move = None
 
-    def _close_game_entry(self, outcome: chess.Outcome | None) -> None:
+    def _close_game_entry(self, outcome: Outcome) -> None:
         """Terminate the game for this collector."""
+        if outcome.cause is None:
+            msg = "Cannot close game entry without a cause of termination."
+            raise RuntimeError(msg)
+
         game: GameLogEntry = cast("GameLogEntry", self._game)
 
         game_start_time: int = cast("int", game.timestamp)
@@ -173,36 +176,8 @@ class Collector:
 
         game.dt = game_end_time - game_start_time
 
-        if outcome:
-            if outcome.winner is chess.WHITE:
-                game.result = LogResult.WHITE
-            elif outcome.winner is chess.BLACK:
-                game.result = LogResult.BLACK
-            else:
-                game.result = LogResult.DRAW
-
-            if outcome.termination is chess.Termination.CHECKMATE:
-                game.termination_type = LogTerminationType.CHECKMATE
-            elif outcome.termination is chess.Termination.STALEMATE:
-                game.termination_type = LogTerminationType.STALEMATE
-            elif outcome.termination in (
-                chess.Termination.FIVEFOLD_REPETITION,
-                chess.Termination.THREEFOLD_REPETITION,
-            ):
-                game.termination_type = LogTerminationType.REPETITION
-            elif outcome.termination in (
-                chess.Termination.FIFTY_MOVES,
-                chess.Termination.SEVENTYFIVE_MOVES,
-            ):
-                game.termination_type = LogTerminationType.FIFTY_MOVES
-            elif outcome.termination is chess.Termination.INSUFFICIENT_MATERIAL:
-                game.termination_type = LogTerminationType.INSUFFICIENT_MATERIAL
-            else:
-                game.termination_type = LogTerminationType.ABORT
-
-        else:
-            game.result = LogResult.UNRESOLVED
-            game.termination_type = LogTerminationType.ABORT
+        game.result = outcome.status
+        game.termination_type = outcome.cause
 
         game.ply_number = len(self._moves)
 

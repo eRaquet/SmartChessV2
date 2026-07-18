@@ -8,11 +8,13 @@ from chess.polyglot import zobrist_hash
 from modules.chess_types import (
     ABORT_ACTION,
     Action,
-    BoardOutcome,
+    BoardStatus,
     BoardStepResult,
     LogCastleType,
     MoveVector,
     Observation,
+    Outcome,
+    TerminationType,
 )
 from modules.display import Display
 from modules.utils import (
@@ -28,7 +30,7 @@ class Board:
         self._board = chess.Board()
         self._moves: list[chess.Move] = list(self._board.legal_moves)
 
-        self._status: BoardOutcome = BoardOutcome.UNDECIDED
+        self._outcome = Outcome()
 
         # allocate the observation space
         self._observation: Observation = cast("Observation", None)
@@ -56,41 +58,31 @@ class Board:
         BoardStepResult | None
             result from step, or None if step not performed
         """
-        if self._status not in BoardOutcome.TERMINATED:
-            if action != ABORT_ACTION:
-                result = self.update_state(action)
+        if self._outcome.status in BoardStatus.TERMINATED:
+            msg = "Board is in terminal state, and cannot be stepped."
+            raise RuntimeError(msg)
 
-                # check for end conditions
-                if self._board.is_checkmate():
-                    self._status = (
-                        BoardOutcome.BLACK
-                        if self._board.turn == chess.WHITE
-                        else BoardOutcome.WHITE
-                    )
-                elif (
-                    self._board.is_repetition()
-                    or self._board.is_fifty_moves()
-                    or self._board.is_insufficient_material()
-                    or self._board.is_stalemate()
-                ):
-                    self._status = BoardOutcome.DRAW
-
-                self._render()
-
-                return result
-            self._status = BoardOutcome.ABORT
+        if action == ABORT_ACTION:
+            self._outcome.status = BoardStatus.UNDECIDED
+            self._outcome.cause = TerminationType.ABORT
             return None
-        msg = "Board is in terminal state, and cannot be stepped."
-        raise RuntimeError(msg)
+
+        result = self.update_state(action)
+
+        self._check_end_conditions()
+
+        self._render()
+
+        return result
 
     def _observe(self) -> None:
         """Make the environment reflect the board state and generate an observation."""
-        if self._status not in BoardOutcome.TERMINATED:
-            self._observation = generate_observation(self._board, self._moves)
-            self._observed = True
-        else:
+        if self._outcome.status in BoardStatus.TERMINATED:
             msg = "Tried to observe board after status was terminated."
             raise RuntimeError(msg)
+
+        self._observation = generate_observation(self._board, self._moves)
+        self._observed = True
 
     def update_state(self, action: Action) -> BoardStepResult:
         """
@@ -148,19 +140,7 @@ class Board:
         -------
         bool
         """
-        return self._status in BoardOutcome.TERMINATED
-
-    @property
-    def outcome(self) -> chess.Outcome | None:
-        """
-
-        The outcome of the board, or None if not terminated.
-
-        Returns
-        -------
-        chess.Outcome | None
-        """
-        return self._board.outcome(claim_draw=True)
+        return self._outcome.status in BoardStatus.TERMINATED
 
     @property
     def winner(self) -> chess.Color | None:
@@ -173,9 +153,21 @@ class Board:
         chess.Color | None
             The winning color, or None if no winner is determined (draw or unfinished game)
         """
-        if self._status in BoardOutcome.WON:
-            return chess.WHITE if self._status == BoardOutcome.WHITE else chess.BLACK
+        if self._outcome.status in BoardStatus.WON:
+            return chess.WHITE if self._outcome.status == BoardStatus.WHITE else chess.BLACK
         return None
+
+    @property
+    def outcome(self) -> Outcome:
+        """
+
+        The outcome of the board.
+
+        Returns
+        -------
+        Outcome
+        """
+        return self._outcome
 
     @property
     def observation(self) -> Observation:
@@ -269,6 +261,25 @@ class Board:
         result.is_check = self._board.is_check()
         result.pos_hash = zobrist_hash(self._board)
         return result
+
+    def _check_end_conditions(self) -> None:
+        if self._board.is_checkmate():
+            self._outcome.status = (
+                BoardStatus.BLACK if self._board.turn == chess.WHITE else BoardStatus.WHITE
+            )
+            self._outcome.cause = TerminationType.CHECKMATE
+        elif self._board.is_repetition():
+            self._outcome.status = BoardStatus.DRAW
+            self._outcome.cause = TerminationType.REPETITION
+        elif self._board.is_fifty_moves():
+            self._outcome.status = BoardStatus.DRAW
+            self._outcome.cause = TerminationType.FIFTY_MOVES
+        elif self._board.is_insufficient_material():
+            self._outcome.status = BoardStatus.DRAW
+            self._outcome.cause = TerminationType.INSUFFICIENT_MATERIAL
+        elif self._board.is_stalemate():
+            self._outcome.status = BoardStatus.DRAW
+            self._outcome.cause = TerminationType.STALEMATE
 
 
 class ASCIIBoard(Board):
