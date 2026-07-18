@@ -180,9 +180,8 @@ class Board:
         Observation
             shape (n, 8, 8, 18), where n is the number of valid moves
         """
-        if self._observed:
-            return self._observation
-        self._observe()
+        if not self._observed:
+            self._observe()
         return self._observation
 
     @property
