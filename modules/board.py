@@ -3,7 +3,6 @@
 from typing import cast, override
 
 import chess
-import numpy as np
 from chess.polyglot import zobrist_hash
 
 from modules.chess_types import (
@@ -32,14 +31,14 @@ class Board:
         self._status: BoardOutcome = BoardOutcome.UNDECIDED
 
         # allocate the observation space
-        self._observation: Observation = Observation(np.array([], dtype=np.uint8), None)
-        self._observe()
+        self._observation: Observation = cast("Observation", None)
+        self._observed = False
 
     def reset(self) -> None:
         """Reset board position."""
         self._board.reset()
         self._moves: list[chess.Move] = list(self._board.legal_moves)
-        self._observe()
+        self._observed = False
         self._render()
 
     def step(self, action: Action) -> BoardStepResult | None:
@@ -76,13 +75,10 @@ class Board:
                 ):
                     self._status = BoardOutcome.DRAW
 
-                self._observe()
-
                 self._render()
 
                 return result
             self._status = BoardOutcome.ABORT
-            self._observe()
             return None
         msg = "Board is in terminal state, and cannot be stepped."
         raise RuntimeError(msg)
@@ -91,8 +87,10 @@ class Board:
         """Make the environment reflect the board state and generate an observation."""
         if self._status not in BoardOutcome.TERMINATED:
             self._observation = generate_observation(self._board, self._moves)
+            self._observed = True
         else:
-            self._observation: Observation = Observation(np.array([], dtype=np.uint8), None)
+            msg = "Tried to observe board after status was terminated."
+            raise RuntimeError(msg)
 
     def update_state(self, action: Action) -> BoardStepResult:
         """
@@ -118,6 +116,8 @@ class Board:
         result = self._capture_post(result)
 
         self._moves = list(self._board.legal_moves)
+
+        self._observed = False
 
         return result
 
@@ -188,6 +188,9 @@ class Board:
         Observation
             shape (n, 8, 8, 18), where n is the number of valid moves
         """
+        if self._observed:
+            return self._observation
+        self._observe()
         return self._observation
 
     @property
