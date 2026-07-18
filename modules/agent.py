@@ -4,12 +4,12 @@ from abc import ABC, abstractmethod
 from typing import Any, override
 
 import numpy as np
-from scipy.special import softmax
 
 from modules.board import Board, GUIBoard
 from modules.chess_types import PMF, Action, AgentDecision, SetEvaluation
 from modules.config import DEFAULT_CONFIDENCE
 from modules.model import ModelBase, StandardModel
+from modules.utils import softmax
 
 
 class AgentBase(ABC):

@@ -26,7 +26,6 @@ dependencies = [
     "mlx>=0.31.2",
     "numpy>=2.2.6",
     "pygame>=2.6.1",
-    "scipy>=1.15.3",
     "tabulate>=0.10.0",
 ]
 

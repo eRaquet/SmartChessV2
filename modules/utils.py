@@ -24,6 +24,7 @@ from modules.chess_types import (
     PieceEncoding,
     Players,
     SetEncoding,
+    SetEvaluation,
 )
 
 rng = np.random.default_rng()
@@ -311,3 +312,23 @@ def write_game(game_log: GameLog) -> None:
         print(agent_string, file=file)
         print("\nMove Data", file=file)
         print(move_string, file=file)
+
+
+def softmax(evals: SetEvaluation) -> PMF:
+    """
+
+    Calculate the softmax of the given set of evaluations.
+
+    Parameters
+    ----------
+    evals : SetEvaluation
+        evaluations that have been scaled appropriately
+
+    Returns
+    -------
+    PMF
+        output PMF
+    """
+    out = np.exp(evals)
+    out /= np.sum(out)
+    return out
