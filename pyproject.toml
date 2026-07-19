@@ -6,38 +6,30 @@ build-backend = "setuptools.build_meta"
 where = ["."]
 exclude = ["tests"]
 
-[tool.setuptools.dynamic]
-version = { attr = "modules.__version__" }
-
 ###########
 # project #
 ###########
 
 [project]
-name = "smartchessv2"
+name = "smartchess-v2"
 version = "0.1.0"
-description = "Add your description here"
+description = "Reinforcement Learning Chess AI"
 readme = "README.md"
-requires-python = ">=3.10"
-dependencies = [
-    "chess>=1.11.2",
-    "keras",
-    "matplotlib>=3.10.9",
-    "mlx>=0.31.2",
-    "numpy>=2.2.6",
-    "pygame>=2.6.1",
-    "tabulate>=0.10.0",
-]
+requires-python = ">=3.12"
+dependencies = ["chess>=1.11.2", "numpy>=2.2.6"]
 
-[dependency-groups]
-dev = [
+[project.optional-dependencies]
+visual = ["matplotlib>=3.11.1", "pygame>=2.6.1", "tabulate>=0.10.0"]
+# this option uses the mlx branch of keras, hence the custom source
+mlx = ["keras", "mlx>=0.32.0"]
+jax = ["jax>=0.10.2", "keras>=3.15.0"]
+tool = [
     "git-lfs>=1.6",
-    "jax>=0.6.2",
     "poethepoet>=0.48.0",
     "pytest>=9.1.1",
-    "ruff>=0.15.20",
+    "ruff>=0.15.22",
     "tuna>=0.5.15",
-    "ty>=0.0.56",
+    "ty>=0.0.61",
 ]
 
 #######
