@@ -30,7 +30,8 @@ rng = np.random.default_rng()
 
 
 def encode_pieces_slow(
-    piece_map: dict[chess.Square, chess.Piece], color_to_move: chess.Color
+    piece_map: dict[chess.Square, chess.Piece],
+    color_to_move: chess.Color,
 ) -> PieceEncoding:
     """
 
@@ -63,7 +64,9 @@ def encode_pieces_slow(
     for square, piece in piece_map.items():
         row, col = square_indices(square, color_to_move)
         encoded_pieces[
-            row, col, get_piece_index(piece.piece_type, Players(piece.color == color_to_move))
+            row,
+            col,
+            get_piece_index(piece.piece_type, Players(piece.color == color_to_move)),
         ] = 1
 
     # return contructed board encoding
@@ -104,7 +107,7 @@ def encode_pieces(board: chess.Board) -> PieceEncoding:
             opponent & board.knights,
             opponent & board.pawns,
         ],
-        dtype="<u8",
+        dtype='<u8',
     )
 
     # reinterpret the bitboards by partitioning them into individual bytes
@@ -117,7 +120,7 @@ def encode_pieces(board: chess.Board) -> PieceEncoding:
     return np.unpackbits(
         rank_bytes,
         axis=0,
-        bitorder="little",
+        bitorder='little',
     ).reshape(PIECE_ENCODING_SHAPE)
 
 
@@ -296,25 +299,25 @@ def calculate_policy_entropy(dist: PMF | None) -> float | None:
 def write_game(game_log: GameLog) -> None:
     """Write game to output (currently just a text file)."""
     game_headers = [f.name for f in fields(GameLogEntry)]
-    agent_headers = ["agent_color", *[f.name for f in fields(AgentLogEntry)]]
+    agent_headers = ['agent_color', *[f.name for f in fields(AgentLogEntry)]]
     move_headers = [f.name for f in fields(MoveLogEntry)]
 
     game_data = [list(astuple(game_log.game))]
     agent_data = [[color, *astuple(game_log.agents[color])] for color in [chess.BLACK, chess.WHITE]]
     move_data = [list(astuple(move)) for move in game_log.moves]
 
-    game_string = tabulate(game_data, headers=game_headers, tablefmt="grid")
-    agent_string = tabulate(agent_data, headers=agent_headers, tablefmt="grid")
-    move_string = tabulate(move_data, headers=move_headers, tablefmt="grid")
+    game_string = tabulate(game_data, headers=game_headers, tablefmt='grid')
+    agent_string = tabulate(agent_data, headers=agent_headers, tablefmt='grid')
+    move_string = tabulate(move_data, headers=move_headers, tablefmt='grid')
 
-    path = Path("temp.txt")
+    path = Path('temp.txt')
 
-    with path.open("w") as file:
-        print("Game Data", file=file)
+    with path.open('w') as file:
+        print('Game Data', file=file)
         print(game_string, file=file)
-        print("\nAgent Data", file=file)
+        print('\nAgent Data', file=file)
         print(agent_string, file=file)
-        print("\nMove Data", file=file)
+        print('\nMove Data', file=file)
         print(move_string, file=file)
 
 

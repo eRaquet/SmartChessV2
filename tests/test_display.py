@@ -6,7 +6,7 @@ import os
 import chess
 
 # make a blank rendering backend for testing
-os.environ["SDL_VIDEODRIVER"] = "dummy"
+os.environ['SDL_VIDEODRIVER'] = 'dummy'
 
 from modules.display import Display
 

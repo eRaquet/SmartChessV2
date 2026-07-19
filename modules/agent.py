@@ -1,7 +1,7 @@
 """Module for defining chess agents."""
 
 from abc import ABC, abstractmethod
-from typing import Any, override
+from typing import override
 
 import numpy as np
 
@@ -16,7 +16,7 @@ class AgentBase(ABC):
     """Agent base class, specifying structure."""
 
     @abstractmethod
-    def act(self, board: Board, *args: Any, **kwargs: Any) -> AgentDecision:
+    def act(self, board: Board) -> AgentDecision:
         """
 
         Choose an action to play based on the provided observation.
@@ -33,7 +33,10 @@ class AgentBase(ABC):
         """
 
     def _capture(
-        self, action: Action, evals: SetEvaluation | None = None, dist: PMF | None = None
+        self,
+        action: Action,
+        evals: SetEvaluation | None = None,
+        dist: PMF | None = None,
     ) -> AgentDecision:
         """Capture the agent's decision metadata."""
         return AgentDecision(evals=evals, dist=dist, action=action)
@@ -71,7 +74,9 @@ class StandardAgent(AgentBase):
     _rng = np.random.default_rng()
 
     def __init__(
-        self, model: ModelBase, confidence_factor: float | None = DEFAULT_CONFIDENCE
+        self,
+        model: ModelBase,
+        confidence_factor: float | None = DEFAULT_CONFIDENCE,
     ) -> None:
         self._model = model
         self._confidence_factor = confidence_factor
@@ -95,7 +100,7 @@ class StandardAgent(AgentBase):
             chosen action data
         """
         evals: SetEvaluation = 1 - self._model.predict_batch(
-            board.observation.encodings
+            board.observation.encodings,
         )  # evaluation as seen by agent
 
         # handle case where a mate in one was found
@@ -127,14 +132,14 @@ class UIAgent(AgentBase):
 
     def __init__(self, board: GUIBoard) -> None:
         if type(board) is not GUIBoard:
-            msg = "UI Agents can only be instantiated from a GUI Board."
+            msg = 'UI Agents can only be instantiated from a GUI Board.'
             raise TypeError(msg)
 
         # core objects that a UIAgent contains
         self._board: GUIBoard = board
 
     @override
-    def act(self, _: Board) -> AgentDecision:
+    def act(self, board: Board) -> AgentDecision:
         """
 
         Get the user input.

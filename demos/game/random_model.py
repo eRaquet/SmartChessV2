@@ -12,19 +12,21 @@ from modules.game import LoggedGame, StandardGame
 from modules.model import RandomModel
 from modules.utils import write_game
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     parser = argparse.ArgumentParser(
-        description="Demo playing a game with the standard agent with a random model."
+        description='Demo playing a game with the standard agent with a random model.',
     )
-    parser.add_argument("--gui", action="store_true", help="display the game with GUI")
+    parser.add_argument('--gui', action='store_true', help='display the game with GUI')
     parser.add_argument(
-        "--ascii", action="store_true", help="display the game with ASCII in terminal"
+        '--ascii',
+        action='store_true',
+        help='display the game with ASCII in terminal',
     )
-    parser.add_argument("--log", action="store_true", help="log game to database")
+    parser.add_argument('--log', action='store_true', help='log game to database')
 
     args = parser.parse_args()
 
-    print("Start")
+    print('Start')
 
     start = time.perf_counter()
 
@@ -45,13 +47,13 @@ if __name__ == "__main__":
     if log is not None:
         write_game(log)
 
-    print(f"Done with {((end - start) / board.half_move_count * 1e3):.3f} ms per move")
+    print(f'Done with {((end - start) / board.half_move_count * 1e3):.3f} ms per move')
     print(
-        f"Winner: {
-            'White'
+        f'Winner: {
+            "White"
             if board.winner == chess.WHITE
-            else 'BLACK'
+            else "BLACK"
             if board.winner == chess.BLACK
-            else 'Draw'
-        }"
+            else "Draw"
+        }',
     )

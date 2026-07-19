@@ -4,7 +4,7 @@ import os
 
 from modules.utils import get_action
 
-os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "1"  # disable the pygame welcome message
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'  # disable the pygame welcome message
 
 import chess
 import pygame as pg
@@ -25,51 +25,51 @@ class Display:
         # dictionary of images associated with each piece
         self._images = {
             (chess.PAWN, chess.WHITE): pg.transform.smoothscale(
-                pg.image.load(PROJECT_PATH / "images" / "whitePawn.png"),
+                pg.image.load(PROJECT_PATH / 'images' / 'whitePawn.png'),
                 (SQUARE_WIDTH, SQUARE_WIDTH),
             ),
             (chess.KNIGHT, chess.WHITE): pg.transform.smoothscale(
-                pg.image.load(PROJECT_PATH / "images" / "whiteKnight.png"),
+                pg.image.load(PROJECT_PATH / 'images' / 'whiteKnight.png'),
                 (SQUARE_WIDTH, SQUARE_WIDTH),
             ),
             (chess.BISHOP, chess.WHITE): pg.transform.smoothscale(
-                pg.image.load(PROJECT_PATH / "images" / "whiteBishop.png"),
+                pg.image.load(PROJECT_PATH / 'images' / 'whiteBishop.png'),
                 (SQUARE_WIDTH, SQUARE_WIDTH),
             ),
             (chess.ROOK, chess.WHITE): pg.transform.smoothscale(
-                pg.image.load(PROJECT_PATH / "images" / "whiteRook.png"),
+                pg.image.load(PROJECT_PATH / 'images' / 'whiteRook.png'),
                 (SQUARE_WIDTH, SQUARE_WIDTH),
             ),
             (chess.QUEEN, chess.WHITE): pg.transform.smoothscale(
-                pg.image.load(PROJECT_PATH / "images" / "whiteQueen.png"),
+                pg.image.load(PROJECT_PATH / 'images' / 'whiteQueen.png'),
                 (SQUARE_WIDTH, SQUARE_WIDTH),
             ),
             (chess.KING, chess.WHITE): pg.transform.smoothscale(
-                pg.image.load(PROJECT_PATH / "images" / "whiteKing.png"),
+                pg.image.load(PROJECT_PATH / 'images' / 'whiteKing.png'),
                 (SQUARE_WIDTH, SQUARE_WIDTH),
             ),
             (chess.PAWN, chess.BLACK): pg.transform.smoothscale(
-                pg.image.load(PROJECT_PATH / "images" / "blackPawn.png"),
+                pg.image.load(PROJECT_PATH / 'images' / 'blackPawn.png'),
                 (SQUARE_WIDTH, SQUARE_WIDTH),
             ),
             (chess.KNIGHT, chess.BLACK): pg.transform.smoothscale(
-                pg.image.load(PROJECT_PATH / "images" / "blackKnight.png"),
+                pg.image.load(PROJECT_PATH / 'images' / 'blackKnight.png'),
                 (SQUARE_WIDTH, SQUARE_WIDTH),
             ),
             (chess.BISHOP, chess.BLACK): pg.transform.smoothscale(
-                pg.image.load(PROJECT_PATH / "images" / "blackBishop.png"),
+                pg.image.load(PROJECT_PATH / 'images' / 'blackBishop.png'),
                 (SQUARE_WIDTH, SQUARE_WIDTH),
             ),
             (chess.ROOK, chess.BLACK): pg.transform.smoothscale(
-                pg.image.load(PROJECT_PATH / "images" / "blackRook.png"),
+                pg.image.load(PROJECT_PATH / 'images' / 'blackRook.png'),
                 (SQUARE_WIDTH, SQUARE_WIDTH),
             ),
             (chess.QUEEN, chess.BLACK): pg.transform.smoothscale(
-                pg.image.load(PROJECT_PATH / "images" / "blackQueen.png"),
+                pg.image.load(PROJECT_PATH / 'images' / 'blackQueen.png'),
                 (SQUARE_WIDTH, SQUARE_WIDTH),
             ),
             (chess.KING, chess.BLACK): pg.transform.smoothscale(
-                pg.image.load(PROJECT_PATH / "images" / "blackKing.png"),
+                pg.image.load(PROJECT_PATH / 'images' / 'blackKing.png'),
                 (SQUARE_WIDTH, SQUARE_WIDTH),
             ),
         }
@@ -84,7 +84,9 @@ class Display:
 
     # display board
     def display_board(
-        self, board: chess.Board, board_map: dict[chess.Square, chess.Piece] | None = None
+        self,
+        board: chess.Board,
+        board_map: dict[chess.Square, chess.Piece] | None = None,
     ) -> None:
         """
 

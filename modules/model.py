@@ -101,7 +101,11 @@ class StandardModel(ModelBase):
     """CNN-based evaluation model for chess boards."""
 
     def __init__(
-        self, strain: int, generation: int | None = None, *, construct: bool = False
+        self,
+        strain: int,
+        generation: int | None = None,
+        *,
+        construct: bool = False,
     ) -> None:
         """
 
@@ -128,8 +132,9 @@ class StandardModel(ModelBase):
 
         if construct:
             # create model strain directory if it doesn't already exits
-            (PROJECT_PATH / "data" / "saved_models" / f"strain_{self._strain}").mkdir(
-                parents=True, exist_ok=True
+            (PROJECT_PATH / 'data' / 'saved_models' / f'strain_{self._strain}').mkdir(
+                parents=True,
+                exist_ok=True,
             )
 
             # construct model from scratch
@@ -160,7 +165,7 @@ class StandardModel(ModelBase):
         """
         # cast encoding to the proper shape and data type
         encoding_recasted: NDArray[np.float16] = encoding.astype(np.float16).reshape(
-            (1, *encoding.shape)
+            (1, *encoding.shape),
         )
 
         return self._model.predict_on_batch(encoding_recasted)[0, 0]
@@ -185,7 +190,7 @@ class StandardModel(ModelBase):
         encodings_recasted: NDArray[np.float16] = encodings.astype(np.float16)
 
         return self._model.predict(encodings_recasted, verbose=0).reshape(
-            (len(encodings_recasted),)
+            (len(encodings_recasted),),
         )
 
     def save(self, *, keep_generation: bool = False, new_generation: bool = False) -> None:
@@ -206,18 +211,18 @@ class StandardModel(ModelBase):
         # check for trying to save new versions of old model generations (not good for record
         # keeping)
         if self._generation != curr_generation:
-            msg = "Can only update the most current model \
-                generation to maintain backward compatability."
+            msg = 'Can only update the most current model \
+                generation to maintain backward compatability.'
             raise RuntimeError(msg)
 
         # update current model
         if keep_generation:
             self._model.save(
                 PROJECT_PATH
-                / "data"
-                / "saved_models"
-                / f"strain_{self._strain}"
-                / f"{self.name}.keras"
+                / 'data'
+                / 'saved_models'
+                / f'strain_{self._strain}'
+                / f'{self.name}.keras',
             )
 
         # save model as a new generation
@@ -226,15 +231,15 @@ class StandardModel(ModelBase):
             self.set_curr_generation(self._generation)
             self._model.save(
                 PROJECT_PATH
-                / "data"
-                / "saved_models"
-                / f"strain_{self._strain}"
-                / f"{self.name}.keras"
+                / 'data'
+                / 'saved_models'
+                / f'strain_{self._strain}'
+                / f'{self.name}.keras',
             )
 
         else:
-            msg = "Please specify whether to save as a new \
-                generation or an update of a past generation."
+            msg = 'Please specify whether to save as a new \
+                generation or an update of a past generation.'
             raise RuntimeError(msg)
 
     def _load(self) -> None:
@@ -242,15 +247,15 @@ class StandardModel(ModelBase):
         try:
             self._model = load_model(
                 PROJECT_PATH
-                / "data"
-                / "saved_models"
-                / f"strain_{self._strain}"
-                / f"{self.name}.keras"
+                / 'data'
+                / 'saved_models'
+                / f'strain_{self._strain}'
+                / f'{self.name}.keras',
             )
         except ValueError:
             msg = (
-                f"Unable to load model: strain {self._strain}"
-                f" generation {self._generation} not found."
+                f'Unable to load model: strain {self._strain}'
+                f' generation {self._generation} not found.'
             )
             raise ValueError(msg) from None
 
@@ -265,7 +270,7 @@ class StandardModel(ModelBase):
         str
             name of model
         """
-        return f"strain_{self._strain}_gen_{self._generation}"
+        return f'strain_{self._strain}_gen_{self._generation}'
 
     def get_curr_generation(self) -> int:
         """
@@ -278,11 +283,12 @@ class StandardModel(ModelBase):
             Generation number
         """
         with Path.open(
-            PROJECT_PATH / "data" / "saved_models" / "metadata.json", "r"
+            PROJECT_PATH / 'data' / 'saved_models' / 'metadata.json',
+            'r',
         ) as metadata_file:
             metadata = json.load(metadata_file)
 
-        return metadata[f"strain_{self._strain}_curr_gen"]
+        return metadata[f'strain_{self._strain}_curr_gen']
 
     def set_curr_generation(self, generation_num: int) -> None:
         """
@@ -295,12 +301,14 @@ class StandardModel(ModelBase):
             Generation number to set
         """
         with Path.open(
-            PROJECT_PATH / "data" / "saved_models" / "metadata.json", "r"
+            PROJECT_PATH / 'data' / 'saved_models' / 'metadata.json',
+            'r',
         ) as metadata_file:
             metadata = json.load(metadata_file)
-            metadata[f"strain_{self._strain}_curr_gen"] = generation_num
+            metadata[f'strain_{self._strain}_curr_gen'] = generation_num
         with Path.open(
-            PROJECT_PATH / "data" / "saved_models" / "metadata.json", "w"
+            PROJECT_PATH / 'data' / 'saved_models' / 'metadata.json',
+            'w',
         ) as metadata_file:
             json.dump(metadata, metadata_file)
 
@@ -312,51 +320,51 @@ class StandardModel(ModelBase):
         stores in `self._model`.
         """
         # input layer
-        input_layer = Input((8, 8, 18), dtype="float16")
+        input_layer = Input((8, 8, 18), dtype='float16')
 
         # convolution layers
 
         temp_layer = Conv2D(
-            filters=MODEL_PARAMS["1"]["filters"],
-            kernel_size=MODEL_PARAMS["1"]["kernal_size"],
-            activation=MODEL_PARAMS["1"]["activation"],
-            padding=MODEL_PARAMS["1"]["padding"],
-            data_format=MODEL_PARAMS["1"]["data_format"],
+            filters=MODEL_PARAMS['1']['filters'],
+            kernel_size=MODEL_PARAMS['1']['kernal_size'],
+            activation=MODEL_PARAMS['1']['activation'],
+            padding=MODEL_PARAMS['1']['padding'],
+            data_format=MODEL_PARAMS['1']['data_format'],
         )(input_layer)
         temp_layer = BatchNormalization()(temp_layer)
         temp_layer = Conv2D(
-            filters=MODEL_PARAMS["2"]["filters"],
-            kernel_size=MODEL_PARAMS["2"]["kernal_size"],
-            activation=MODEL_PARAMS["2"]["activation"],
-            padding=MODEL_PARAMS["2"]["padding"],
-            data_format=MODEL_PARAMS["2"]["data_format"],
+            filters=MODEL_PARAMS['2']['filters'],
+            kernel_size=MODEL_PARAMS['2']['kernal_size'],
+            activation=MODEL_PARAMS['2']['activation'],
+            padding=MODEL_PARAMS['2']['padding'],
+            data_format=MODEL_PARAMS['2']['data_format'],
         )(temp_layer)
         temp_layer = BatchNormalization()(temp_layer)
         temp_layer = Conv2D(
-            filters=MODEL_PARAMS["3"]["filters"],
-            kernel_size=MODEL_PARAMS["3"]["kernal_size"],
-            activation=MODEL_PARAMS["3"]["activation"],
-            padding=MODEL_PARAMS["3"]["padding"],
-            data_format=MODEL_PARAMS["3"]["data_format"],
+            filters=MODEL_PARAMS['3']['filters'],
+            kernel_size=MODEL_PARAMS['3']['kernal_size'],
+            activation=MODEL_PARAMS['3']['activation'],
+            padding=MODEL_PARAMS['3']['padding'],
+            data_format=MODEL_PARAMS['3']['data_format'],
         )(temp_layer)
         temp_layer = BatchNormalization()(temp_layer)
         temp_layer = Conv2D(
-            filters=MODEL_PARAMS["4"]["filters"],
-            kernel_size=MODEL_PARAMS["4"]["kernal_size"],
-            activation=MODEL_PARAMS["4"]["activation"],
-            padding=MODEL_PARAMS["4"]["padding"],
-            data_format=MODEL_PARAMS["4"]["data_format"],
+            filters=MODEL_PARAMS['4']['filters'],
+            kernel_size=MODEL_PARAMS['4']['kernal_size'],
+            activation=MODEL_PARAMS['4']['activation'],
+            padding=MODEL_PARAMS['4']['padding'],
+            data_format=MODEL_PARAMS['4']['data_format'],
         )(temp_layer)
         temp_layer = BatchNormalization()(temp_layer)
 
         # squishing layer
-        temp_layer = Dense(1, activation="sigmoid")(temp_layer)
+        temp_layer = Dense(1, activation='sigmoid')(temp_layer)
         output_layer = Reshape((1,))(temp_layer)
 
         # build model
         opt = Adam()
         self._model = Model(inputs=input_layer, outputs=output_layer, name=self.name)
-        self._model.compile(optimizer=opt, loss="mean_squared_error")
+        self._model.compile(optimizer=opt, loss='mean_squared_error')
 
     @property
     def strain(self) -> int:

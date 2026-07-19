@@ -24,7 +24,7 @@ from modules.model import RandomModel, StandardModel
 NANOSECONDS_PER_SECOND = 1_000_000_000
 MILLISECONDS_PER_SECOND = 1_000
 DEFAULT_GAMES = 100
-DEFAULT_PROFILING_OUTPUT = Path("run.prof")
+DEFAULT_PROFILING_OUTPUT = Path('run.prof')
 
 
 @dataclass(frozen=True, slots=True)
@@ -49,61 +49,64 @@ class BenchmarkResult:
 def parse_args() -> argparse.Namespace:
     """Parse command-line arguments."""
     parser = argparse.ArgumentParser(
-        description="Benchmark SmartChessV2 by running complete games.",
+        description='Benchmark SmartChessV2 by running complete games.',
         epilog=(
-            "Examples:\n"
-            "  uv run python benchmarks/run_games.py --games 200\n"
-            "  uv run python benchmarks/run_games.py --games 50 --agent random-model\n"
-            "  uv run python benchmarks/run_games.py --games 20 --profile cprofile\n"
-            "  uv run kernprof -l -v benchmarks/run_games.py --games 20"
+            'Examples:\n'
+            '  uv run python benchmarks/run_games.py --games 200\n'
+            '  uv run python benchmarks/run_games.py --games 50 --agent random-model\n'
+            '  uv run python benchmarks/run_games.py --games 20 --profile cprofile\n'
+            '  uv run kernprof -l -v benchmarks/run_games.py --games 20'
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    parser.add_argument("--games", type=int, default=DEFAULT_GAMES, help="timed games to run")
+    parser.add_argument('--games', type=int, default=DEFAULT_GAMES, help='timed games to run')
     parser.add_argument(
-        "--warmup-games",
+        '--warmup-games',
         type=int,
         default=0,
-        help="untimed games to run before collecting benchmark timings",
+        help='untimed games to run before collecting benchmark timings',
     )
     parser.add_argument(
-        "--agent",
-        choices=("random", "random-model", "standard-model"),
-        default="random",
+        '--agent',
+        choices=('random', 'random-model', 'standard-model'),
+        default='random',
         help=(
-            "agent pair to benchmark: random avoids model inference; random-model uses "
-            "StandardAgent with RandomModel; standard-model loads StandardModel"
+            'agent pair to benchmark: random avoids model inference; random-model uses '
+            'StandardAgent with RandomModel; standard-model loads StandardModel'
         ),
     )
-    parser.add_argument("--strain", type=int, default=0, help="StandardModel strain")
+    parser.add_argument('--strain', type=int, default=0, help='StandardModel strain')
     parser.add_argument(
-        "--generation", type=int, default=0, help="StandardModel generation for standard-model"
+        '--generation',
+        type=int,
+        default=0,
+        help='StandardModel generation for standard-model',
     )
     parser.add_argument(
-        "--confidence",
+        '--confidence',
         type=float,
         default=1.0,
-        help="StandardAgent confidence factor for model-backed agents",
+        help='StandardAgent confidence factor for model-backed agents',
     )
     parser.add_argument(
-        "--seed",
+        '--seed',
         type=int,
         default=None,
         help="seed NumPy's global random state for repeatable surrounding code",
     )
     parser.add_argument(
-        "--profile",
-        choices=("none", "cprofile"),
-        default="none",
-        help="optional profiler to run around the benchmark body",
+        '--profile',
+        choices=('none', 'cprofile'),
+        default='none',
+        help='optional profiler to run around the benchmark body',
     )
     parser.add_argument(
-        "--profile-output",
+        '--profile-output',
         type=Path,
         default=DEFAULT_PROFILING_OUTPUT,
-        help="write cProfile stats to this path when --profile cprofile is used",
+        help='write cProfile stats to this path when --profile cprofile is used',
     )
-    parser.add_argument("--log", action="store_true", help="run logging during games")
+    parser.add_argument('--log', action='store_true', help='run logging during games')
     return parser.parse_args()
 
 
@@ -115,10 +118,10 @@ def build_agents(
     confidence: float,
 ) -> tuple[RandomAgent | StandardAgent, RandomAgent | StandardAgent]:
     """Create the white and black agents for one game."""
-    if agent_kind == "random":
+    if agent_kind == 'random':
         return RandomAgent(), RandomAgent()
 
-    if agent_kind == "random-model":
+    if agent_kind == 'random-model':
         return (
             StandardAgent(RandomModel(), confidence_factor=confidence),
             StandardAgent(RandomModel(), confidence_factor=confidence),
@@ -227,8 +230,8 @@ def collect_benchmark(
 def format_rate(seconds: float, count: int) -> str:
     """Format a seconds-per-unit rate in milliseconds."""
     if count == 0:
-        return "n/a"
-    return f"{seconds / count * MILLISECONDS_PER_SECOND:.3f} ms"
+        return 'n/a'
+    return f'{seconds / count * MILLISECONDS_PER_SECOND:.3f} ms'
 
 
 def print_summary(result: BenchmarkResult, *, output: TextIO = sys.stdout) -> None:
@@ -246,24 +249,24 @@ def print_summary(result: BenchmarkResult, *, output: TextIO = sys.stdout) -> No
         )
     }
 
-    print("Benchmark complete", file=output)
-    print(f"  games:        {result.games}", file=output)
-    print(f"  warmups:      {result.warmup_games}", file=output)
-    print(f"  total plies:  {total_plies}", file=output)
-    print(f"  outcomes:     {outcomes}", file=output)
-    print(f"  total time:   {result.elapsed_seconds:.3f} s", file=output)
-    print(f"  per game:     {format_rate(result.elapsed_seconds, result.games)}", file=output)
-    print(f"  per ply:      {format_rate(result.elapsed_seconds, total_plies)}", file=output)
+    print('Benchmark complete', file=output)
+    print(f'  games:        {result.games}', file=output)
+    print(f'  warmups:      {result.warmup_games}', file=output)
+    print(f'  total plies:  {total_plies}', file=output)
+    print(f'  outcomes:     {outcomes}', file=output)
+    print(f'  total time:   {result.elapsed_seconds:.3f} s', file=output)
+    print(f'  per game:     {format_rate(result.elapsed_seconds, result.games)}', file=output)
+    print(f'  per ply:      {format_rate(result.elapsed_seconds, total_plies)}', file=output)
 
     if result.results:
         print(
-            f"  game plies:   median={statistics.median(plies):.1f}, max={max(plies)}",
+            f'  game plies:   median={statistics.median(plies):.1f}, max={max(plies)}',
             file=output,
         )
         print(
-            "  game time:    "
-            f"median={statistics.median(game_seconds) * MILLISECONDS_PER_SECOND:.3f} ms, "
-            f"max={max(game_seconds) * MILLISECONDS_PER_SECOND:.3f} ms",
+            '  game time:    '
+            f'median={statistics.median(game_seconds) * MILLISECONDS_PER_SECOND:.3f} ms, '
+            f'max={max(game_seconds) * MILLISECONDS_PER_SECOND:.3f} ms',
             file=output,
         )
 
@@ -295,7 +298,7 @@ def main() -> None:
     if args.seed is not None:
         seed_random_generators(args.seed)
 
-    if args.profile == "cprofile":
+    if args.profile == 'cprofile':
         result = run_profiled(args)
     else:
         result = run_games(
@@ -311,5 +314,5 @@ def main() -> None:
     print_summary(result)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

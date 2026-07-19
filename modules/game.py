@@ -85,7 +85,8 @@ class LoggedGame(GameBase):
 
         while not self._board.terminated:
             context = MoveContext(
-                side_to_move=self._board.turn, ply=self._board.half_move_count + 1
+                side_to_move=self._board.turn,
+                ply=self._board.half_move_count + 1,
             )
             self._collector.start_move()
 

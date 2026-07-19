@@ -45,16 +45,16 @@ class Collector:
     def select_agent(self, agent: AgentBase, color: chess.Color) -> None:
         """Select the agent playing the specific color."""
         if self._game is not None:
-            msg = "Collector cannot select an agent when a game is currently active."
+            msg = 'Collector cannot select an agent when a game is currently active.'
             raise RuntimeError(msg)
 
         if self._active_move is not None:
-            msg = "Collector cannot select an agent when a move is active."
+            msg = 'Collector cannot select an agent when a move is active.'
             raise RuntimeError(msg)
 
-        if hasattr(agent, "strain") and hasattr(agent, "generation"):
-            strain = cast("int", agent.strain)
-            generation = cast("int", agent.generation)
+        if hasattr(agent, 'strain') and hasattr(agent, 'generation'):
+            strain = cast('int', agent.strain)
+            generation = cast('int', agent.generation)
         else:
             strain = None
             generation = None
@@ -69,11 +69,11 @@ class Collector:
     def start_game(self) -> None:
         """Create a new game log entry."""
         if self._game is not None:
-            msg = "Current game must be finished before starting another."
+            msg = 'Current game must be finished before starting another.'
             raise RuntimeError(msg)
 
         if not self._is_agents_populated():
-            msg = "Agents must be selected before starting a game."
+            msg = 'Agents must be selected before starting a game.'
             raise RuntimeError(msg)
 
         self._game = GameLogEntry(
@@ -96,16 +96,16 @@ class Collector:
             log that contains all relevant metadata for the game.
         """
         if self._game is None:
-            msg = "Cannot finish a non-existant game!"
+            msg = 'Cannot finish a non-existant game!'
             raise RuntimeError(msg)
 
         if self._active_move is not None:
-            msg = "Cannot finish a game with an unresolved move."
+            msg = 'Cannot finish a game with an unresolved move.'
             raise RuntimeError(msg)
 
         self._close_game_entry(outcome)
 
-        agents = cast("dict[chess.Color, AgentLogEntry]", self._agents)
+        agents = cast('dict[chess.Color, AgentLogEntry]', self._agents)
 
         log = GameLog(
             game=self._game,
@@ -120,10 +120,10 @@ class Collector:
     def start_move(self) -> None:
         """Start logging current move."""
         if self._game is None:
-            msg = "Cannot start a new move on a non-existant game."
+            msg = 'Cannot start a new move on a non-existant game.'
             raise RuntimeError(msg)
         if self._active_move is not None:
-            msg = "Cannot start a new move when there is already an active move."
+            msg = 'Cannot start a new move when there is already an active move.'
             raise RuntimeError(msg)
 
         self._active_move = MoveLogEntry()
@@ -134,7 +134,10 @@ class Collector:
         self._active_move = None
 
     def record_move(
-        self, context: MoveContext, decision: AgentDecision, result: BoardStepResult | None
+        self,
+        context: MoveContext,
+        decision: AgentDecision,
+        result: BoardStepResult | None,
     ) -> None:
         """
 
@@ -148,7 +151,7 @@ class Collector:
             result when played on board, None if game was aborted before decision was played
         """
         if self._active_move is None:
-            msg = "No active move."
+            msg = 'No active move.'
             raise RuntimeError(msg)
 
         self._move_stop_time = time.time_ns()
@@ -166,12 +169,12 @@ class Collector:
     def _close_game_entry(self, outcome: Outcome) -> None:
         """Terminate the game for this collector."""
         if outcome.cause is None:
-            msg = "Cannot close game entry without a cause of termination."
+            msg = 'Cannot close game entry without a cause of termination.'
             raise RuntimeError(msg)
 
-        game: GameLogEntry = cast("GameLogEntry", self._game)
+        game: GameLogEntry = cast('GameLogEntry', self._game)
 
-        game_start_time: int = cast("int", game.timestamp)
+        game_start_time: int = cast('int', game.timestamp)
         game_end_time = time.time_ns()
 
         game.dt = game_end_time - game_start_time
@@ -202,7 +205,7 @@ class Collector:
         context : MoveContext
             move context metadata object
         """
-        move: MoveLogEntry = cast("MoveLogEntry", self._active_move)
+        move: MoveLogEntry = cast('MoveLogEntry', self._active_move)
         move.side_to_move = context.side_to_move
         move.ply = context.ply
 
@@ -216,7 +219,7 @@ class Collector:
         decision : AgentDecision
             agent decision metadata object
         """
-        move: MoveLogEntry = cast("MoveLogEntry", self._active_move)
+        move: MoveLogEntry = cast('MoveLogEntry', self._active_move)
 
         action: Action = decision.action
         evals: SetEvaluation | None = decision.evals
@@ -238,7 +241,7 @@ class Collector:
         result : BoardStepResult
             step result metadata object
         """
-        move: MoveLogEntry = cast("MoveLogEntry", self._active_move)
+        move: MoveLogEntry = cast('MoveLogEntry', self._active_move)
 
         move.capture_piece_type = result.capture_piece
         move.castle_type = result.castle_type
@@ -251,7 +254,7 @@ class Collector:
 
     def _write_times(self) -> None:
         """Populate the fields of the current move that pertain to the start/stop timestamps."""
-        move: MoveLogEntry = cast("MoveLogEntry", self._active_move)
+        move: MoveLogEntry = cast('MoveLogEntry', self._active_move)
 
         move.timestamp = self._move_start_time
         move.dt = self._move_stop_time - self._move_start_time

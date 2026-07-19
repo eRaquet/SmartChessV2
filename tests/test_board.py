@@ -16,6 +16,6 @@ def test_board() -> None:
     assert board.moves == list(chess.Board().generate_legal_moves())
 
     test_encoding = np.load(
-        PROJECT_PATH / "tests" / "data" / "test_position_board_initial_encoding.npy"
+        PROJECT_PATH / 'tests' / 'data' / 'test_position_board_initial_encoding.npy',
     )
     assert np.allclose(board.observation.encodings, test_encoding)

@@ -33,7 +33,7 @@ class Board:
         self._outcome = Outcome()
 
         # allocate the observation space
-        self._observation: Observation = cast("Observation", None)
+        self._observation: Observation = cast('Observation', None)
         self._observed = False
 
     def reset(self) -> None:
@@ -59,7 +59,7 @@ class Board:
             result from step, or None if step not performed
         """
         if self._outcome.status in BoardStatus.TERMINATED:
-            msg = "Board is in terminal state, and cannot be stepped."
+            msg = 'Board is in terminal state, and cannot be stepped.'
             raise RuntimeError(msg)
 
         if action == ABORT_ACTION:
@@ -78,7 +78,7 @@ class Board:
     def _observe(self) -> None:
         """Make the environment reflect the board state and generate an observation."""
         if self._outcome.status in BoardStatus.TERMINATED:
-            msg = "Tried to observe board after status was terminated."
+            msg = 'Tried to observe board after status was terminated.'
             raise RuntimeError(msg)
 
         self._observation = generate_observation(self._board, self._moves)
@@ -227,7 +227,7 @@ class Board:
         return self._board.ply()
 
     def _capture_pre(self, move: chess.Move) -> BoardStepResult:
-        moved = cast("chess.Piece", self._board.piece_at(move.from_square))
+        moved = cast('chess.Piece', self._board.piece_at(move.from_square))
         move_piece = moved.piece_type
         captured = self._board.piece_at(move.to_square)
         capture_piece = (
@@ -287,9 +287,9 @@ class ASCIIBoard(Board):
     @override
     def _render(self) -> None:
         """Render board as ASCII."""
-        print("-" * 15)
+        print('-' * 15)
         print(self._board)
-        print("-" * 15)
+        print('-' * 15)
 
 
 class GUIBoard(Board):

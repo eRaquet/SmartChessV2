@@ -3,12 +3,12 @@
 import os
 import warnings
 
-warnings.filterwarnings("ignore", category=UserWarning)
+warnings.filterwarnings('ignore', category=UserWarning)
 
-KERAS_BACKEND = os.environ.get("KERAS_BACKEND", "mlx")
-KERAS_DTYPE_POLICY = os.environ.get("KERAS_DTYPE_POLICY", "mixed_float16")
+KERAS_BACKEND = os.environ.get('KERAS_BACKEND', 'mlx')
+KERAS_DTYPE_POLICY = os.environ.get('KERAS_DTYPE_POLICY', 'mixed_float16')
 
-os.environ["KERAS_BACKEND"] = KERAS_BACKEND
+os.environ['KERAS_BACKEND'] = KERAS_BACKEND
 
 from keras.config import set_dtype_policy  # noqa: E402
 
@@ -18,34 +18,34 @@ set_dtype_policy(KERAS_DTYPE_POLICY)
 MODEL_PARAMS = {
     # shuffling layer, that doesn't change the width of the board, but adds way more channels
     # (note that padding is "same", not "valid")
-    "1": {
-        "filters": 256,
-        "kernal_size": 3,
-        "activation": "relu",
-        "padding": "same",
-        "data_format": "channels_last",
+    '1': {
+        'filters': 256,
+        'kernal_size': 3,
+        'activation': 'relu',
+        'padding': 'same',
+        'data_format': 'channels_last',
     },
     # condensing layer, that squishes the width of the board down to a single value across many
     # channels.
-    "2": {
-        "filters": 128,
-        "kernal_size": 3,
-        "activation": "relu",
-        "padding": "valid",
-        "data_format": "channels_last",
+    '2': {
+        'filters': 128,
+        'kernal_size': 3,
+        'activation': 'relu',
+        'padding': 'valid',
+        'data_format': 'channels_last',
     },
-    "3": {
-        "filters": 64,
-        "kernal_size": 3,
-        "activation": "relu",
-        "padding": "valid",
-        "data_format": "channels_last",
+    '3': {
+        'filters': 64,
+        'kernal_size': 3,
+        'activation': 'relu',
+        'padding': 'valid',
+        'data_format': 'channels_last',
     },
-    "4": {
-        "filters": 32,
-        "kernal_size": 4,
-        "activation": "relu",
-        "padding": "valid",
-        "data_format": "channels_last",
+    '4': {
+        'filters': 32,
+        'kernal_size': 4,
+        'activation': 'relu',
+        'padding': 'valid',
+        'data_format': 'channels_last',
     },
 }

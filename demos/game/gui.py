@@ -11,23 +11,23 @@ from modules.game import LoggedGame, StandardGame
 from modules.model import StandardModel
 from modules.utils import write_game
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     parser = argparse.ArgumentParser(
-        description="Demo playing a game with an agent that picks random moves."
+        description='Demo playing a game with an agent that picks random moves.',
     )
     parser.add_argument(
-        "--white",
-        nargs="*",
-        default=["human"],
+        '--white',
+        nargs='*',
+        default=['human'],
         help='Options: "h" or "human", "r" or "random", "<strain>", or "<strain> <generation>"',
     )
     parser.add_argument(
-        "--black",
-        nargs="*",
-        default=["human"],
+        '--black',
+        nargs='*',
+        default=['human'],
         help='Options: "h" or "human", "r" or "random", "<strain>", or "<strain> <generation>"',
     )
-    parser.add_argument("--log", action="store_true", help="log game to database")
+    parser.add_argument('--log', action='store_true', help='log game to database')
 
     args = parser.parse_args()
 
@@ -36,14 +36,14 @@ if __name__ == "__main__":
     if args.white:
         if len(args.white) == 1:
             arg = args.white[0]
-            if arg in ["h", "human"]:
+            if arg in ['h', 'human']:
                 white_agent = UIAgent(board)
-            elif arg in ["r", "random"]:
+            elif arg in ['r', 'random']:
                 white_agent = RandomAgent()
             elif arg.isdigit():
                 white_agent = StandardAgent(StandardModel(int(arg)))
             else:
-                msg = "Invalid argument for [--white] option"
+                msg = 'Invalid argument for [--white] option'
                 raise ValueError(msg)
         elif len(args.white) == 2:  # noqa: PLR2004
             strain = args.white[0]
@@ -51,10 +51,10 @@ if __name__ == "__main__":
             if strain.isdigit() and generation.isdigit():
                 white_agent = StandardAgent(StandardModel(int(strain), int(generation)))
             else:
-                msg = "Invalid arguments for [--white] option"
+                msg = 'Invalid arguments for [--white] option'
                 raise ValueError(msg)
         else:
-            msg = "Invalid number of arguments for [--white] option"
+            msg = 'Invalid number of arguments for [--white] option'
             raise ValueError(msg)
     else:
         white_agent = UIAgent(board)
@@ -62,14 +62,14 @@ if __name__ == "__main__":
     if args.black:
         if len(args.black) == 1:
             arg = args.black[0]
-            if arg in ["h", "human"]:
+            if arg in ['h', 'human']:
                 black_agent = UIAgent(board)
-            elif arg in ["r", "random"]:
+            elif arg in ['r', 'random']:
                 black_agent = RandomAgent()
             elif arg.isdigit():
                 black_agent = StandardAgent(StandardModel(int(arg)))
             else:
-                msg = "Invalid argument for [--black] option"
+                msg = 'Invalid argument for [--black] option'
                 raise ValueError(msg)
         elif len(args.black) == 2:  # noqa: PLR2004
             strain = args.black[0]
@@ -77,10 +77,10 @@ if __name__ == "__main__":
             if strain.isdigit() and generation.isdigit():
                 black_agent = StandardAgent(StandardModel(int(strain), int(generation)))
             else:
-                msg = "Invalid arguments for [--black] option"
+                msg = 'Invalid arguments for [--black] option'
                 raise ValueError(msg)
         else:
-            msg = "Invalid number of arguments for [--black] option"
+            msg = 'Invalid number of arguments for [--black] option'
             raise ValueError(msg)
     else:
         black_agent = UIAgent(board)
@@ -91,21 +91,21 @@ if __name__ == "__main__":
     else:
         game = StandardGame(white_agent, black_agent, board)
 
-    print("Start")
+    print('Start')
 
     log = game.play_game()
 
-    print("End")
+    print('End')
 
     if log is not None:
         write_game(log)
 
     print(
-        f"Winner: {
-            'White'
+        f'Winner: {
+            "White"
             if board.winner == chess.WHITE
-            else 'BLACK'
+            else "BLACK"
             if board.winner == chess.BLACK
-            else 'Draw'
-        }"
+            else "Draw"
+        }',
     )
