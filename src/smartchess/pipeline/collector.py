@@ -5,8 +5,8 @@ from typing import cast
 
 import chess
 
-from modules.agent import AgentBase
-from modules.chess_types import (
+from smartchess.agent import AgentBase
+from smartchess.types import (
     ABORT_ACTION,
     PMF,
     Action,
@@ -20,7 +20,7 @@ from modules.chess_types import (
     Outcome,
     SetEvaluation,
 )
-from modules.utils import calculate_policy_entropy
+from smartchess.util import entropy
 
 
 class Collector:
@@ -229,7 +229,7 @@ class Collector:
             move.position_eval_after_move = evals[action] if action != ABORT_ACTION else None
         if dist is not None:
             move.probability_of_choice = dist[action] if action != ABORT_ACTION else None
-            move.policy_entropy = calculate_policy_entropy(dist)
+            move.policy_entropy = entropy(dist)
 
     def _write_result(self, result: BoardStepResult) -> None:
         """

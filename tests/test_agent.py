@@ -3,9 +3,9 @@
 
 import numpy as np
 
-from modules.agent import RandomAgent, StandardAgent
-from modules.board import Board
-from modules.model import StandardModel
+from smartchess.agent import ModelAgent, RandomAgent
+from smartchess.board import Board
+from smartchess.model import InferenceModel
 
 
 def test_random_agent() -> None:
@@ -17,12 +17,12 @@ def test_random_agent() -> None:
     assert 0 <= decision.action < len(board.moves)
 
 
-def test_standard_agent() -> None:
+def test_model_agent() -> None:
     """Test for the StandardAgent class."""
-    model = StandardModel(0)
+    model = InferenceModel(0)
     board = Board()
-    agent_deterministic = StandardAgent(model, confidence_factor=None)
-    agent_random = StandardAgent(model)
+    agent_deterministic = ModelAgent(model, confidence_factor=None)
+    agent_random = ModelAgent(model)
 
     decision = agent_random.act(board)
     decision_1 = agent_deterministic.act(board)

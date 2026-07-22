@@ -2,9 +2,11 @@
 requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
 
+[tool.setuptools]
+package-dir = { "" = "src" }
+
 [tool.setuptools.packages.find]
-where = ["."]
-exclude = ["tests"]
+where = ["src"]
 
 ###########
 # project #
@@ -83,6 +85,12 @@ fixable = ["ALL"]
 "test/*" = [
     "D103", # undocumented-public-function (missing docstring in public function)
     "S101", # assert (use of assert detected)
+]
+"src/smartchess/model/inference_model.py" = [
+    "E402", # import not at top of file
+]
+"src/smartchess/**/__init__.py" = [
+    "PLC0415", # import should be at top level of file
 ]
 
 [tool.ruff.lint.pydocstyle]

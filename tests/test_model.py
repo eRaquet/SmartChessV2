@@ -5,10 +5,10 @@ from typing import TYPE_CHECKING, cast
 
 import numpy as np
 
-from modules.model import RandomModel, StandardModel
+from smartchess.model import InferenceModel, RandomModel
 
 if TYPE_CHECKING:
-    from modules.chess_types import SetEncoding, SetEvaluation
+    from smartchess.types import SetEncoding, SetEvaluation
 
 
 def test_random_model() -> None:
@@ -23,9 +23,9 @@ def test_random_model() -> None:
     assert np.all((test_evals <= 1) & (test_evals >= 0))
 
 
-def test_standard_model() -> None:
+def test_inference_model() -> None:
     """Test the StandardModel class."""
-    model = StandardModel(0, 0)
+    model = InferenceModel(0, 0)
     rng = np.random.default_rng()
     test_data: SetEncoding = cast('SetEncoding', rng.integers(0, 2, (10, 8, 8, 18), dtype=np.uint8))
     test_eval = model.predict(test_data[0])

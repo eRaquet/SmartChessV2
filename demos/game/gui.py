@@ -4,12 +4,12 @@ import argparse
 
 import chess
 
-from modules.agent import RandomAgent, StandardAgent, UIAgent
-from modules.board import GUIBoard
-from modules.collector import Collector
-from modules.game import LoggedGame, StandardGame
-from modules.model import StandardModel
-from modules.utils import write_game
+from smartchess.agent import ModelAgent, RandomAgent, UIAgent
+from smartchess.board import GUIBoard
+from smartchess.game import LoggedGame, StandardGame
+from smartchess.model import InferenceModel
+from smartchess.pipeline import Collector
+from smartchess.util import write_game
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
@@ -41,7 +41,7 @@ if __name__ == '__main__':
             elif arg in ['r', 'random']:
                 white_agent = RandomAgent()
             elif arg.isdigit():
-                white_agent = StandardAgent(StandardModel(int(arg)))
+                white_agent = ModelAgent(InferenceModel(int(arg)))
             else:
                 msg = 'Invalid argument for [--white] option'
                 raise ValueError(msg)
@@ -49,7 +49,7 @@ if __name__ == '__main__':
             strain = args.white[0]
             generation = args.white[1]
             if strain.isdigit() and generation.isdigit():
-                white_agent = StandardAgent(StandardModel(int(strain), int(generation)))
+                white_agent = ModelAgent(InferenceModel(int(strain), int(generation)))
             else:
                 msg = 'Invalid arguments for [--white] option'
                 raise ValueError(msg)
@@ -67,7 +67,7 @@ if __name__ == '__main__':
             elif arg in ['r', 'random']:
                 black_agent = RandomAgent()
             elif arg.isdigit():
-                black_agent = StandardAgent(StandardModel(int(arg)))
+                black_agent = ModelAgent(InferenceModel(int(arg)))
             else:
                 msg = 'Invalid argument for [--black] option'
                 raise ValueError(msg)
@@ -75,7 +75,7 @@ if __name__ == '__main__':
             strain = args.black[0]
             generation = args.black[1]
             if strain.isdigit() and generation.isdigit():
-                black_agent = StandardAgent(StandardModel(int(strain), int(generation)))
+                black_agent = ModelAgent(InferenceModel(int(strain), int(generation)))
             else:
                 msg = 'Invalid arguments for [--black] option'
                 raise ValueError(msg)

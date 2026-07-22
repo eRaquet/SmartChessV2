@@ -3,8 +3,8 @@
 import json
 from pathlib import Path
 
-from modules.config import PROJECT_PATH, STRAIN_COUNT
-from modules.model import StandardModel
+from smartchess.config import PROJECT_PATH, STRAIN_COUNT
+from smartchess.model import InferenceModel
 
 if __name__ == '__main__':
     saved_models_path = PROJECT_PATH / 'data' / 'saved_models'
@@ -19,4 +19,4 @@ if __name__ == '__main__':
         json.dump(metadata, file)
 
     for i in range(STRAIN_COUNT):
-        StandardModel(i, 0, construct=True)
+        InferenceModel(i, 0, construct=True)

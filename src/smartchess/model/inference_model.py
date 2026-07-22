@@ -1,103 +1,40 @@
-"""Module to specify the behavior of a chess board inference model."""
+"""Inference Implementation of Model."""
 
-# import at top to configure keras backend
-from modules.model_config import MODEL_PARAMS  # noqa: I001
+import os
+import warnings
+
+warnings.filterwarnings('ignore', category=UserWarning)
+
+# get environment variables
+KERAS_BACKEND = os.environ.get('KERAS_BACKEND', default='mlx')
+KERAS_DTYPE_POLICY = os.environ.get('KERAS_DTYPE_POLICY', 'mixed_float16')
+
+# set keras backend, if it was not already set
+os.environ['KERAS_BACKEND'] = KERAS_BACKEND
 
 import json
-from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import TYPE_CHECKING, override
 
-import numpy as np
 from keras import Input, Model
+from keras.config import set_dtype_policy
 from keras.layers import BatchNormalization, Conv2D, Dense, Reshape
 from keras.models import load_model
 from keras.optimizers import Adam
+from numpy import float16
 
-from modules.chess_types import BoardEncoding, Evaluation, SetEncoding, SetEvaluation
-from modules.config import PROJECT_PATH
+from smartchess.config import MODEL_PARAMS, PROJECT_PATH
+from smartchess.types import BoardEncoding, Evaluation, SetEncoding, SetEvaluation
+
+from .model_base import ModelBase
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
 
-
-class ModelBase(ABC):
-    """Model base class that specifies structure."""
-
-    @abstractmethod
-    def predict(self, encoding: BoardEncoding) -> Evaluation:
-        """
-
-        Estimated probability of winning from current position.
-
-        Parameters
-        ----------
-        encoding : BoardEncoding
-            Board to predict on
-
-        Returns
-        -------
-        Evaluation
-            Probability of winning from current position,
-            between 0 and 1 normally, unless the model is badly trained.
-        """
-
-    @abstractmethod
-    def predict_batch(self, encodings: SetEncoding) -> SetEvaluation:
-        """
-
-        Predict on a set of board encodings.
-
-        Parameters
-        ----------
-        encodings : SetEncoding
-            Encodings to predict for.
-
-        Returns
-        -------
-        SetEvaluation
-            Array of predictions
-        """
+set_dtype_policy(KERAS_DTYPE_POLICY)
 
 
-class RandomModel(ModelBase):
-    """Model that randomly evaluates board positions."""
-
-    rng = np.random.default_rng()
-
-    @override
-    def predict(self, encoding: BoardEncoding) -> Evaluation:
-        """
-
-        Make a random prediction of the probability of winning from the given position.
-
-        Returns
-        -------
-        Evaluation
-            random evaluation between 0 and 1
-        """
-        return self.rng.random()
-
-    @override
-    def predict_batch(self, encodings: SetEncoding) -> SetEvaluation:
-        """
-
-        Make a random prediction of the probability of winning from the given position.
-
-        Parameters
-        ----------
-        encodings : SetEncoding
-            Encodings to predict for.
-
-        Returns
-        -------
-        Evaluation
-            random evaluation between 0 and 1
-        """
-        return self.rng.random(len(encodings))
-
-
-class StandardModel(ModelBase):
+class InferenceModel(ModelBase):
     """CNN-based evaluation model for chess boards."""
 
     def __init__(
@@ -164,7 +101,7 @@ class StandardModel(ModelBase):
             between 0 and 1 normally, unless the model is badly trained.
         """
         # cast encoding to the proper shape and data type
-        encoding_recasted: NDArray[np.float16] = encoding.astype(np.float16).reshape(
+        encoding_recasted: NDArray[float16] = encoding.astype(float16).reshape(
             (1, *encoding.shape),
         )
 
@@ -187,7 +124,7 @@ class StandardModel(ModelBase):
             random evaluation between 0 and 1
         """
         # cast encoding to the proper shape and data type
-        encodings_recasted: NDArray[np.float16] = encodings.astype(np.float16)
+        encodings_recasted: NDArray[float16] = encodings.astype(float16)
 
         return self._model.predict(encodings_recasted, verbose=0).reshape(
             (len(encodings_recasted),),
@@ -325,35 +262,35 @@ class StandardModel(ModelBase):
         # convolution layers
 
         temp_layer = Conv2D(
-            filters=MODEL_PARAMS['1']['filters'],
-            kernel_size=MODEL_PARAMS['1']['kernal_size'],
-            activation=MODEL_PARAMS['1']['activation'],
-            padding=MODEL_PARAMS['1']['padding'],
-            data_format=MODEL_PARAMS['1']['data_format'],
+            filters=MODEL_PARAMS[1]['filters'],
+            kernel_size=MODEL_PARAMS[1]['kernal_size'],
+            activation=MODEL_PARAMS[1]['activation'],
+            padding=MODEL_PARAMS[1]['padding'],
+            data_format=MODEL_PARAMS[1]['data_format'],
         )(input_layer)
         temp_layer = BatchNormalization()(temp_layer)
         temp_layer = Conv2D(
-            filters=MODEL_PARAMS['2']['filters'],
-            kernel_size=MODEL_PARAMS['2']['kernal_size'],
-            activation=MODEL_PARAMS['2']['activation'],
-            padding=MODEL_PARAMS['2']['padding'],
-            data_format=MODEL_PARAMS['2']['data_format'],
+            filters=MODEL_PARAMS[2]['filters'],
+            kernel_size=MODEL_PARAMS[2]['kernal_size'],
+            activation=MODEL_PARAMS[2]['activation'],
+            padding=MODEL_PARAMS[2]['padding'],
+            data_format=MODEL_PARAMS[2]['data_format'],
         )(temp_layer)
         temp_layer = BatchNormalization()(temp_layer)
         temp_layer = Conv2D(
-            filters=MODEL_PARAMS['3']['filters'],
-            kernel_size=MODEL_PARAMS['3']['kernal_size'],
-            activation=MODEL_PARAMS['3']['activation'],
-            padding=MODEL_PARAMS['3']['padding'],
-            data_format=MODEL_PARAMS['3']['data_format'],
+            filters=MODEL_PARAMS[3]['filters'],
+            kernel_size=MODEL_PARAMS[3]['kernal_size'],
+            activation=MODEL_PARAMS[3]['activation'],
+            padding=MODEL_PARAMS[3]['padding'],
+            data_format=MODEL_PARAMS[3]['data_format'],
         )(temp_layer)
         temp_layer = BatchNormalization()(temp_layer)
         temp_layer = Conv2D(
-            filters=MODEL_PARAMS['4']['filters'],
-            kernel_size=MODEL_PARAMS['4']['kernal_size'],
-            activation=MODEL_PARAMS['4']['activation'],
-            padding=MODEL_PARAMS['4']['padding'],
-            data_format=MODEL_PARAMS['4']['data_format'],
+            filters=MODEL_PARAMS[4]['filters'],
+            kernel_size=MODEL_PARAMS[4]['kernal_size'],
+            activation=MODEL_PARAMS[4]['activation'],
+            padding=MODEL_PARAMS[4]['padding'],
+            data_format=MODEL_PARAMS[4]['data_format'],
         )(temp_layer)
         temp_layer = BatchNormalization()(temp_layer)
 

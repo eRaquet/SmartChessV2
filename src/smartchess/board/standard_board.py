@@ -1,11 +1,11 @@
 """Module to define the board environment for training and playing."""
 
-from typing import cast, override
+from typing import cast
 
 import chess
 from chess.polyglot import zobrist_hash
 
-from modules.chess_types import (
+from smartchess.types import (
     ABORT_ACTION,
     Action,
     BoardStatus,
@@ -16,8 +16,7 @@ from modules.chess_types import (
     Outcome,
     TerminationType,
 )
-from modules.display import Display
-from modules.utils import (
+from smartchess.util import (
     generate_observation,
 )
 
@@ -279,40 +278,3 @@ class Board:
         elif self._board.is_stalemate():
             self._outcome.status = BoardStatus.DRAW
             self._outcome.cause = TerminationType.STALEMATE
-
-
-class ASCIIBoard(Board):
-    """Board with simple ASCII visualization."""
-
-    @override
-    def _render(self) -> None:
-        """Render board as ASCII."""
-        print('-' * 15)
-        print(self._board)
-        print('-' * 15)
-
-
-class GUIBoard(Board):
-    """Board with full pygame gui."""
-
-    def __init__(self) -> None:
-        super().__init__()
-
-        self._display = Display()
-
-    @override
-    def _render(self) -> None:
-        """Render board display."""
-        self._display.display_board(self._board)
-
-    def get_user_input(self) -> Action | None:
-        """
-
-        Check if the user has given GUI input, and return the move if possible.
-
-        Returns
-        -------
-        Action | None
-            Action selected by the user, or None if no action is yet selected
-        """
-        return self._display.get_user_input(self._board, self._moves)

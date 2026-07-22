@@ -8,10 +8,10 @@ import chess
 # make a blank rendering backend for testing
 os.environ['SDL_VIDEODRIVER'] = 'dummy'
 
-from modules.display import Display
+from smartchess.ui import Display
 
 
-def test_display_board() -> None:
+def test_display() -> None:
     """Test the display board function of the Display class."""
     disp = Display()
 

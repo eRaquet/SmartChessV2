@@ -1,32 +1,19 @@
-"""File containing helper functions for chess bot."""
-
-from dataclasses import astuple, fields
-from pathlib import Path
+"""Helper Functions for Encoding Boards."""
 
 import chess
 import numpy as np
-from tabulate import tabulate
 
-from modules.chess_types import (
+from smartchess.types import (
     BOARD_ENCODING_SHAPE,
     PIECE_ENCODING_SHAPE,
     PIECE_INDEX,
-    PMF,
     Action,
-    AgentLogEntry,
     BoardEncoding,
-    GameLog,
-    GameLogEntry,
-    MoveLogEntry,
-    MoveVector,
     Observation,
     PieceEncoding,
     Players,
     SetEncoding,
-    SetEvaluation,
 )
-
-rng = np.random.default_rng()
 
 
 def encode_pieces_slow(
@@ -197,7 +184,7 @@ def generate_observation(board: chess.Board, moves: list[chess.Move]) -> Observa
         completed observation of board
     """
     num_moves = len(moves)
-    encodings: SetEncoding = np.zeros((num_moves, 8, 8, 18), dtype=np.uint8)
+    encodings: SetEncoding = np.zeros((num_moves, *BOARD_ENCODING_SHAPE), dtype=np.uint8)
     checkmate_action: Action | None = None
 
     for i, move in enumerate(moves):
@@ -253,89 +240,3 @@ def square_indices(square: chess.Square, player_color: chess.Color) -> tuple[int
         row and column index of square in encoding space
     """
     return square // 8 if player_color == chess.WHITE else 7 - square // 8, square % 8
-
-
-def get_action(move: chess.Move, vector: MoveVector) -> Action:
-    """
-
-    Obtain the action that gives the selected move from the given move vector.
-
-    Parameters
-    ----------
-    move : chess.Move
-        move to create action for
-    vector : MoveVector
-        current move vector
-
-    Returns
-    -------
-    Action
-        index of given move in move vector
-    """
-    return vector.index(move)
-
-
-def calculate_policy_entropy(dist: PMF | None) -> float | None:
-    """
-
-    Calculate the policy entropy from the provided distribution.
-
-    Parameters
-    ----------
-    dist : PMF | None
-        choice distribution of policy, None if no N/A
-
-    Returns
-    -------
-    float | None
-        returned Shannon entropy, or None if not applicable
-    """
-    if dist is not None:
-        positive = dist > 0
-        return float(-np.dot(dist[positive], np.log2(dist[positive]))) + 0.0
-    return None
-
-
-def write_game(game_log: GameLog) -> None:
-    """Write game to output (currently just a text file)."""
-    game_headers = [f.name for f in fields(GameLogEntry)]
-    agent_headers = ['agent_color', *[f.name for f in fields(AgentLogEntry)]]
-    move_headers = [f.name for f in fields(MoveLogEntry)]
-
-    game_data = [list(astuple(game_log.game))]
-    agent_data = [[color, *astuple(game_log.agents[color])] for color in [chess.BLACK, chess.WHITE]]
-    move_data = [list(astuple(move)) for move in game_log.moves]
-
-    game_string = tabulate(game_data, headers=game_headers, tablefmt='grid')
-    agent_string = tabulate(agent_data, headers=agent_headers, tablefmt='grid')
-    move_string = tabulate(move_data, headers=move_headers, tablefmt='grid')
-
-    path = Path('temp.txt')
-
-    with path.open('w') as file:
-        print('Game Data', file=file)
-        print(game_string, file=file)
-        print('\nAgent Data', file=file)
-        print(agent_string, file=file)
-        print('\nMove Data', file=file)
-        print(move_string, file=file)
-
-
-def softmax(evals: SetEvaluation) -> PMF:
-    """
-
-    Calculate the softmax of the given set of evaluations.
-
-    Parameters
-    ----------
-    evals : SetEvaluation
-        evaluations that have been scaled appropriately
-
-    Returns
-    -------
-    PMF
-        output PMF
-    """
-    out = np.exp(evals)
-    out /= np.sum(out)
-    return out

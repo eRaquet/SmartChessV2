@@ -1,9 +1,9 @@
 # ruff: noqa: S101
 """Tests for the game module."""
 
-from modules.agent import RandomAgent
-from modules.board import Board
-from modules.game import StandardGame
+from smartchess.agent import RandomAgent
+from smartchess.board import Board
+from smartchess.game import StandardGame
 
 
 def test_game() -> None:

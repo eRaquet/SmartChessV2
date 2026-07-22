@@ -14,12 +14,12 @@ from typing import TextIO
 import chess
 import numpy as np
 
-from modules.agent import RandomAgent, StandardAgent
-from modules.board import Board
-from modules.chess_types import BoardStatus, Outcome
-from modules.collector import Collector
-from modules.game import LoggedGame, StandardGame
-from modules.model import RandomModel, StandardModel
+from smartchess.agent import ModelAgent, RandomAgent
+from smartchess.board import Board
+from smartchess.game import LoggedGame, StandardGame
+from smartchess.model import InferenceModel, RandomModel
+from smartchess.pipeline import Collector
+from smartchess.types import BoardStatus, Outcome
 
 NANOSECONDS_PER_SECOND = 1_000_000_000
 MILLISECONDS_PER_SECOND = 1_000
@@ -116,33 +116,33 @@ def build_agents(
     strain: int,
     generation: int,
     confidence: float,
-) -> tuple[RandomAgent | StandardAgent, RandomAgent | StandardAgent]:
+) -> tuple[RandomAgent | ModelAgent, RandomAgent | ModelAgent]:
     """Create the white and black agents for one game."""
     if agent_kind == 'random':
         return RandomAgent(), RandomAgent()
 
     if agent_kind == 'random-model':
         return (
-            StandardAgent(RandomModel(), confidence_factor=confidence),
-            StandardAgent(RandomModel(), confidence_factor=confidence),
+            ModelAgent(RandomModel(), confidence_factor=confidence),
+            ModelAgent(RandomModel(), confidence_factor=confidence),
         )
 
-    model = StandardModel(strain, generation)
+    model = InferenceModel(strain, generation)
     return (
-        StandardAgent(model, confidence_factor=confidence),
-        StandardAgent(model, confidence_factor=confidence),
+        ModelAgent(model, confidence_factor=confidence),
+        ModelAgent(model, confidence_factor=confidence),
     )
 
 
 def seed_random_generators(seed: int) -> None:
     """Seed random generators used by benchmark agent choices."""
     RandomAgent._rng = np.random.default_rng(seed)  # noqa: SLF001
-    StandardAgent._rng = np.random.default_rng(seed + 1)  # noqa: SLF001
-    RandomModel.rng = np.random.default_rng(seed + 2)
+    ModelAgent._rng = np.random.default_rng(seed + 1)  # noqa: SLF001
+    RandomModel._rng = np.random.default_rng(seed + 2)  # noqa: SLF001
 
 
 def play_one_game(
-    agents: dict[chess.Color, RandomAgent | StandardAgent],
+    agents: dict[chess.Color, RandomAgent | ModelAgent],
     *,
     log: bool,
 ) -> GameResult:
@@ -197,7 +197,7 @@ def run_games(
 
 def collect_benchmark(
     *,
-    agents: dict[chess.Color, RandomAgent | StandardAgent],
+    agents: dict[chess.Color, RandomAgent | ModelAgent],
     games: int,
     warmup_games: int,
     log: bool,

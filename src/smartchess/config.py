@@ -1,24 +1,37 @@
-"""Python file that contains some model configurations parameters."""
+"""Python file that contains various project-wide configuration features."""
 
-import os
-import warnings
+from pathlib import Path
 
-warnings.filterwarnings('ignore', category=UserWarning)
+### Project Config
 
-KERAS_BACKEND = os.environ.get('KERAS_BACKEND', 'mlx')
-KERAS_DTYPE_POLICY = os.environ.get('KERAS_DTYPE_POLICY', 'mixed_float16')
+# path object to project directory
+PROJECT_PATH = Path(__file__).parent.parent.parent
 
-os.environ['KERAS_BACKEND'] = KERAS_BACKEND
+# number of model strains
+STRAIN_COUNT = 4
 
-from keras.config import set_dtype_policy  # noqa: E402
+### Graphics Config
 
-set_dtype_policy(KERAS_DTYPE_POLICY)
+# frames per second for user input
+FPS = 30
 
-# parameterize the model
+# board gui dimentions
+BOARD_RIM_THICKNESS = 20
+BOARD_WIDTH = 480
+SQUARE_WIDTH = BOARD_WIDTH / 8
+
+### Agent Config
+
+# default confidence level
+DEFAULT_CONFIDENCE = 8.0
+
+### Model Config
+
+# inference model shape
 MODEL_PARAMS = {
     # shuffling layer, that doesn't change the width of the board, but adds way more channels
     # (note that padding is "same", not "valid")
-    '1': {
+    1: {
         'filters': 256,
         'kernal_size': 3,
         'activation': 'relu',
@@ -27,21 +40,21 @@ MODEL_PARAMS = {
     },
     # condensing layer, that squishes the width of the board down to a single value across many
     # channels.
-    '2': {
+    2: {
         'filters': 128,
         'kernal_size': 3,
         'activation': 'relu',
         'padding': 'valid',
         'data_format': 'channels_last',
     },
-    '3': {
+    3: {
         'filters': 64,
         'kernal_size': 3,
         'activation': 'relu',
         'padding': 'valid',
         'data_format': 'channels_last',
     },
-    '4': {
+    4: {
         'filters': 32,
         'kernal_size': 4,
         'activation': 'relu',

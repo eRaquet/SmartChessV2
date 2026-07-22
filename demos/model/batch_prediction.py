@@ -5,13 +5,18 @@ import time
 from typing import TYPE_CHECKING, cast
 
 import numpy as np
-from matplotlib import pyplot as plt
 
-from modules.config import PROJECT_PATH
-from modules.model import StandardModel
+try:
+    from matplotlib import pyplot as plt
+except ImportError as error:
+    msg = 'This script requires a plotting backend.'
+    raise ImportError(msg) from error
+
+from smartchess.config import PROJECT_PATH
+from smartchess.model import InferenceModel
 
 if TYPE_CHECKING:
-    from modules.chess_types import SetEncoding
+    from smartchess.types import SetEncoding
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
@@ -32,7 +37,7 @@ if __name__ == '__main__':
 
     # load model (strain: 0, generation: 0)
     # construct=True if model does not yet exist (for seeding)
-    model = StandardModel(0, 0)
+    model = InferenceModel(0, 0)
 
     N = np.array([10, 30, 100, 300, 1000, 3000, 10000])
     times = np.zeros(N.shape)

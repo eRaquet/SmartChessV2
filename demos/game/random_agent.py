@@ -5,22 +5,17 @@ import time
 
 import chess
 
-from modules.agent import RandomAgent
-from modules.board import ASCIIBoard, Board, GUIBoard
-from modules.collector import Collector
-from modules.game import LoggedGame, StandardGame
-from modules.utils import write_game
+from smartchess.agent import RandomAgent
+from smartchess.board import Board, GUIBoard
+from smartchess.game import LoggedGame, StandardGame
+from smartchess.pipeline import Collector
+from smartchess.util import write_game
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='Demo playing a game with an agent that picks random moves.',
     )
     parser.add_argument('--gui', action='store_true', help='display the game with GUI')
-    parser.add_argument(
-        '--ascii',
-        action='store_true',
-        help='display the game with ASCII in terminal',
-    )
     parser.add_argument('--log', action='store_true', help='log game to database')
 
     args = parser.parse_args()
@@ -29,7 +24,7 @@ if __name__ == '__main__':
 
     start = time.perf_counter()
 
-    board = ASCIIBoard() if args.ascii else GUIBoard() if args.gui else Board()
+    board = GUIBoard() if args.gui else Board()
     white_agent = RandomAgent()
     black_agent = RandomAgent()
 

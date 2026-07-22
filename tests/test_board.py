@@ -4,8 +4,8 @@
 import chess
 import numpy as np
 
-from modules.board import Board
-from modules.config import PROJECT_PATH
+from smartchess.board import Board
+from smartchess.config import PROJECT_PATH
 
 
 def test_board() -> None:

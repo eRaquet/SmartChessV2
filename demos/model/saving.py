@@ -1,8 +1,8 @@
 """Script to demo the StandardModel class saving mechanism."""
 
-from modules.model import StandardModel
+from smartchess.model import InferenceModel
 
 if __name__ == '__main__':
-    model = StandardModel(0, 0)
+    model = InferenceModel(0, 0)
     model.save(keep_generation=True)
     model.save(new_generation=True)

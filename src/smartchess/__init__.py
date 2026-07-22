@@ -1,0 +1,1 @@
+"""Smartchess V2."""

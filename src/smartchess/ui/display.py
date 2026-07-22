@@ -2,15 +2,13 @@
 
 import os
 
-from modules.utils import get_action
-
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'  # disable the pygame welcome message
 
 import chess
 import pygame as pg
 
-from modules.chess_types import ABORT_ACTION, Action, MoveVector
-from modules.config import BOARD_RIM_THICKNESS, BOARD_WIDTH, FPS, PROJECT_PATH, SQUARE_WIDTH
+from smartchess.config import BOARD_RIM_THICKNESS, BOARD_WIDTH, FPS, PROJECT_PATH, SQUARE_WIDTH
+from smartchess.types import ABORT_ACTION, Action, MoveVector
 
 
 class Display:
@@ -264,7 +262,7 @@ class Display:
 
                         # if valid user input was created, return that
                         if user_input:
-                            return get_action(user_input, moves)
+                            return moves.index(user_input)
 
             # return a resignation event if the window was exited
             if event.type == pg.QUIT:
