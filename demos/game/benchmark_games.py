@@ -9,22 +9,22 @@ import sys
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TextIO
+from typing import Literal, TextIO
 
 import chess
-import numpy as np
 
 from smartchess.agent import ModelAgent, RandomAgent
 from smartchess.board import Board
+from smartchess.config import PROJECT_PATH
 from smartchess.game import LoggedGame, StandardGame
-from smartchess.model import InferenceModel, RandomModel
+from smartchess.model import InferenceModel
 from smartchess.pipeline import Collector
 from smartchess.types import BoardStatus, Outcome
 
 NANOSECONDS_PER_SECOND = 1_000_000_000
 MILLISECONDS_PER_SECOND = 1_000
 DEFAULT_GAMES = 100
-DEFAULT_PROFILING_OUTPUT = Path('run.prof')
+DEFAULT_PROFILING_OUTPUT = PROJECT_PATH / 'artifacts' / 'profiles' / 'run.prof'
 
 
 @dataclass(frozen=True, slots=True)
@@ -53,9 +53,8 @@ def parse_args() -> argparse.Namespace:
         epilog=(
             'Examples:\n'
             '  uv run python benchmarks/run_games.py --games 200\n'
-            '  uv run python benchmarks/run_games.py --games 50 --agent random-model\n'
-            '  uv run python benchmarks/run_games.py --games 20 --profile cprofile\n'
-            '  uv run kernprof -l -v benchmarks/run_games.py --games 20'
+            '  uv run python benchmarks/run_games.py --games 50 --agent inference\n'
+            '  uv run python benchmarks/run_games.py --games 20 --profile\n'
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
@@ -63,82 +62,40 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         '--warmup-games',
         type=int,
-        default=0,
+        default=1,
         help='untimed games to run before collecting benchmark timings',
     )
     parser.add_argument(
         '--agent',
-        choices=('random', 'random-model', 'standard-model'),
+        choices=('random', 'inference'),
         default='random',
         help=(
-            'agent pair to benchmark: random avoids model inference; random-model uses '
-            'StandardAgent with RandomModel; standard-model loads StandardModel'
+            'agent pair to benchmark: random avoids model inference; inference loads '
+            'InferenceModel of strains 0 and 1'
         ),
-    )
-    parser.add_argument('--strain', type=int, default=0, help='StandardModel strain')
-    parser.add_argument(
-        '--generation',
-        type=int,
-        default=0,
-        help='StandardModel generation for standard-model',
-    )
-    parser.add_argument(
-        '--confidence',
-        type=float,
-        default=1.0,
-        help='StandardAgent confidence factor for model-backed agents',
-    )
-    parser.add_argument(
-        '--seed',
-        type=int,
-        default=None,
-        help="seed NumPy's global random state for repeatable surrounding code",
     )
     parser.add_argument(
         '--profile',
-        choices=('none', 'cprofile'),
-        default='none',
+        action='store_true',
         help='optional profiler to run around the benchmark body',
     )
     parser.add_argument(
         '--profile-output',
         type=Path,
         default=DEFAULT_PROFILING_OUTPUT,
-        help='write cProfile stats to this path when --profile cprofile is used',
+        help='write cProfile stats to this path when --profile is used',
     )
     parser.add_argument('--log', action='store_true', help='run logging during games')
     return parser.parse_args()
 
 
 def build_agents(
-    agent_kind: str,
-    *,
-    strain: int,
-    generation: int,
-    confidence: float,
+    agent_kind: Literal['random', 'inference'],
 ) -> tuple[RandomAgent | ModelAgent, RandomAgent | ModelAgent]:
     """Create the white and black agents for one game."""
     if agent_kind == 'random':
         return RandomAgent(), RandomAgent()
-
-    if agent_kind == 'random-model':
-        return (
-            ModelAgent(RandomModel(), confidence_factor=confidence),
-            ModelAgent(RandomModel(), confidence_factor=confidence),
-        )
-
-    model = InferenceModel(strain, generation)
-    return (
-        ModelAgent(model, confidence_factor=confidence),
-        ModelAgent(model, confidence_factor=confidence),
-    )
-
-
-def seed_random_generators(seed: int) -> None:
-    """Seed random generators used by benchmark agent choices."""
-    RandomAgent._rng = np.random.default_rng(seed)  # noqa: SLF001
-    ModelAgent._rng = np.random.default_rng(seed + 1)  # noqa: SLF001
-    RandomModel._rng = np.random.default_rng(seed + 2)  # noqa: SLF001
+    return ModelAgent(InferenceModel(0)), ModelAgent(InferenceModel(1))
 
 
 def play_one_game(
@@ -172,19 +129,11 @@ def run_games(
     *,
     games: int,
     warmup_games: int,
-    agent_kind: str,
-    strain: int,
-    generation: int,
-    confidence: float,
+    agent_kind: Literal['random', 'inference'],
     log: bool,
 ) -> BenchmarkResult:
     """Run warmup and timed benchmark games."""
-    white_agent, black_agent = build_agents(
-        agent_kind,
-        strain=strain,
-        generation=generation,
-        confidence=confidence,
-    )
+    white_agent, black_agent = build_agents(agent_kind)
     agents = {chess.WHITE: white_agent, chess.BLACK: black_agent}
 
     return collect_benchmark(
@@ -279,13 +228,11 @@ def run_profiled(args: argparse.Namespace) -> BenchmarkResult:
         games=args.games,
         warmup_games=args.warmup_games,
         agent_kind=args.agent,
-        strain=args.strain,
-        generation=args.generation,
-        confidence=args.confidence,
         log=args.log,
     )
 
     if args.profile_output is not None:
+        args.profile_output.parent.mkdir(parents=True, exist_ok=True)
         profiler.dump_stats(args.profile_output)
 
     return result
@@ -295,19 +242,13 @@ def main() -> None:
     """Run the benchmark CLI."""
     args = parse_args()
 
-    if args.seed is not None:
-        seed_random_generators(args.seed)
-
-    if args.profile == 'cprofile':
+    if args.profile:
         result = run_profiled(args)
     else:
         result = run_games(
             games=args.games,
             warmup_games=args.warmup_games,
             agent_kind=args.agent,
-            strain=args.strain,
-            generation=args.generation,
-            confidence=args.confidence,
             log=args.log,
         )
 
