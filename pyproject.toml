@@ -20,19 +20,32 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = ["chess>=1.11.2", "numpy>=2.2.6"]
 
-[project.optional-dependencies]
-visual = ["matplotlib>=3.11.1", "pygame>=2.6.1", "tabulate>=0.10.0"]
-# this option uses the mlx branch of keras, hence the custom source
-mlx = ["keras", "mlx>=0.32.0"]
-jax = ["jax>=0.10.2", "keras>=3.15.0"]
-tool = [
-    "git-lfs>=1.6",
-    "poethepoet>=0.48.0",
-    "pytest>=9.1.1",
-    "ruff>=0.15.22",
-    "tuna>=0.5.15",
-    "ty>=0.0.61",
+[dependency-groups]
+test = ["pytest>=9.1.1"]
+quality = ["ruff>=0.15.22", "ty>=0.0.61"]
+gui = ["pygame>=2.6.1"]
+plot = ["matplotlib>=3.11.1"]
+profile = ["tuna>=0.5.15"]
+table = ["tabulate>=0.10.0"]
+tools = ["git-lfs>=1.6", "poethepoet>=0.48.0"]
+backend-mlx = [
+    "keras @ git+https://github.com/keras-team/keras.git@mlx",
+    "mlx>=0.32.0",
 ]
+backend-jax = ["jax>=0.10.2", "keras>=3.15.0"]
+dev = [
+    { include-group = "test" },
+    { include-group = "quality" },
+    { include-group = "gui" },
+    { include-group = "plot" },
+    { include-group = "profile" },
+    { include-group = "table" },
+    { include-group = "tools" },
+    { include-group = "backend-mlx" },
+]
+
+[project.scripts]
+smartchess = 'smartchess.cli.main:main'
 
 #######
 # poe #
@@ -113,5 +126,10 @@ quote-style = "single" # change to "double" or "single" if either is preferred
 indent-style = "space"
 line-ending = "auto"
 
-[tool.uv.sources]
-keras = { git = "https://github.com/keras-team/keras.git", rev = "mlx" }
+######
+# uv #
+######
+
+[tool.uv]
+default-groups = ["dev"]
+conflicts = [[{ group = "backend-mlx" }, { group = "backend-jax" }]]
