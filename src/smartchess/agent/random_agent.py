@@ -8,12 +8,14 @@ from smartchess.board import Board
 from smartchess.types import AgentDecision
 
 from .agent_base import AgentBase
+from .config import DEFAULT_RANDOM_AGENT_CONFIG, RandomAgentConfig
 
 
 class RandomAgent(AgentBase):
     """Agent that picks a random move."""
 
-    _rng = default_rng()
+    def __init__(self, config: RandomAgentConfig = DEFAULT_RANDOM_AGENT_CONFIG) -> None:
+        self._rng = default_rng(config.seed)
 
     @override
     def act(self, board: Board) -> AgentDecision:

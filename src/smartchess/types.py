@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 from enum import Enum, IntFlag
-from typing import TypedDict
+from typing import Protocol
 
 import chess
 from numpy import float64, uint8
@@ -54,17 +54,6 @@ type MoveVector = list[chess.Move]
 type Evaluation = float
 type SetEvaluation = NDArray[float64]
 type PMF = NDArray[float64]
-
-
-# dictionary structure to specify the info read off from the board at each position
-class BoardInfo(TypedDict):
-    """
-
-    Class that defines board info.
-
-    Currently empty.
-
-    """
 
 
 class Players(Enum):
@@ -272,3 +261,58 @@ class GameLog:
     game: GameLogEntry
     agents: dict[chess.Color, AgentLogEntry]
     moves: tuple[MoveLogEntry, ...]
+
+
+### UI Types
+
+
+@dataclass(slots=True, kw_only=True)
+class PositionSnapshot:
+    """Snapshot of board position to be used in renderer protocol."""
+
+    pieces: dict[chess.Square, chess.Piece]
+    turn: chess.Color
+    moves: list[chess.Move]
+    check_square: chess.Square | None
+
+
+class QuitType:
+    """Sentinel for the UI quit action."""
+
+
+Quit = QuitType()
+
+
+class BoardRenderer(Protocol):
+    """A protocol for an object capable of rendering a board."""
+
+    def render(self, state: PositionSnapshot) -> None:
+        """
+
+        Display the current state.
+
+        Parameters
+        ----------
+        state : PositionSnapshot
+            snapshot of the board state
+        """
+
+
+class MoveSource(Protocol):
+    """A protocol for an object capable of choosing a move from a snapshot."""
+
+    def request_move(self, state: PositionSnapshot) -> chess.Move | QuitType | None:
+        """
+
+        Retrieve a move given the current state.
+
+        Parameters
+        ----------
+        state : PositionSnapshot
+            snapshot of board state
+
+        Returns
+        -------
+        chess.Move | QuitType
+            chess move, or `Quit` if the user quit the game
+        """

@@ -8,13 +8,15 @@ import chess
 import pygame as pg
 
 from smartchess.config import BOARD_RIM_THICKNESS, BOARD_WIDTH, FPS, PROJECT_PATH, SQUARE_WIDTH
-from smartchess.types import ABORT_ACTION, Action, MoveVector
+from smartchess.types import PositionSnapshot, Quit, QuitType
+
+from .config import GUIConfig
 
 
-class Display:
+class GUI:
     """Class to display boards associated with the Board environment."""
 
-    def __init__(self) -> None:
+    def __init__(self, _: GUIConfig) -> None:
         """Initiate the display."""
         pg.init()
 
@@ -78,29 +80,20 @@ class Display:
         self._selected_square = None
         self._highlight_mask: list[chess.Square] = []
 
-        self.display_board(chess.Board())
-
     # display board
-    def display_board(
-        self,
-        board: chess.Board,
-        board_map: dict[chess.Square, chess.Piece] | None = None,
-    ) -> None:
+    def render(self, state: PositionSnapshot) -> None:
         """
 
         Display a board object.
 
         Parameters
         ----------
-        board : chess.Board
-            Board to display
-        board_map : dict[chess.Piece, chess.Square] | None, optional
-            Map of pieces, optional for efficiency, by default None
+        state : PositionSnapshot
+            snapshot of board position
         """
         pg.event.pump()  # temporary fix for flushing pygame events
 
-        if board_map is None:
-            board_map = board.piece_map()
+        board_map = state.pieces
 
         self._highlight_mask = []
 
@@ -116,7 +109,7 @@ class Display:
 
             # highlight if the current square is a possible move for the selected piece
             if self._selected_square is not None:
-                highlight = chess.Move(self._selected_square, square) in board.legal_moves
+                highlight = chess.Move(self._selected_square, square) in state.moves
 
                 if highlight:
                     self._highlight_mask.append(square)
@@ -126,12 +119,7 @@ class Display:
             selected = square == self._selected_square
 
             # if our king is on this square and check is placed on the board
-            if (
-                square in board_map
-                and board_map[square].color == board.turn
-                and board_map[square].piece_type == chess.KING
-                and board.is_check() is True
-            ):
+            if square is state.check_square:
                 color = (100, 0, 0)
 
             elif highlight:
@@ -173,12 +161,7 @@ class Display:
 
         pg.display.update()
 
-    def get_user_input(
-        self,
-        board: chess.Board,
-        moves: MoveVector,
-        board_map: dict[chess.Square, chess.Piece] | None = None,
-    ) -> Action | None:
+    def request_move(self, state: PositionSnapshot) -> chess.Move | QuitType | None:
         """
 
         Check if there is a user input.
@@ -189,20 +172,15 @@ class Display:
 
         Parameters
         ----------
-        board : chess.Board
-            chess.board object which is being displayed
-        moves : MoveVector
-            legal moves from the current position
-        board_map : dict[chess.Square, chess.Piece] | None, optional
-            map of pieces on board, by default None
+        state : PositionSnapshot
+            snapshot of board state
 
         Returns
         -------
-        Action | None
-            action chosen by user, or None if no action yet selected
+        chess.Move | QuitType | None
+            action chosen by user, `Quit` if user decided to quit, or None if no action yet selected
         """
-        if board_map is None:
-            board_map = board.piece_map()
+        board_map = state.pieces
 
         self._clock.tick(FPS)
 
@@ -231,43 +209,38 @@ class Display:
 
                     # ...no square selected->select square
                     if self._selected_square is None:
-                        if square in board_map and board_map[square].color == board.turn:
+                        if square in board_map and board_map[square].color == state.turn:
                             self._selected_square = square
-                            self.display_board(board, board_map=board_map)
+                            self.render(state)
 
                     # ...square is selected
+                    # square is a valid square to move to
+                    elif square in self._highlight_mask:
+                        # if the move is a pawn promotion
+                        if board_map[self._selected_square].piece_type == chess.PAWN and (
+                            chess.square_rank(square) == 7 or chess.square_rank(square) == 0  # noqa: PLR2004
+                        ):
+                            user_input = chess.Move(self._selected_square, square, chess.QUEEN)
+                        user_input = chess.Move(self._selected_square, square)
+                        self._selected_square = None
+
+                        return user_input
+
+                    # square is not a vlid square to move to, but is a square with a piece of
+                    # our color
+                    elif square in board_map and board_map[square].color == state.turn:
+                        self._selected_square = square if self._selected_square != square else None
+                        self.render(state)
+
+                    # square is an "unselectable" square (empty or opponent)
                     else:
-                        # square is a valid square to move to
-                        if square in self._highlight_mask:
-                            # if the move is a pawn promotion
-                            if board_map[self._selected_square].piece_type == chess.PAWN and (
-                                chess.square_rank(square) == 7 or chess.square_rank(square) == 0  # noqa: PLR2004
-                            ):
-                                user_input = chess.Move(self._selected_square, square, chess.QUEEN)
-                            user_input = chess.Move(self._selected_square, square)
-                            self._selected_square = None
-
-                        # square is not a vlid square to move to, but is a square with a piece of
-                        # our color
-                        elif square in board_map and board_map[square].color == board.turn:
-                            self._selected_square = (
-                                square if self._selected_square != square else None
-                            )
-                            self.display_board(board, board_map=board_map)
-
-                        # square is an "unselectable" square (empty or opponent)
-                        else:
-                            self._selected_square = None
-                            self.display_board(board, board_map=board_map)
-
-                        # if valid user input was created, return that
-                        if user_input:
-                            return moves.index(user_input)
+                        self._selected_square = None
+                        self.render(state)
 
             # return a resignation event if the window was exited
             if event.type == pg.QUIT:
                 self.exit()
-                return ABORT_ACTION
+                return Quit
         return None
 
     def exit(self) -> None:

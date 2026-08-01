@@ -14,17 +14,20 @@ from smartchess.types import (
     MoveVector,
     Observation,
     Outcome,
+    PositionSnapshot,
     TerminationType,
 )
 from smartchess.util import (
     generate_observation,
 )
 
+from .config import DEFAULT_BOARD_CONFIG, BoardConfig
+
 
 class Board:
     """Chess board environment with generation of valid moves and creation of observations."""
 
-    def __init__(self) -> None:
+    def __init__(self, _: BoardConfig = DEFAULT_BOARD_CONFIG) -> None:
         """Initiate a board object."""
         self._board = chess.Board()
         self._moves: list[chess.Move] = list(self._board.legal_moves)
@@ -40,7 +43,6 @@ class Board:
         self._board.reset()
         self._moves: list[chess.Move] = list(self._board.legal_moves)
         self._observed = False
-        self._render()
 
     def step(self, action: Action) -> BoardStepResult | None:
         """
@@ -69,8 +71,6 @@ class Board:
         result = self.update_state(action)
 
         self._check_end_conditions()
-
-        self._render()
 
         return result
 
@@ -111,10 +111,6 @@ class Board:
         self._observed = False
 
         return result
-
-    def _render(self) -> None:
-        """Render method for board, empty for base class."""
-        return
 
     @property
     def moves(self) -> MoveVector:
@@ -209,6 +205,23 @@ class Board:
         int
         """
         return self._board.fullmove_number
+
+    @property
+    def snapshot(self) -> PositionSnapshot:
+        """
+
+        Get a snapshot of the current board state.
+
+        Returns
+        -------
+        PositionSnapshot
+        """
+        return PositionSnapshot(
+            pieces=self._board.piece_map(),
+            turn=self._board.turn,
+            moves=self._moves,
+            check_square=self._board.king(self._board.turn) if self._board.is_check() else None,
+        )
 
     @property
     def half_move_count(self) -> int:

@@ -2,23 +2,36 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING
+
+from smartchess.capabilities import require_capability
+
+from .config import GUIConfig as GUIConfig
 
 if TYPE_CHECKING:
-    from .display import Display
+    from .gui import GUI
 
 
-def __getattr__(name: Literal['Display']) -> type[Display]:
-    if name == 'Display':
-        try:
-            from .display import Display
-        except ModuleNotFoundError as error:
-            if error.name == 'pygame':
-                msg = 'Display requires a graphics backend.  Install smartchess-v2[visual]'
-                raise ImportError(msg) from error
-            raise
+def create_gui(config: GUIConfig) -> GUI:
+    """
 
-        return Display
+    Create a GUI from the provided config.
 
-    msg = f'module {__name__!r} has no attribute {name!r}'
-    raise AttributeError(msg)
+    Parameters
+    ----------
+    config : GUIConfig
+        config for the GUI
+
+    Returns
+    -------
+    GUI
+        created GUI object
+    """
+    if type(config) is GUIConfig:
+        require_capability('gui')
+
+        from .gui import GUI
+
+        return GUI(config)
+    msg = 'Unsupported GUI config type'
+    raise ValueError(msg)

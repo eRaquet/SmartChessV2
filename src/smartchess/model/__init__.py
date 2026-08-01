@@ -2,29 +2,28 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Literal
+from smartchess.capabilities import require_capability
 
-from .model_base import ModelBase as ModelBase
-from .random_model import RandomModel as RandomModel
+from .config import InferenceModelConfig as InferenceModelConfig
+from .config import ModelConfig as ModelConfig
+from .config import RandomModelConfig as RandomModelConfig
+from .model_base import ModelBase as ModelBase  # noqa: TC001
 
-if TYPE_CHECKING:
-    from .inference_model import InferenceModel
 
+def create_model(config: ModelConfig) -> ModelBase:
+    """Create a model from the provided config."""
+    if type(config) is RandomModelConfig:
+        from .random_model import RandomModel
 
-def __getattr__(name: Literal['InferenceModel']) -> type[InferenceModel]:
-    if name == 'InferenceModel':
-        try:
-            from .inference_model import InferenceModel
-        except ModuleNotFoundError as error:
-            if error.name in {'keras', 'jax', 'mlx'}:
-                msg = (
-                    'InferenceModel requires an inference backend.  '
-                    'Install smartchess-v2[jax] or smartchess-v2[mlx]'
-                )
-                raise ImportError(msg) from error
-            raise
+        return RandomModel(config)
 
-        return InferenceModel
+    if type(config) is InferenceModelConfig:
+        from smartchess.config import KERAS_BACKEND
 
-    msg = f'module {__name__!r} has no attribute {name!r}'
-    raise AttributeError(msg)
+        require_capability(KERAS_BACKEND)
+
+        from .inference_model import InferenceModel
+
+        return InferenceModel(config)
+    msg = 'Unsupported Model Config Type'
+    raise ValueError(msg)

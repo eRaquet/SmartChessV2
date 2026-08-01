@@ -6,13 +6,15 @@ from numpy.random import default_rng
 
 from smartchess.types import BoardEncoding, Evaluation, SetEncoding, SetEvaluation
 
+from .config import DEFAULT_RANDOM_MODEL_CONFIG, RandomModelConfig
 from .model_base import ModelBase
 
 
 class RandomModel(ModelBase):
     """Model that randomly evaluates board positions."""
 
-    _rng = default_rng()
+    def __init__(self, config: RandomModelConfig = DEFAULT_RANDOM_MODEL_CONFIG) -> None:
+        self._rng = default_rng(config.seed)
 
     @override
     def predict(self, encoding: BoardEncoding) -> Evaluation:

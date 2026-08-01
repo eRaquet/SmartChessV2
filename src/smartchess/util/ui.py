@@ -6,11 +6,14 @@ from pathlib import Path
 import chess
 from tabulate import tabulate
 
+from smartchess.capabilities import require_capability
 from smartchess.types import AgentLogEntry, GameLog, GameLogEntry, MoveLogEntry
 
 
-def write_game(game_log: GameLog) -> None:
+def write_game(game_log: GameLog, path: Path) -> None:
     """Write game to output (currently just a text file)."""
+    require_capability('table')
+
     game_headers = [f.name for f in fields(GameLogEntry)]
     agent_headers = ['agent_color', *[f.name for f in fields(AgentLogEntry)]]
     move_headers = [f.name for f in fields(MoveLogEntry)]
@@ -23,7 +26,8 @@ def write_game(game_log: GameLog) -> None:
     agent_string = tabulate(agent_data, headers=agent_headers, tablefmt='grid')
     move_string = tabulate(move_data, headers=move_headers, tablefmt='grid')
 
-    path = Path('temp.txt')
+    # make parent directories, if not already present
+    path.parent.mkdir(parents=True, exist_ok=True)
 
     with path.open('w') as file:
         print('Game Data', file=file)
@@ -32,3 +36,34 @@ def write_game(game_log: GameLog) -> None:
         print(agent_string, file=file)
         print('\nMove Data', file=file)
         print(move_string, file=file)
+
+
+# set the maximum quantity before the time will be converted into the next unit up
+_UNIT_THRESHOLD = 100
+_UNIT_PREFIX = ['n', 'µ', 'm', '', 'K', 'M', 'G', 'T']
+
+
+def format_time(time: float, decimals: int = 3) -> str:
+    """
+
+    Turn a time in nanoseconds into a formatting time string based on it's size.
+
+    Parameters
+    ----------
+    time : float
+        time (or time interval) in nanoseconds
+    decimals : int
+        number of decimal places to use, default 3
+
+    Returns
+    -------
+    str
+        formatting time string
+    """
+    unit = 0
+
+    while time > _UNIT_THRESHOLD:
+        time /= 1e3
+        unit += 1
+
+    return f'{time:.{decimals}f} {_UNIT_PREFIX[unit]}s'

@@ -6,12 +6,12 @@ import numpy as np
 from numpy.random import default_rng
 
 from smartchess.board import Board
-from smartchess.config import DEFAULT_CONFIDENCE
-from smartchess.model import InferenceModel, ModelBase
+from smartchess.model import ModelConfig, create_model
 from smartchess.types import PMF, AgentDecision, SetEvaluation
 from smartchess.util import softmax
 
 from .agent_base import AgentBase
+from .config import ModelAgentConfig
 
 
 class ModelAgent(AgentBase):
@@ -19,15 +19,16 @@ class ModelAgent(AgentBase):
 
     _rng = default_rng()
 
-    def __init__(
-        self,
-        model: ModelBase,
-        confidence_factor: float | None = DEFAULT_CONFIDENCE,
-    ) -> None:
-        self._model = model
-        self._confidence_factor = confidence_factor
-        self.strain = model.strain if isinstance(model, InferenceModel) else None
-        self.generation = model.generation if isinstance(model, InferenceModel) else None
+    def __init__(self, config: ModelAgentConfig) -> None:
+        # create model object, if all we were provided is a config
+        if isinstance(config.model, ModelConfig):
+            self._model = create_model(config.model)
+        else:
+            self._model = config.model
+
+        self._confidence_factor = config.confidence
+        self.strain = getattr(self._model, 'strain', None)
+        self.generation = getattr(self._model, 'generation', None)
 
     @override
     def act(self, board: Board) -> AgentDecision:

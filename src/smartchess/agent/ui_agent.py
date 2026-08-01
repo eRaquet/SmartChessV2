@@ -2,36 +2,39 @@
 
 from typing import override
 
-from smartchess.board import Board, GUIBoard
-from smartchess.types import AgentDecision
+from smartchess.board import Board
+from smartchess.types import ABORT_ACTION, AgentDecision, Quit
 
 from .agent_base import AgentBase
+from .config import UIAgentConfig
 
 
 class UIAgent(AgentBase):
     """Agent that gets user input from a board with a GUI."""
 
-    def __init__(self, board: GUIBoard) -> None:
-        if type(board) is not GUIBoard:
-            msg = 'UI Agents can only be instantiated from a GUI Board.'
-            raise TypeError(msg)
-
-        # core objects that a UIAgent contains
-        self._board: GUIBoard = board
+    def __init__(self, config: UIAgentConfig) -> None:
+        self._move_source = config.move_source
 
     @override
     def act(self, board: Board) -> AgentDecision:
         """
 
-        Get the user input.
+        Choose an action for this board state.
+
+        Parameters
+        ----------
+        board : Board
+            board to act on
 
         Returns
         -------
         AgentDecision
-            action to take, specified by user
+            returned action, specified by user
         """
-        action = None
-        while action is None:
-            action = self._board.get_user_input()
+        state = board.snapshot
 
+        while (move := self._move_source.request_move(state)) is None:
+            pass
+
+        action = ABORT_ACTION if move is Quit else board.moves.index(move)  # ty:ignore[invalid-argument-type]
         return self._capture(action)

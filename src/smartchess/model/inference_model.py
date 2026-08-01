@@ -1,16 +1,8 @@
 """Inference Implementation of Model."""
 
-import os
 import warnings
 
 warnings.filterwarnings('ignore', category=UserWarning)
-
-# get environment variables
-KERAS_BACKEND = os.environ.get('KERAS_BACKEND', default='mlx')
-KERAS_DTYPE_POLICY = os.environ.get('KERAS_DTYPE_POLICY', 'mixed_float16')
-
-# set keras backend, if it was not already set
-os.environ['KERAS_BACKEND'] = KERAS_BACKEND
 
 import json
 from pathlib import Path
@@ -23,9 +15,10 @@ from keras.models import load_model
 from keras.optimizers import Adam
 from numpy import float16
 
-from smartchess.config import MODEL_PARAMS, PROJECT_PATH
+from smartchess.config import KERAS_DTYPE_POLICY, MODEL_PARAMS, PROJECT_PATH
 from smartchess.types import BoardEncoding, Evaluation, SetEncoding, SetEvaluation
 
+from .config import InferenceModelConfig
 from .model_base import ModelBase
 
 if TYPE_CHECKING:
@@ -37,13 +30,7 @@ set_dtype_policy(KERAS_DTYPE_POLICY)
 class InferenceModel(ModelBase):
     """CNN-based evaluation model for chess boards."""
 
-    def __init__(
-        self,
-        strain: int,
-        generation: int | None = None,
-        *,
-        construct: bool = False,
-    ) -> None:
+    def __init__(self, config: InferenceModelConfig) -> None:
         """
 
         Create a standard model.
@@ -52,22 +39,17 @@ class InferenceModel(ModelBase):
 
         Parameters
         ----------
-        strain : int
-            strain number of model
-        generation : int | None
-            generation number of model, or None if selecting the current generation, None by default
-        construct : bool, optional
-            whether to construct the model from scratch and save to memory, or load it from memory,
-            by default False
+        config : InferenceModelConfig
+            config object for this model
         """
-        self._strain = strain
+        self._strain = config.strain
 
-        if generation is not None:
-            self._generation = generation
+        if config.generation is not None:
+            self._generation = config.generation
         else:
             self._generation = self.get_curr_generation()
 
-        if construct:
+        if config.construct:
             # create model strain directory if it doesn't already exits
             (PROJECT_PATH / 'data' / 'saved_models' / f'strain_{self._strain}').mkdir(
                 parents=True,

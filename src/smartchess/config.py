@@ -1,5 +1,6 @@
 """Python file that contains various project-wide configuration features."""
 
+import os
 from pathlib import Path
 
 ### Project Config
@@ -26,6 +27,18 @@ SQUARE_WIDTH = BOARD_WIDTH / 8
 DEFAULT_CONFIDENCE = 8.0
 
 ### Model Config
+
+# get environment variables
+_backend = os.environ.get('KERAS_BACKEND', default='mlx')
+if _backend not in ['jax', 'mlx']:
+    msg = 'Only "jax" and "mlx" are supported keras backends'
+    raise ValueError(msg)
+KERAS_BACKEND = _backend
+
+# set keras backend, if it was not already set
+os.environ['KERAS_BACKEND'] = KERAS_BACKEND
+
+KERAS_DTYPE_POLICY = os.environ.get('KERAS_DTYPE_POLICY', 'mixed_float16')
 
 # inference model shape
 MODEL_PARAMS = {
