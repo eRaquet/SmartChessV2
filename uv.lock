@@ -5,6 +5,13 @@ resolution-markers = [
     "python_full_version >= '3.13'",
     "python_full_version < '3.13'",
 ]
+conflicts = [[
+    { package = "smartchess-v2", group = "backend-jax" },
+    { package = "smartchess-v2", group = "backend-mlx" },
+], [
+    { package = "smartchess-v2", group = "backend-jax" },
+    { package = "smartchess-v2", group = "dev" },
+]]
 
 [[package]]
 name = "absl-py"
@@ -13,6 +20,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/d0/4f/d79676ab82f2e42fc3611618139f13a9c4c31d0cff4b486982047679a802/absl_py-2.5.0.tar.gz", hash = "sha256:0c996f25c0490700fadabe6351630f6111534fa0ae252cc6d2014ea3b141135f", size = 118119, upload-time = "2026-07-03T10:57:48.157Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/58/0a/a10b45aab35b175aded078a462dc8d0c698f5b13946e7cb0869097b78bb6/absl_py-2.5.0-py3-none-any.whl", hash = "sha256:0f17b89f2a4eaaedc4f28c622998aa690564b3012a396a4ffad0821007fe03ba", size = 137410, upload-time = "2026-07-03T10:57:46.735Z" },
+]
+
+[[package]]
+name = "annotated-doc"
+version = "0.0.5"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/5a/8e/38aa427ed5402449e226975b649c5dc73ccadfefeb95e6aecb8f8ea4b6b6/annotated_doc-0.0.5.tar.gz", hash = "sha256:c7e58ce09192557605d8bbd92836d7e1d520ac9580096042c0bfd197efacf1bb", size = 10758, upload-time = "2026-07-28T13:50:58.129Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/3e/30/e900b21425a860e195f32e37657aa1f7c7f2b1bfb26f03ca209b90933c06/annotated_doc-0.0.5-py3-none-any.whl", hash = "sha256:117bac03a25ede5df5440e855b32d556049ca169ead221505badf432fed4b101", size = 5302, upload-time = "2026-07-28T13:50:57.239Z" },
 ]
 
 [[package]]
@@ -257,6 +273,10 @@ wheels = [
 name = "keras"
 version = "3.10.0"
 source = { git = "https://github.com/keras-team/keras.git?rev=mlx#b7b2ced40567e1b3600db35f2f81bc6e340e1184" }
+resolution-markers = [
+    "python_full_version >= '3.13'",
+    "python_full_version < '3.13'",
+]
 dependencies = [
     { name = "absl-py" },
     { name = "h5py" },
@@ -266,6 +286,29 @@ dependencies = [
     { name = "optree" },
     { name = "packaging" },
     { name = "rich" },
+]
+
+[[package]]
+name = "keras"
+version = "3.15.1"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version >= '3.13'",
+    "python_full_version < '3.13'",
+]
+dependencies = [
+    { name = "absl-py" },
+    { name = "h5py" },
+    { name = "ml-dtypes" },
+    { name = "namex" },
+    { name = "numpy" },
+    { name = "optree" },
+    { name = "packaging" },
+    { name = "rich" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/ec/a6/4cebb4196f4e6284b35e68dc17dda9a4111a2e2bf21db8211de12881ef89/keras-3.15.1.tar.gz", hash = "sha256:92ae7c1dd7f61041953dc2d42253181ee099086f0b58ae36fcf98147a6f08a29", size = 1919818, upload-time = "2026-07-29T18:20:13.909Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/8d/b3/c9b848bbdba18e765a8051917c0cc82585b64278ce87895f2e521a27438f/keras-3.15.1-py3-none-any.whl", hash = "sha256:836460e480930acbd19bb7a17e62f9ecad40e8a9af9a651fc8d0586a96d27e20", size = 2398595, upload-time = "2026-07-29T18:20:12.345Z" },
 ]
 
 [[package]]
@@ -813,7 +856,7 @@ name = "pytest"
 version = "9.1.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colorama", marker = "sys_platform == 'win32'" },
+    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'group-13-smartchess-v2-backend-jax' and extra == 'group-13-smartchess-v2-backend-mlx') or (extra == 'group-13-smartchess-v2-backend-jax' and extra == 'group-13-smartchess-v2-dev')" },
     { name = "iniconfig" },
     { name = "packaging" },
     { name = "pluggy" },
@@ -982,6 +1025,15 @@ wheels = [
 ]
 
 [[package]]
+name = "shellingham"
+version = "1.5.4"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/58/15/8b3609fd3830ef7b27b655beb4b4e9c62313a4e8da8c676e142cc210d58e/shellingham-1.5.4.tar.gz", hash = "sha256:8dbca0739d487e5bd35ab3ca4b36e11c4078f3a234bfce294b0a0291363404de", size = 10310, upload-time = "2023-10-24T04:13:40.426Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e0/f9/0595336914c5619e5f28a1fb793285925a8cd4b432c9da0a987836c7f822/shellingham-1.5.4-py2.py3-none-any.whl", hash = "sha256:7ecfff8f2fd72616f7481040475a65b2bf8af90a56c89140852d1120324e8686", size = 9755, upload-time = "2023-10-24T04:13:38.866Z" },
+]
+
+[[package]]
 name = "six"
 version = "1.17.0"
 source = { registry = "https://pypi.org/simple" }
@@ -997,50 +1049,97 @@ source = { editable = "." }
 dependencies = [
     { name = "chess" },
     { name = "numpy" },
+    { name = "typer" },
 ]
 
-[package.optional-dependencies]
-jax = [
+[package.dev-dependencies]
+backend-jax = [
     { name = "jax" },
-    { name = "keras" },
+    { name = "keras", version = "3.15.1", source = { registry = "https://pypi.org/simple" } },
 ]
-mlx = [
-    { name = "keras" },
+backend-mlx = [
+    { name = "keras", version = "3.10.0", source = { git = "https://github.com/keras-team/keras.git?rev=mlx#b7b2ced40567e1b3600db35f2f81bc6e340e1184" } },
     { name = "mlx" },
 ]
-tool = [
+dev = [
     { name = "git-lfs" },
+    { name = "keras", version = "3.10.0", source = { git = "https://github.com/keras-team/keras.git?rev=mlx#b7b2ced40567e1b3600db35f2f81bc6e340e1184" } },
+    { name = "matplotlib" },
+    { name = "mlx" },
     { name = "poethepoet" },
+    { name = "pygame" },
     { name = "pytest" },
     { name = "ruff" },
+    { name = "tabulate" },
     { name = "tuna" },
     { name = "ty" },
 ]
-visual = [
-    { name = "matplotlib" },
+gui = [
     { name = "pygame" },
+]
+plot = [
+    { name = "matplotlib" },
+]
+profile = [
+    { name = "tuna" },
+]
+quality = [
+    { name = "ruff" },
+    { name = "ty" },
+]
+table = [
     { name = "tabulate" },
+]
+test = [
+    { name = "pytest" },
+]
+tools = [
+    { name = "git-lfs" },
+    { name = "poethepoet" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "chess", specifier = ">=1.11.2" },
-    { name = "git-lfs", marker = "extra == 'tool'", specifier = ">=1.6" },
-    { name = "jax", marker = "extra == 'jax'", specifier = ">=0.10.2" },
-    { name = "keras", marker = "extra == 'jax'", git = "https://github.com/keras-team/keras.git?rev=mlx" },
-    { name = "keras", marker = "extra == 'mlx'", git = "https://github.com/keras-team/keras.git?rev=mlx" },
-    { name = "matplotlib", marker = "extra == 'visual'", specifier = ">=3.11.1" },
-    { name = "mlx", marker = "extra == 'mlx'", specifier = ">=0.32.0" },
     { name = "numpy", specifier = ">=2.2.6" },
-    { name = "poethepoet", marker = "extra == 'tool'", specifier = ">=0.48.0" },
-    { name = "pygame", marker = "extra == 'visual'", specifier = ">=2.6.1" },
-    { name = "pytest", marker = "extra == 'tool'", specifier = ">=9.1.1" },
-    { name = "ruff", marker = "extra == 'tool'", specifier = ">=0.15.22" },
-    { name = "tabulate", marker = "extra == 'visual'", specifier = ">=0.10.0" },
-    { name = "tuna", marker = "extra == 'tool'", specifier = ">=0.5.15" },
-    { name = "ty", marker = "extra == 'tool'", specifier = ">=0.0.61" },
+    { name = "typer", specifier = ">=0.27.0" },
 ]
-provides-extras = ["visual", "mlx", "jax", "tool"]
+
+[package.metadata.requires-dev]
+backend-jax = [
+    { name = "jax", specifier = ">=0.10.2" },
+    { name = "keras", specifier = ">=3.15.0" },
+]
+backend-mlx = [
+    { name = "keras", git = "https://github.com/keras-team/keras.git?rev=mlx" },
+    { name = "mlx", specifier = ">=0.32.0" },
+]
+dev = [
+    { name = "git-lfs", specifier = ">=1.6" },
+    { name = "keras", git = "https://github.com/keras-team/keras.git?rev=mlx" },
+    { name = "matplotlib", specifier = ">=3.11.1" },
+    { name = "mlx", specifier = ">=0.32.0" },
+    { name = "poethepoet", specifier = ">=0.48.0" },
+    { name = "pygame", specifier = ">=2.6.1" },
+    { name = "pytest", specifier = ">=9.1.1" },
+    { name = "ruff", specifier = ">=0.15.22" },
+    { name = "tabulate", specifier = ">=0.10.0" },
+    { name = "tuna", specifier = ">=0.5.15" },
+    { name = "ty", specifier = ">=0.0.61" },
+]
+gui = [{ name = "pygame", specifier = ">=2.6.1" }]
+plot = [{ name = "matplotlib", specifier = ">=3.11.1" }]
+profile = [{ name = "tuna", specifier = ">=0.5.15" }]
+quality = [
+    { name = "ruff", specifier = ">=0.15.22" },
+    { name = "ty", specifier = ">=0.0.61" },
+]
+table = [{ name = "tabulate", specifier = ">=0.10.0" }]
+test = [{ name = "pytest", specifier = ">=9.1.1" }]
+tools = [
+    { name = "git-lfs", specifier = ">=1.6" },
+    { name = "poethepoet", specifier = ">=0.48.0" },
+]
 
 [[package]]
 name = "tabulate"
@@ -1083,6 +1182,21 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/e3/08/1e62d1bca5c0cebdc7a34db1f4b61557aab85961cedd56953dd2c32d3e66/ty-0.0.61-py3-none-win32.whl", hash = "sha256:e3e1fe06f49a5492a922a5df2739834aa5ee978c7dd10414119dc8755cc40c9c", size = 11313991, upload-time = "2026-07-18T01:39:48.761Z" },
     { url = "https://files.pythonhosted.org/packages/26/f1/d8e33b3aeb36b73d81ae34d10e46ec4abf506d68f4e0a1491a76a593dd42/ty-0.0.61-py3-none-win_amd64.whl", hash = "sha256:25f2291169e0298fcdbba1b1fea64f8207a6c1908dddef32346fd5e3e6ac9221", size = 12311717, upload-time = "2026-07-18T01:39:50.881Z" },
     { url = "https://files.pythonhosted.org/packages/e1/14/7caec26d93a943c0e7d15eb7374644508d08cbd387d112b722b12d14e044/ty-0.0.61-py3-none-win_arm64.whl", hash = "sha256:3e496f7698bc4b5bbb1eb66d8b5799ba87596d88d36604ca359083893fa2fc49", size = 11693485, upload-time = "2026-07-18T01:39:52.73Z" },
+]
+
+[[package]]
+name = "typer"
+version = "0.27.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "annotated-doc" },
+    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'group-13-smartchess-v2-backend-jax' and extra == 'group-13-smartchess-v2-backend-mlx') or (extra == 'group-13-smartchess-v2-backend-jax' and extra == 'group-13-smartchess-v2-dev')" },
+    { name = "rich" },
+    { name = "shellingham" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/37/78/fda3361b56efc27944f24225f6ecd13d96d6fcfe37bd0eb34e2f4c63f9fc/typer-0.27.0.tar.gz", hash = "sha256:629bd12ea5d13a17148125d9a264f949eb171fb3f120f9b04d85873cab054fa5", size = 203430, upload-time = "2026-07-15T19:21:07.007Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/40/03/26a383c9e58c213199d1aad1c3d353cfc22d4444ec6d2c0bf8ad02523843/typer-0.27.0-py3-none-any.whl", hash = "sha256:6f4b27631e47f077871b7dc30e933ec0131c1390fbe0e387ea5574b5bac9ccf1", size = 122716, upload-time = "2026-07-15T19:21:05.553Z" },
 ]
 
 [[package]]
