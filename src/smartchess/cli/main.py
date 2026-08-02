@@ -1,0 +1,25 @@
+"""Top-level SmartChess command-line application."""
+
+import typer
+
+from .play import play
+
+app = typer.Typer(
+    name='smartchess', no_args_is_help=True, help='Reinforcement Learning Chess Platform'
+)
+
+app.command(no_args_is_help=True)(play)
+
+
+@app.callback()
+def root() -> None:
+    """Run SmartChess applications."""
+
+
+def main() -> None:
+    """Run Smartchess CLI."""
+    app()
+
+
+if __name__ == '__main__':
+    main()

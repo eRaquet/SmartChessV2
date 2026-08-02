@@ -18,7 +18,7 @@ version = "0.1.0"
 description = "Reinforcement Learning Chess AI"
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = ["chess>=1.11.2", "numpy>=2.2.6"]
+dependencies = ["chess>=1.11.2", "numpy>=2.2.6", "typer>=0.27.0"]
 
 [dependency-groups]
 test = ["pytest>=9.1.1"]
@@ -101,6 +101,11 @@ fixable = ["ALL"]
 ]
 "src/smartchess/model/inference_model.py" = [
     "E402", # import not at top of file
+]
+"src/smartchess/cli/**" = [
+    "FBT002",  # Typer boolean flag declarations use boolean defaults
+    "TC003",   # Typer needs Path available when evaluating command annotations
+    "PLC0415", # CLI needs to use lazy imports to save on load time
 ]
 "src/smartchess/**/__init__.py" = [
     "PLC0415", # import should be at top level of file
