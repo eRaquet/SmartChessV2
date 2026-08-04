@@ -15,7 +15,7 @@ from keras.models import load_model
 from keras.optimizers import Adam
 from numpy import float16
 
-from smartchess.config import KERAS_DTYPE_POLICY, MODEL_PARAMS, PROJECT_PATH
+from smartchess.config import KERAS_DTYPE_POLICY, MODEL_PARAMS
 from smartchess.types import BoardEncoding, Evaluation, SetEncoding, SetEvaluation
 
 from .config import InferenceModelConfig
@@ -42,6 +42,7 @@ class InferenceModel(ModelBase):
         config : InferenceModelConfig
             config object for this model
         """
+        self._path = config.path
         self._strain = config.strain
 
         if config.generation is not None:
@@ -51,7 +52,7 @@ class InferenceModel(ModelBase):
 
         if config.construct:
             # create model strain directory if it doesn't already exits
-            (PROJECT_PATH / 'data' / 'saved_models' / f'strain_{self._strain}').mkdir(
+            (config.path / f'strain_{self._strain}').mkdir(
                 parents=True,
                 exist_ok=True,
             )
@@ -137,11 +138,7 @@ class InferenceModel(ModelBase):
         # update current model
         if keep_generation:
             self._model.save(
-                PROJECT_PATH
-                / 'data'
-                / 'saved_models'
-                / f'strain_{self._strain}'
-                / f'{self.name}.keras',
+                self._path / f'strain_{self._strain}' / f'{self.name}.keras',
             )
 
         # save model as a new generation
@@ -149,11 +146,7 @@ class InferenceModel(ModelBase):
             self._generation += 1
             self.set_curr_generation(self._generation)
             self._model.save(
-                PROJECT_PATH
-                / 'data'
-                / 'saved_models'
-                / f'strain_{self._strain}'
-                / f'{self.name}.keras',
+                self._path / f'strain_{self._strain}' / f'{self.name}.keras',
             )
 
         else:
@@ -165,11 +158,7 @@ class InferenceModel(ModelBase):
         """Load model from `.keras` file."""
         try:
             self._model = load_model(
-                PROJECT_PATH
-                / 'data'
-                / 'saved_models'
-                / f'strain_{self._strain}'
-                / f'{self.name}.keras',
+                self._path / f'strain_{self._strain}' / f'{self.name}.keras',
             )
         except ValueError:
             msg = (
@@ -202,7 +191,7 @@ class InferenceModel(ModelBase):
             Generation number
         """
         with Path.open(
-            PROJECT_PATH / 'data' / 'saved_models' / 'metadata.json',
+            self._path / 'metadata.json',
             'r',
         ) as metadata_file:
             metadata = json.load(metadata_file)
@@ -220,13 +209,13 @@ class InferenceModel(ModelBase):
             Generation number to set
         """
         with Path.open(
-            PROJECT_PATH / 'data' / 'saved_models' / 'metadata.json',
+            self._path / 'metadata.json',
             'r',
         ) as metadata_file:
             metadata = json.load(metadata_file)
             metadata[f'strain_{self._strain}_curr_gen'] = generation_num
         with Path.open(
-            PROJECT_PATH / 'data' / 'saved_models' / 'metadata.json',
+            self._path / 'metadata.json',
             'w',
         ) as metadata_file:
             json.dump(metadata, metadata_file)

@@ -1,6 +1,9 @@
 """Config for model class."""
 
 from dataclasses import dataclass
+from pathlib import Path
+
+from smartchess.config import PROJECT_PATH
 
 
 @dataclass(slots=True, kw_only=True)
@@ -40,4 +43,9 @@ class InferenceModelConfig(ModelConfig):
     """
     Whether to construct the model from scratch and save to memory, or load it from memory,
     by default False.
+    """
+
+    path: Path = PROJECT_PATH / 'artifacts' / 'saved_models'
+    """
+    Path to the folder in which to the model is stored.
     """
