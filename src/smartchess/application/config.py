@@ -78,3 +78,33 @@ class BenchmarkModelConfig:
 
     Plots will be saved in `./artifacts/plots/`.  If None, the plot will only be displayed.
     """
+
+
+@dataclass(slots=True, kw_only=True)
+class BenchmarkGameConfig:
+    """Config for game benchmark."""
+
+    game: GameConfig
+    """
+    Config for game to benchmark.
+    """
+
+    trials: int
+    """
+    Number of runs to benchmark.
+    """
+
+    warmup: int
+    """
+    Number of warmup runs for benchmark.
+    """
+
+    profile: bool
+    """
+    Whether to run with profiling.
+    """
+
+    profile_output: str | None
+    """
+    Filename for profile output, or None if no profiling is to be done.
+    """

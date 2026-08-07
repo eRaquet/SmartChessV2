@@ -2,6 +2,7 @@
 
 import typer
 
+from .game import game_app
 from .model import model_app
 from .play import play
 
@@ -11,6 +12,7 @@ app = typer.Typer(
 
 app.command(no_args_is_help=True)(play)
 app.add_typer(model_app)
+app.add_typer(game_app)
 
 
 @app.callback()

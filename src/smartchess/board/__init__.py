@@ -1,5 +1,6 @@
 """Board Module."""
 
+from .config import DEFAULT_BOARD_CONFIG as DEFAULT_BOARD_CONFIG
 from .config import BoardConfig as BoardConfig
 from .standard_board import Board as Board
 

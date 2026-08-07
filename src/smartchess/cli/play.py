@@ -99,12 +99,6 @@ def _validate_options(
         msg = '--log-file can only be used with --log=file.'
         raise typer.BadParameter(msg, param_hint='--log-file')
 
-    if confidence is not UNSET and not (
-        AgentKind.MODEL in agent_kinds or AgentKind.RANDOM_MODEL in agent_kinds
-    ):
-        msg = '--confidence specified even though no model agents are selected.'
-        raise typer.BadParameter(msg, param_hint='--confidence')
-
 
 def _execute_play(
     white: AgentSpec,

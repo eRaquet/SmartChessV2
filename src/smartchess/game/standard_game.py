@@ -23,9 +23,9 @@ class StandardGame(GameBase):
         if isinstance(config.black, AgentConfig):
             config.black = create_agent(config.black)
 
-        # create board if only a config was provided
-        if isinstance(config.board, BoardConfig):
-            config.board = create_board(config.board)
+        self._board = (
+            create_board(config.board) if isinstance(config.board, BoardConfig) else config.board
+        )
 
         # construct collector if logger config is present
         if config.collect:
@@ -39,7 +39,6 @@ class StandardGame(GameBase):
             chess.WHITE: config.white,
             chess.BLACK: config.black,
         }
-        self._board = config.board
 
         self._renderer = config.renderer
 
