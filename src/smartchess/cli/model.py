@@ -29,7 +29,7 @@ def seed(
     run_seed(config)
 
 
-@model_app.command()
+@model_app.command(no_args_is_help=True)
 def benchmark(
     strain: Annotated[
         int,

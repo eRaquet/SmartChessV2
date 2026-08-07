@@ -21,7 +21,7 @@ from .util import UNSET, Unset, parse_confidence
 game_app = typer.Typer(name='game', no_args_is_help=True, help='Manage smartchess game play.')
 
 
-@game_app.command()
+@game_app.command(no_args_is_help=True)
 def benchmark(
     white: Annotated[
         AgentSpec,
@@ -96,7 +96,7 @@ def benchmark(
     benchmark_game(benchmark_config)
 
 
-@game_app.command()
+@game_app.command(no_args_is_help=True)
 def play(
     white: Annotated[
         AgentSpec,
