@@ -4,13 +4,14 @@
 import chess
 import numpy as np
 
-from smartchess.board import Board
+from smartchess.board import BoardConfig, create_board
 from smartchess.config import PROJECT_PATH
 
 
 def test_board() -> None:
     """Integration test the Board class."""
-    board = Board()
+    board_config = BoardConfig()
+    board = create_board(board_config)
 
     assert board.turn == chess.WHITE
     assert board.moves == list(chess.Board().generate_legal_moves())

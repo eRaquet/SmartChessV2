@@ -4,18 +4,11 @@
 
 import chess
 import numpy as np
-import pytest
 
 from smartchess.config import PROJECT_PATH
 from smartchess.util import (
     encode_board,
 )
-
-
-@pytest.fixture
-def default_board() -> chess.Board:
-    """Create the default board setup and piece map."""
-    return chess.Board()
 
 
 def test_encode_board() -> None:

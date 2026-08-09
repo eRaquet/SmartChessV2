@@ -3,24 +3,39 @@
 
 import os
 
-import chess
+from smartchess.board import BoardConfig, create_board
 
 # make a blank rendering backend for testing
 os.environ['SDL_VIDEODRIVER'] = 'dummy'
 
-from smartchess.ui import Display
+from smartchess.ui import GUIConfig, create_gui
 
 
-def test_display() -> None:
-    """Test the display board function of the Display class."""
-    disp = Display()
+def test_gui_render() -> None:
+    """Test the render method of the GUI class."""
+    gui_config = GUIConfig()
+    gui = create_gui(gui_config)
 
-    board = chess.Board()
-    disp.display_board(board)
+    board_config = BoardConfig()
+    board = create_board(board_config)
 
-    board.push(chess.Move(chess.A2, chess.A3))
-    disp.display_board(board)
+    gui.render(board.snapshot)
 
-    assert disp.get_user_input(board, list(board.legal_moves)) is None
+    board.step(0)
 
-    disp.exit()
+    gui.render(board.snapshot)
+
+    gui.exit()
+
+
+def test_gui_request_move() -> None:
+    """Test the request_move method of the GUI class."""
+    gui_config = GUIConfig()
+    gui = create_gui(gui_config)
+
+    board_config = BoardConfig()
+    board = create_board(board_config)
+
+    assert gui.request_move(board.snapshot) is None
+
+    gui.exit()
