@@ -4,7 +4,6 @@ from dataclasses import astuple, fields
 from pathlib import Path
 
 import chess
-from tabulate import tabulate
 
 from smartchess.capabilities import require_capability
 from smartchess.types import AgentLogEntry, GameLog, GameLogEntry, MoveLogEntry
@@ -13,6 +12,8 @@ from smartchess.types import AgentLogEntry, GameLog, GameLogEntry, MoveLogEntry
 def write_game(game_log: GameLog, path: Path) -> None:
     """Write game to output (currently just a text file)."""
     require_capability('table')
+
+    from tabulate import tabulate  # noqa: PLC0415
 
     game_headers = [f.name for f in fields(GameLogEntry)]
     agent_headers = ['agent_color', *[f.name for f in fields(AgentLogEntry)]]
