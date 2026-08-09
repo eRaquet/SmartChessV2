@@ -3,6 +3,8 @@
 import os
 from pathlib import Path
 
+from smartchess.capabilities import MissingCapabilityError, require_capability
+
 ### Project Config
 
 # path object to project directory
@@ -29,11 +31,15 @@ DEFAULT_CONFIDENCE = 8.0
 ### Model Config
 
 # get environment variables
-_backend = os.environ.get('KERAS_BACKEND', default='mlx')
-if _backend not in ['jax', 'mlx']:
-    msg = 'Only "jax" and "mlx" are supported keras backends'
-    raise ValueError(msg)
-KERAS_BACKEND = _backend
+try:
+    require_capability('mlx')
+    KERAS_BACKEND = 'mlx'
+except MissingCapabilityError:
+    try:
+        require_capability('jax')
+        KERAS_BACKEND = 'jax'
+    except MissingCapabilityError:
+        KERAS_BACKEND = ''
 
 # set keras backend, if it was not already set
 os.environ['KERAS_BACKEND'] = KERAS_BACKEND

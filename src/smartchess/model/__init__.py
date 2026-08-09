@@ -20,6 +20,10 @@ def create_model(config: ModelConfig) -> ModelBase:
     if type(config) is InferenceModelConfig:
         from smartchess.config import KERAS_BACKEND
 
+        if KERAS_BACKEND == '':
+            msg = 'No keras backend specified or available.'
+            raise RuntimeError(msg)
+
         require_capability(KERAS_BACKEND)
 
         from .inference_model import InferenceModel
