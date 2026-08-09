@@ -63,6 +63,16 @@ fix = ["format", "check_fix"]
 run = ["test"]
 all = ["check", "fix", "run"]
 
+##########
+# pytest #
+##########
+
+[tool.pytest.ini_options]
+markers = [
+    "backend: requires a Keras inference backend",
+    "gui: requires the pygame graphical interface",
+]
+
 ######
 # ty #
 ######

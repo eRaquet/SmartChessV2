@@ -3,12 +3,16 @@
 
 import os
 
+import pytest
+
 from smartchess.board import BoardConfig, create_board
+
+pytestmark = pytest.mark.gui
 
 # make a blank rendering backend for testing
 os.environ['SDL_VIDEODRIVER'] = 'dummy'
 
-from smartchess.ui import GUIConfig, create_gui
+from smartchess.ui import GUIConfig, create_gui  # noqa: E402
 
 
 def test_gui_render() -> None:

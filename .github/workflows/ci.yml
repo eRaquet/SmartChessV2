@@ -1,7 +1,6 @@
 name: CI
 
 on:
-  pull_request:
   push:
   workflow_dispatch:
 
@@ -9,12 +8,73 @@ permissions:
   contents: read
 
 jobs:
-  checks:
-    name: Ruff, ty, and pytest
+  quality:
+    name: Ruff and ty
     runs-on: ubuntu-latest
 
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: .python-version
+
+      - name: Install dependencies
+        run: uv sync --locked --no-default-groups --group quality
+
+      - name: Ruff check
+        run: uv run --no-sync ruff check .
+
+      - name: Ruff format check
+        run: uv run --no-sync ruff format --check .
+
+      - name: ty check
+        run: uv run --no-sync ty check
+
+  tests:
+    name: ${{ matrix.name }} tests
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Core
+            os: ubuntu-latest
+            groups: --group test
+            backend: mlx
+            pytest_args: -m "not backend and not gui"
+            seed_models: false
+          - name: GUI
+            os: ubuntu-latest
+            groups: --group test --group gui
+            backend: mlx
+            pytest_args: -m gui
+            seed_models: false
+          - name: JAX backend
+            os: ubuntu-latest
+            groups: --group test --group backend-jax
+            backend: jax
+            pytest_args: -m backend
+            seed_models: true
+          - name: MLX backend
+            os: macos-latest
+            groups: --group test --group backend-mlx
+            backend: mlx
+            pytest_args: -m backend
+            seed_models: true
+
     env:
-      KERAS_BACKEND: jax
+      KERAS_BACKEND: ${{ matrix.backend }}
       KERAS_DTYPE_POLICY: mixed_float16
       PYGAME_HIDE_SUPPORT_PROMPT: "1"
       SDL_VIDEODRIVER: dummy
@@ -37,19 +97,11 @@ jobs:
           python-version-file: .python-version
 
       - name: Install dependencies
-        run: uv sync --locked --group dev
-
-      - name: Ruff check
-        run: uv run ruff check .
-
-      - name: Ruff format check
-        run: uv run ruff format --check .
-
-      - name: ty check
-        run: uv run ty check
+        run: uv sync --locked --no-default-groups ${{ matrix.groups }}
 
       - name: Seed saved model fixtures
-        run: uv run python demos/model/seed_model_strains.py
+        if: matrix.seed_models
+        run: uv run --no-sync smartchess model seed
 
       - name: Pytest
-        run: uv run pytest
+        run: uv run --no-sync pytest ${{ matrix.pytest_args }}

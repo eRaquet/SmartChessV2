@@ -2,6 +2,7 @@
 """Tests for the agent module."""
 
 import numpy as np
+import pytest
 
 from smartchess.agent import ModelAgentConfig, RandomAgentConfig, create_agent
 from smartchess.board import BoardConfig, create_board
@@ -20,6 +21,7 @@ def test_random_agent() -> None:
     assert 0 <= decision.action < len(board.moves)
 
 
+@pytest.mark.backend
 def test_model_agent() -> None:
     """Test for the ModelAgent class."""
     model_config = InferenceModelConfig(strain=0)

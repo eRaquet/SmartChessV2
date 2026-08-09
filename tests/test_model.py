@@ -4,6 +4,7 @@
 from typing import TYPE_CHECKING, cast
 
 import numpy as np
+import pytest
 
 from smartchess.model import InferenceModelConfig, RandomModelConfig, create_model
 
@@ -24,6 +25,7 @@ def test_random_model() -> None:
     assert np.all((test_evals <= 1) & (test_evals >= 0))
 
 
+@pytest.mark.backend
 def test_inference_model() -> None:
     """Test the InferenceModel class."""
     model_config = InferenceModelConfig(strain=0)
