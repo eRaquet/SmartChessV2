@@ -30,7 +30,7 @@ jobs:
           python-version-file: .python-version
 
       - name: Install dependencies
-        run: uv sync --locked --no-default-groups --group quality
+        run: uv sync --locked --no-default-groups --group test --group quality --group gui --group plot --group table --group backend-mlx
 
       - name: Ruff check
         run: uv run --no-sync ruff check .
