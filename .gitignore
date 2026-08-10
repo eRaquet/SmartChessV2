@@ -208,19 +208,11 @@ __marimo__/
 
 ### Personal Additions
 
-# Ignore github copilot config stuff
-.github/copilot-instructions.md
-
 # Ignore uv lock files
 # uv.lock
-
-# Ignore keras model files (for now, change when actively training)
-*.keras
-
-# Ignore obsidian vault config files
-.obsidian/
 
 # Ignore macOS system file stuff
 .DS_Store
 
-data/
+# Ignore artifacts folder
+artifacts/

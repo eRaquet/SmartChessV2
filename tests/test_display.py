@@ -3,24 +3,43 @@
 
 import os
 
-import chess
+import pytest
+
+from smartchess.board import BoardConfig, create_board
+
+pytestmark = pytest.mark.gui
 
 # make a blank rendering backend for testing
-os.environ["SDL_VIDEODRIVER"] = "dummy"
+os.environ['SDL_VIDEODRIVER'] = 'dummy'
 
-from modules.display import Display
+from smartchess.ui import GUIConfig, create_gui  # noqa: E402
 
 
-def test_display_board() -> None:
-    """Test the display board function of the Display class."""
-    disp = Display()
+def test_gui_render() -> None:
+    """Test the render method of the GUI class."""
+    gui_config = GUIConfig()
+    gui = create_gui(gui_config)
 
-    board = chess.Board()
-    disp.display_board(board)
+    board_config = BoardConfig()
+    board = create_board(board_config)
 
-    board.push(chess.Move(chess.A2, chess.A3))
-    disp.display_board(board)
+    gui.render(board.snapshot)
 
-    assert disp.get_user_input(board, list(board.legal_moves)) is None
+    board.step(0)
 
-    disp.exit()
+    gui.render(board.snapshot)
+
+    gui.exit()
+
+
+def test_gui_request_move() -> None:
+    """Test the request_move method of the GUI class."""
+    gui_config = GUIConfig()
+    gui = create_gui(gui_config)
+
+    board_config = BoardConfig()
+    board = create_board(board_config)
+
+    assert gui.request_move(board.snapshot) is None
+
+    gui.exit()

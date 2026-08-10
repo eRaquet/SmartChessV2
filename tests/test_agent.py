@@ -2,27 +2,38 @@
 """Tests for the agent module."""
 
 import numpy as np
+import pytest
 
-from modules.agent import RandomAgent, StandardAgent
-from modules.board import Board
-from modules.model import StandardModel
+from smartchess.agent import ModelAgentConfig, RandomAgentConfig, create_agent
+from smartchess.board import BoardConfig, create_board
+from smartchess.config import DEFAULT_CONFIDENCE
+from smartchess.model import InferenceModelConfig, create_model
 
 
 def test_random_agent() -> None:
     """Test for the RandomAgent class."""
-    agent = RandomAgent()
-    board = Board()
+    agent_config = RandomAgentConfig(seed=0)
+    agent = create_agent(agent_config)
+    board_config = BoardConfig()
+    board = create_board(board_config)
     decision = agent.act(board)
 
     assert 0 <= decision.action < len(board.moves)
 
 
-def test_standard_agent() -> None:
-    """Test for the StandardAgent class."""
-    model = StandardModel(0)
-    board = Board()
-    agent_deterministic = StandardAgent(model, confidence_factor=None)
-    agent_random = StandardAgent(model)
+@pytest.mark.backend
+def test_model_agent() -> None:
+    """Test for the ModelAgent class."""
+    model_config = InferenceModelConfig(strain=0)
+    model = create_model(model_config)
+
+    board_config = BoardConfig()
+    board = create_board(board_config)
+
+    deterministic_config = ModelAgentConfig(model=model, confidence=None, seed=0)
+    agent_deterministic = create_agent(deterministic_config)
+    random_config = ModelAgentConfig(model=model, confidence=DEFAULT_CONFIDENCE, seed=0)
+    agent_random = create_agent(random_config)
 
     decision = agent_random.act(board)
     decision_1 = agent_deterministic.act(board)

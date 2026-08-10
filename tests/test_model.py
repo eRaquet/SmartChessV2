@@ -4,18 +4,20 @@
 from typing import TYPE_CHECKING, cast
 
 import numpy as np
+import pytest
 
-from modules.model import RandomModel, StandardModel
+from smartchess.model import InferenceModelConfig, RandomModelConfig, create_model
 
 if TYPE_CHECKING:
-    from modules.chess_types import SetEncoding, SetEvaluation
+    from smartchess.types import SetEncoding, SetEvaluation
 
 
 def test_random_model() -> None:
     """Test for the RandomModel class."""
-    model = RandomModel()
+    model_config = RandomModelConfig(seed=0)
+    model = create_model(model_config)
     rng = np.random.default_rng()
-    test_data: SetEncoding = cast("SetEncoding", rng.integers(0, 2, (10, 8, 8, 18), dtype=np.uint8))
+    test_data: SetEncoding = cast('SetEncoding', rng.integers(0, 2, (10, 8, 8, 18), dtype=np.uint8))
     test_eval = model.predict(test_data[0])
     test_evals: SetEvaluation = model.predict_batch(test_data)
 
@@ -23,11 +25,13 @@ def test_random_model() -> None:
     assert np.all((test_evals <= 1) & (test_evals >= 0))
 
 
-def test_standard_model() -> None:
-    """Test the StandardModel class."""
-    model = StandardModel(0, 0)
+@pytest.mark.backend
+def test_inference_model() -> None:
+    """Test the InferenceModel class."""
+    model_config = InferenceModelConfig(strain=0)
+    model = create_model(model_config)
     rng = np.random.default_rng()
-    test_data: SetEncoding = cast("SetEncoding", rng.integers(0, 2, (10, 8, 8, 18), dtype=np.uint8))
+    test_data: SetEncoding = cast('SetEncoding', rng.integers(0, 2, (10, 8, 8, 18), dtype=np.uint8))
     test_eval = model.predict(test_data[0])
     test_evals: SetEvaluation = model.predict_batch(test_data)
 
